@@ -1,4 +1,3 @@
-﻿clear
 #Global variables
 $desktopPath = [Environment]::GetFolderPath("Desktop")
 $folderWithProcessedDocuments = "Processed files"
