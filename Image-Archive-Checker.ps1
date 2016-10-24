@@ -132,10 +132,9 @@ Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments" -Directory | % 
         $imageHashes += $imageHash
         $imageFullName = Split-Path $_.Path -Leaf
         $imageFullNames += $imageFullName
-        $parsedImageFullName = $imageFullName -split "\."
-        $imageName = $parsedImageFullName[0]
+        $imageName = [IO.Path]::GetFileNameWithoutExtension($_.Path)
         $imageNames += $imageName
-        $imageExtension = "." + $parsedImageFullName[1]
+        $imageExtension = [IO.Path]::GetExtension($_.Path)
         $imageExtensions += $imageExtension
     }
     #Creates temporary folders
@@ -217,10 +216,9 @@ Function Get-WordFileExtension
 $documentNames = @()
 $documentExtensions = @()
 Get-ChildItem -path "$desktopPath\$folderWithProcessedDocuments\*.doc*" | % {
-$parsedDocumentFullName = $_.Name -split "\."
-$documentName = $parsedDocumentFullName[0]
+$documentName = [IO.Path]::GetFileNameWithoutExtension($_)
 $documentNames += $documentName
-$documentExtension = $parsedDocumentFullName[1]
+$documentExtension = [IO.Path]::GetExtension($_).Trim(".")
 $documentExtensions += $documentExtension
 }
 $global:documentNameForRenaming = $documentNames, $documentExtensions
