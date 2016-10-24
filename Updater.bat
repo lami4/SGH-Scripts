@@ -179,14 +179,14 @@ ECHO ---------------------------------------------------------------------------
 ECHO ------------------------------------------------------------------------------------------------------------------------------------------------------>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
 ECHO STATUS FOR "...KPD\Source documents pdf":
 ECHO.
-ECHO Ôàéëû óäàëåííûå â ïàïêå "...KPD\Source documents pdf":>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
+ECHO Файлы удаленные в "...KPD\Source documents pdf":>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
 ECHO.>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
 FOR /F "tokens=*" %%G IN (Del_temporary.txt) DO (IF EXIST "%CD%\KPD\# Source documents pdf\%%G.*" (ECHO !var_incr_del_pdf!^) *.pdf file for %%G found and deleted
 MOVE "%CD%\KPD\# Source documents pdf\%%G.*" "%CD%\KPD\# Source documents pdf\Files updated on %date% by notification No. %notification%" >nul
-ECHO !var_incr_del_pdf!^) *.pdf ôàéë äëÿ äîêóìåíòà %%G áûë íàéäåí è óäàëåí>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
+ECHO !var_incr_del_pdf!^) *.pdf файл для документа %%G был найден>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
 SET /a var_incr_del_pdf+=1
 SET /a var_incr_del_pdf_suc+=1) ELSE (ECHO !var_incr_del_pdf!^) Failed to delete *.pdf file for %%G as it was not found in the folder
-ECHO !var_incr_del_pdf!^) Íå óäàëîñü óäàëèòü *.pdf ôàéë äëÿ äîêóìåíòà %%G, òàê êàê îí íå áûë íàéäåí>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
+ECHO !var_incr_del_pdf!^) Не удалось удалить *.pdf файл для документа %%G, так как он не был найден>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
 SET /a var_incr_del_pdf+=1))
 ECHO.
 ECHO Total files deleted: !var_incr_del_pdf_suc!
@@ -194,14 +194,14 @@ ECHO ---------------------------------------------------------------------------
 ECHO ------------------------------------------------------------------------------------------------------------------------------------------------------>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
 ECHO STATUS FOR "...KPD\Source documents docx, doc, xls, xlsx":
 ECHO.
-ECHO Ôàéëû óäàëåííûå â ïàïêå "...KPD\Source documents docx, doc, xls, xlsx":>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
+ECHO Файлы удаленные в папке "...KPD\Source documents docx, doc, xls, xlsx":>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
 ECHO.>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
 FOR /F "tokens=*" %%G IN (Del_temporary.txt) DO (IF EXIST "%CD%\KPD\# Source documents docx, doc, xls, xlsx\%%G.*" (ECHO !var_incr_del_docs!^) *.doc^(x^)/xls^(x^) file for %%G found and deleted
 MOVE "%CD%\KPD\# Source documents docx, doc, xls, xlsx\%%G.*" "%CD%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%" >nul
-ECHO !var_incr_del_docs!^) *.doc^(x^)/xls^(x^) ôàéë äëÿ äîêóìåíòà %%G áûë íàéäåí è óäàëåí>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
+ECHO !var_incr_del_docs!^) *.doc^(x^)/xls^(x^) файл для документа %%G был найден и удален>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
 SET /a var_incr_del_docs+=1
 SET /a var_incr_del_docs_suc+=1) ELSE (ECHO !var_incr_del_docs!^) Failed to delete *.doc^(x^)/xls^(x^) file for %%G as it was not found in the folder
-ECHO !var_incr_del_docs!^) Íå óäàëîñü óäàëèòü *.doc^(x^)/xls^(x^) ôàéë äëÿ äîêóìåíòà %%G, òàê êàê îí íå áûë íàéäåí>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
+ECHO !var_incr_del_docs!^) Не удалось удалить *.doc^(x^)/xls^(x^) файл для документа %%G, так как он не был найден>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
 SET /a var_incr_del_docs+=1))
 ECHO.
 ECHO Total files deleted: !var_incr_del_docs_suc!
