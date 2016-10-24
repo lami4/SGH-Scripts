@@ -179,14 +179,14 @@ ECHO ---------------------------------------------------------------------------
 ECHO ------------------------------------------------------------------------------------------------------------------------------------------------------>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
 ECHO STATUS FOR "...KPD\Source documents pdf":
 ECHO.
-ECHO Ôàéëû óäàëåííûå â ïàïêå "...KPD\Source documents pdf":>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
+ECHO Ã”Ã Ã©Ã«Ã» Ã³Ã¤Ã Ã«Ã¥Ã­Ã­Ã»Ã¥ Ã¢ Ã¯Ã Ã¯ÃªÃ¥ "...KPD\Source documents pdf":>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
 ECHO.>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
 FOR /F "tokens=*" %%G IN (Del_temporary.txt) DO (IF EXIST "%CD%\KPD\# Source documents pdf\%%G.*" (ECHO !var_incr_del_pdf!^) *.pdf file for %%G found and deleted
 MOVE "%CD%\KPD\# Source documents pdf\%%G.*" "%CD%\KPD\# Source documents pdf\Files updated on %date% by notification No. %notification%" >nul
-ECHO !var_incr_del_pdf!^) *.pdf ôàéë äëÿ äîêóìåíòà %%G áûë íàéäåí è óäàëåí>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
+ECHO !var_incr_del_pdf!^) *.pdf Ã´Ã Ã©Ã« Ã¤Ã«Ã¿ Ã¤Ã®ÃªÃ³Ã¬Ã¥Ã­Ã²Ã  %%G Ã¡Ã»Ã« Ã­Ã Ã©Ã¤Ã¥Ã­ Ã¨ Ã³Ã¤Ã Ã«Ã¥Ã­>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
 SET /a var_incr_del_pdf+=1
 SET /a var_incr_del_pdf_suc+=1) ELSE (ECHO !var_incr_del_pdf!^) Failed to delete *.pdf file for %%G as it was not found in the folder
-ECHO !var_incr_del_pdf!^) Íå óäàëîñü óäàëèòü *.pdf ôàéë äëÿ äîêóìåíòà %%G, òàê êàê îí íå áûë íàéäåí>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
+ECHO !var_incr_del_pdf!^) ÃÃ¥ Ã³Ã¤Ã Ã«Ã®Ã±Ã¼ Ã³Ã¤Ã Ã«Ã¨Ã²Ã¼ *.pdf Ã´Ã Ã©Ã« Ã¤Ã«Ã¿ Ã¤Ã®ÃªÃ³Ã¬Ã¥Ã­Ã²Ã  %%G, Ã²Ã Ãª ÃªÃ Ãª Ã®Ã­ Ã­Ã¥ Ã¡Ã»Ã« Ã­Ã Ã©Ã¤Ã¥Ã­>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
 SET /a var_incr_del_pdf+=1))
 ECHO.
 ECHO Total files deleted: !var_incr_del_pdf_suc!
@@ -194,33 +194,33 @@ ECHO ---------------------------------------------------------------------------
 ECHO ------------------------------------------------------------------------------------------------------------------------------------------------------>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
 ECHO STATUS FOR "...KPD\Source documents docx, doc, xls, xlsx":
 ECHO.
-ECHO Ôàéëû óäàëåííûå â ïàïêå "...KPD\Source documents docx, doc, xls, xlsx":>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
+ECHO Ã”Ã Ã©Ã«Ã» Ã³Ã¤Ã Ã«Ã¥Ã­Ã­Ã»Ã¥ Ã¢ Ã¯Ã Ã¯ÃªÃ¥ "...KPD\Source documents docx, doc, xls, xlsx":>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
 ECHO.>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
 FOR /F "tokens=*" %%G IN (Del_temporary.txt) DO (IF EXIST "%CD%\KPD\# Source documents docx, doc, xls, xlsx\%%G.*" (ECHO !var_incr_del_docs!^) *.doc^(x^)/xls^(x^) file for %%G found and deleted
 MOVE "%CD%\KPD\# Source documents docx, doc, xls, xlsx\%%G.*" "%CD%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%" >nul
-ECHO !var_incr_del_docs!^) *.doc^(x^)/xls^(x^) ôàéë äëÿ äîêóìåíòà %%G áûë íàéäåí è óäàëåí>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
+ECHO !var_incr_del_docs!^) *.doc^(x^)/xls^(x^) Ã´Ã Ã©Ã« Ã¤Ã«Ã¿ Ã¤Ã®ÃªÃ³Ã¬Ã¥Ã­Ã²Ã  %%G Ã¡Ã»Ã« Ã­Ã Ã©Ã¤Ã¥Ã­ Ã¨ Ã³Ã¤Ã Ã«Ã¥Ã­>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
 SET /a var_incr_del_docs+=1
 SET /a var_incr_del_docs_suc+=1) ELSE (ECHO !var_incr_del_docs!^) Failed to delete *.doc^(x^)/xls^(x^) file for %%G as it was not found in the folder
-ECHO !var_incr_del_docs!^) Íå óäàëîñü óäàëèòü *.doc^(x^)/xls^(x^) ôàéë äëÿ äîêóìåíòà %%G, òàê êàê îí íå áûë íàéäåí>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
+ECHO !var_incr_del_docs!^) ÃÃ¥ Ã³Ã¤Ã Ã«Ã®Ã±Ã¼ Ã³Ã¤Ã Ã«Ã¨Ã²Ã¼ *.doc^(x^)/xls^(x^) Ã´Ã Ã©Ã« Ã¤Ã«Ã¿ Ã¤Ã®ÃªÃ³Ã¬Ã¥Ã­Ã²Ã  %%G, Ã²Ã Ãª ÃªÃ Ãª Ã®Ã­ Ã­Ã¥ Ã¡Ã»Ã« Ã­Ã Ã©Ã¤Ã¥Ã­>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
 SET /a var_incr_del_docs+=1))
 ECHO.
 ECHO Total files deleted: !var_incr_del_docs_suc!
 ECHO ------------------------------------------------------------------------------------------------------------------------------------------------------
 ECHO ------------------------------------------------------------------------------------------------------------------------------------------------------>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
-ECHO Ôàéëû óäàëåííûå â ïàïêàõ "...KPD\Matches against previous version" è "...KPD\Source documents to be translated":>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
+ECHO Ã”Ã Ã©Ã«Ã» Ã³Ã¤Ã Ã«Ã¥Ã­Ã­Ã»Ã¥ Ã¢ Ã¯Ã Ã¯ÃªÃ Ãµ "...KPD\Matches against previous version" Ã¨ "...KPD\Source documents to be translated":>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
 ECHO.>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
 ECHO STATUS FOR "...KPD\Matches against previous version" and "...KPD\Source documents to be translated":
 ECHO.
 FOR /F "tokens=*" %%G IN (Del_temporary.txt) DO (IF EXIST "%CD%\KPD\# Matches against previous version\%%G.*" (ECHO !var_incr_del_both!^) *.doc^(x^)/xls^(x^) file for %%G found and deleted in '...KPD\Matches against previous version'
 DEL "%CD%\KPD\# Matches against previous version\%%G.*"
-ECHO !var_incr_del_both!^) *.doc^(x^)/xls^(x^) ôàéë äëÿ äîêóìåíòà %%G áûë íàéäåí è óäàëåí â ïàïêå "...KPD\Matches against previous version">>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
+ECHO !var_incr_del_both!^) *.doc^(x^)/xls^(x^) Ã´Ã Ã©Ã« Ã¤Ã«Ã¿ Ã¤Ã®ÃªÃ³Ã¬Ã¥Ã­Ã²Ã  %%G Ã¡Ã»Ã« Ã­Ã Ã©Ã¤Ã¥Ã­ Ã¨ Ã³Ã¤Ã Ã«Ã¥Ã­ Ã¢ Ã¯Ã Ã¯ÃªÃ¥ "...KPD\Matches against previous version">>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
 SET /a var_incr_del_both+=1
 SET /a var_incr_del_both_suc+=1) ELSE (IF EXIST "%CD%\KPD\# Source documents to be translated\%%G.*" (ECHO !var_incr_del_both!^) *.doc^(x^)/xls^(x^) file for %%G found and deleted in '...\KPD\Source documents to be translated'
 DEL "%CD%\KPD\# Source documents to be translated\%%G.*"
-ECHO !var_incr_del_both!^) *.doc^(x^)/xls^(x^) ôàéë äëÿ äîêóìåíòà %%G áûë íàéäåí è óäàëåí â ïàïêå "...KPD\Source documents to be translated">>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
+ECHO !var_incr_del_both!^) *.doc^(x^)/xls^(x^) Ã´Ã Ã©Ã« Ã¤Ã«Ã¿ Ã¤Ã®ÃªÃ³Ã¬Ã¥Ã­Ã²Ã  %%G Ã¡Ã»Ã« Ã­Ã Ã©Ã¤Ã¥Ã­ Ã¨ Ã³Ã¤Ã Ã«Ã¥Ã­ Ã¢ Ã¯Ã Ã¯ÃªÃ¥ "...KPD\Source documents to be translated">>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
 SET /a var_incr_del_both+=1
 SET /a var_incr_del_both_suc+=1) ELSE (ECHO !var_incr_del_both!^) Failed to delete *.doc^(x^)/xls^(x^) file for %%G as it was not found in the folders
-ECHO !var_incr_del_both!^) Íå óäàëîñü óäàëèòü *.doc^(x^)/xls^(x^) ôàéë äëÿ äîêóìåíòà %%G, òàê êàê îí íå áûë íàéäåí íè â îäíîé èç ïàïîê>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
+ECHO !var_incr_del_both!^) ÃÃ¥ Ã³Ã¤Ã Ã«Ã®Ã±Ã¼ Ã³Ã¤Ã Ã«Ã¨Ã²Ã¼ *.doc^(x^)/xls^(x^) Ã´Ã Ã©Ã« Ã¤Ã«Ã¿ Ã¤Ã®ÃªÃ³Ã¬Ã¥Ã­Ã²Ã  %%G, Ã²Ã Ãª ÃªÃ Ãª Ã®Ã­ Ã­Ã¥ Ã¡Ã»Ã« Ã­Ã Ã©Ã¤Ã¥Ã­ Ã­Ã¨ Ã¢ Ã®Ã¤Ã­Ã®Ã© Ã¨Ã§ Ã¯Ã Ã¯Ã®Ãª>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
 SET /a var_incr_del_both+=1)))
 ECHO.
 ECHO Total files deleted: !var_incr_del_both_suc!
@@ -235,9 +235,9 @@ SET /a var_incr_upd_pdf=1
 SET /a var_incr_upd_docs=1
 SET /a var_incr_upd_both=1
 SETLOCAL ENABLEDELAYEDEXPANSION
-ECHO Îáíîâëåíèå â ïàïêå Matches against previous version è Source documents to be translated:>"%CD%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\MAPV_and_SDTT.txt"
-ECHO Îáíîâëåíèå â ïàïêå Source documents pdf:>"%CD%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\PDF.txt"
-ECHO Îáíîâëåíèå â ïàïêå Source documents docx, doc, xls, xlsx:>"%CD%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\DOC.txt"
+ECHO ÃŽÃ¡Ã­Ã®Ã¢Ã«Ã¥Ã­Ã¨Ã¥ Ã¢ Ã¯Ã Ã¯ÃªÃ¥ Matches against previous version Ã¨ Source documents to be translated:>"%CD%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\MAPV_and_SDTT.txt"
+ECHO ÃŽÃ¡Ã­Ã®Ã¢Ã«Ã¥Ã­Ã¨Ã¥ Ã¢ Ã¯Ã Ã¯ÃªÃ¥ Source documents pdf:>"%CD%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\PDF.txt"
+ECHO ÃŽÃ¡Ã­Ã®Ã¢Ã«Ã¥Ã­Ã¨Ã¥ Ã¢ Ã¯Ã Ã¯ÃªÃ¥ Source documents docx, doc, xls, xlsx:>"%CD%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\DOC.txt"
 CLS
 ECHO NOW, I WILL UPDATE DOCUMENTS SPECIFIED IN 'List.txt'.
 ECHO COPIES OF THE OLD FILES WILL BE STORED IN "...KPD\Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%" IN CASE YOU NEED THEM.
@@ -249,11 +249,11 @@ CD "%CD%\KPD\# Source documents pdf"
 FOR %%G IN ("%root_directory%\MemoQ import\*.pdf") DO IF EXIST %%~nxG (ECHO !var_incr_upd_pdf!^) %%~nxG was updated
 MOVE "%CD%\%%~nxG" "%CD%\Files updated on %date% by notification No. %notification%" >nul
 MOVE "%root_directory%\MemoQ import\%%~nxG" "%CD%" >nul
-ECHO !var_incr_upd_pdf!^) Ôàéë %%~nxG áûë íàéäåí è îáíîâëåí>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\PDF.txt"
+ECHO !var_incr_upd_pdf!^) Ã”Ã Ã©Ã« %%~nxG Ã¡Ã»Ã« Ã­Ã Ã©Ã¤Ã¥Ã­ Ã¨ Ã®Ã¡Ã­Ã®Ã¢Ã«Ã¥Ã­>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\PDF.txt"
 SET /a var_incr_upd_pdf+=1) ELSE (ECHO !var_incr_upd_pdf!^) %%~nxG was just copied to the folder ^(=new file, released for the first time^)
 ECHO This file was released for the first time.>"%CD%\Files updated on %date% by notification No. %notification%\%%~nG.txt"
 ECHO As there was nothing to copy to the current folder, the script created this *.txt file so you know that this file is a new one.>>"%CD%\Files updated on %date% by notification No. %notification%\%%~nG.txt"
-ECHO !var_incr_upd_pdf!^) Ôàéë %%~nxG áûë ïðîñòî ñêîïèðîâàí â ...KPD\Source documents pdf, òàê êàê îí áûë îïóáëèêîâàí âïåðâûå>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\PDF.txt"
+ECHO !var_incr_upd_pdf!^) Ã”Ã Ã©Ã« %%~nxG Ã¡Ã»Ã« Ã¯Ã°Ã®Ã±Ã²Ã® Ã±ÃªÃ®Ã¯Ã¨Ã°Ã®Ã¢Ã Ã­ Ã¢ ...KPD\Source documents pdf, Ã²Ã Ãª ÃªÃ Ãª Ã®Ã­ Ã¡Ã»Ã« Ã®Ã¯Ã³Ã¡Ã«Ã¨ÃªÃ®Ã¢Ã Ã­ Ã¢Ã¯Ã¥Ã°Ã¢Ã»Ã¥>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\PDF.txt"
 MOVE "%root_directory%\MemoQ import\%%~nxG" "%CD%" >nul
 SET /a var_incr_upd_pdf+=1)
 ECHO.
@@ -267,11 +267,11 @@ CD "%root_directory%\KPD\# Source documents docx, doc, xls, xlsx"
 FOR %%G IN ("%root_directory%\MemoQ import\*") DO IF EXIST %%~nG.* (ECHO !var_incr_upd_docs!^) %%~nxG was updated
 MOVE "%CD%\%%~nG.*" "%CD%\Files updated on %date% by notification No. %notification%" >nul
 COPY "%root_directory%\MemoQ import\%%~nG.*" "%CD%" >nul
-ECHO !var_incr_upd_docs!^) Ôàéë %%~nxG áûë íàéäåí è îáíîâëåí>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\DOC.txt"
+ECHO !var_incr_upd_docs!^) Ã”Ã Ã©Ã« %%~nxG Ã¡Ã»Ã« Ã­Ã Ã©Ã¤Ã¥Ã­ Ã¨ Ã®Ã¡Ã­Ã®Ã¢Ã«Ã¥Ã­>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\DOC.txt"
 SET /a var_incr_upd_docs+=1) ELSE (ECHO !var_incr_upd_docs!^) %%~nxG was just copied to the folder ^(=new file, released for the first time^)
 ECHO This file was released for the first time.>"%CD%\Files updated on %date% by notification No. %notification%\%%~nG.txt"
 ECHO As there was nothing to copy to the current folder, the script created this *.txt file so you know that this file is a new one.>>"%CD%\Files updated on %date% by notification No. %notification%\%%~nG.txt"
-ECHO !var_incr_upd_docs!^) Ôàéë %%~nxG áûë ïðîñòî ñêîïèðîâàí â ...KPD\Source documents docx, doc, xls, xlsx, òàê êàê îí áûë îïóáëèêîâàí âïåðâûå>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\DOC.txt"
+ECHO !var_incr_upd_docs!^) Ã”Ã Ã©Ã« %%~nxG Ã¡Ã»Ã« Ã¯Ã°Ã®Ã±Ã²Ã® Ã±ÃªÃ®Ã¯Ã¨Ã°Ã®Ã¢Ã Ã­ Ã¢ ...KPD\Source documents docx, doc, xls, xlsx, Ã²Ã Ãª ÃªÃ Ãª Ã®Ã­ Ã¡Ã»Ã« Ã®Ã¯Ã³Ã¡Ã«Ã¨ÃªÃ®Ã¢Ã Ã­ Ã¢Ã¯Ã¥Ã°Ã¢Ã»Ã¥>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\DOC.txt"
 COPY "%root_directory%\MemoQ import\%%~nG.*" "%CD%" >nul
 SET /a var_incr_upd_docs+=1)
 ECHO.
@@ -285,12 +285,12 @@ CD "%root_directory%\KPD\# Matches against previous version"
 FOR %%G IN ("%root_directory%\MemoQ import\*") DO IF EXIST %%~nG.* (ECHO !var_incr_upd_both!^) %%~nxG was found and updated in '...KPD\Matches against previous version'
 DEL %%~nG.*
 COPY "%root_directory%\MemoQ import\%%~nG.*" "%root_directory%\KPD\# Source documents to be translated" >nul
-ECHO !var_incr_upd_both!^) Ôàéë %%~nxG áûë íàéäåí è îáíîâëåí â ïàïêå ...KPD\Matches against previous version>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\MAPV_and_SDTT.txt"
+ECHO !var_incr_upd_both!^) Ã”Ã Ã©Ã« %%~nxG Ã¡Ã»Ã« Ã­Ã Ã©Ã¤Ã¥Ã­ Ã¨ Ã®Ã¡Ã­Ã®Ã¢Ã«Ã¥Ã­ Ã¢ Ã¯Ã Ã¯ÃªÃ¥ ...KPD\Matches against previous version>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\MAPV_and_SDTT.txt"
 SET /a var_incr_upd_both+=1) ELSE (IF EXIST "%root_directory%\KPD\# Source documents to be translated\%%~nG.*" (ECHO !var_incr_upd_both!^) %%~nxG was found and updated in '...KPD\Source documents to be translated'
 COPY "%root_directory%\MemoQ import\%%~nG.*" "%root_directory%\KPD\# Source documents to be translated" >nul
-ECHO !var_incr_upd_both!^) Ôàéë %%~nxG áûë íàéäåí è îáíîâëåí â ïàïêå ...KPD\Source documents to be translated>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\MAPV_and_SDTT.txt"
+ECHO !var_incr_upd_both!^) Ã”Ã Ã©Ã« %%~nxG Ã¡Ã»Ã« Ã­Ã Ã©Ã¤Ã¥Ã­ Ã¨ Ã®Ã¡Ã­Ã®Ã¢Ã«Ã¥Ã­ Ã¢ Ã¯Ã Ã¯ÃªÃ¥ ...KPD\Source documents to be translated>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\MAPV_and_SDTT.txt"
 SET /a var_incr_upd_both+=1) ELSE (ECHO !var_incr_upd_both!^) %%~nxG was just copied to '...KPD\Source documents to be translated' ^(=new file, released for the first time^)
-ECHO !var_incr_upd_both!^) Ôàéë %%~nxG áûë ïðîñòî ñêîïèðîâàí â ...KPD\Source documents to be translated, òàê êàê îí áûë îïóáëèêîâàí âïåðâûå>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\MAPV_and_SDTT.txt"
+ECHO !var_incr_upd_both!^) Ã”Ã Ã©Ã« %%~nxG Ã¡Ã»Ã« Ã¯Ã°Ã®Ã±Ã²Ã® Ã±ÃªÃ®Ã¯Ã¨Ã°Ã®Ã¢Ã Ã­ Ã¢ ...KPD\Source documents to be translated, Ã²Ã Ãª ÃªÃ Ãª Ã®Ã­ Ã¡Ã»Ã« Ã®Ã¯Ã³Ã¡Ã«Ã¨ÃªÃ®Ã¢Ã Ã­ Ã¢Ã¯Ã¥Ã°Ã¢Ã»Ã¥>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\MAPV_and_SDTT.txt"
 COPY "%root_directory%\MemoQ import\%%~nG.*" "%root_directory%\KPD\# Source documents to be translated" >nul
 SET /a var_incr_upd_both+=1))
 ECHO.
@@ -301,23 +301,23 @@ ENDLOCAL
 
 
 CD "%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%"
-IF EXIST Deletion.txt (ECHO Íèæå ïðåäñòàâëåí ñïèñîê ôàéëîâ, êîòîðûå áûëè óäàëåíû âî âñåõ ïîäïàïêàõ "...\KPD\...".>Report.txt
-ECHO Êîïèè óäàëåííûõ ôàéëîâ áûëè ïåðåìåùåíû â ñîîòâåòñâóþùèå "Files updated on %date% by notification No. %notification%" ïàïêè.>>Report.txt
+IF EXIST Deletion.txt (ECHO ÃÃ¨Ã¦Ã¥ Ã¯Ã°Ã¥Ã¤Ã±Ã²Ã Ã¢Ã«Ã¥Ã­ Ã±Ã¯Ã¨Ã±Ã®Ãª Ã´Ã Ã©Ã«Ã®Ã¢, ÃªÃ®Ã²Ã®Ã°Ã»Ã¥ Ã¡Ã»Ã«Ã¨ Ã³Ã¤Ã Ã«Ã¥Ã­Ã» Ã¢Ã® Ã¢Ã±Ã¥Ãµ Ã¯Ã®Ã¤Ã¯Ã Ã¯ÃªÃ Ãµ "...\KPD\...".>Report.txt
+ECHO ÃŠÃ®Ã¯Ã¨Ã¨ Ã³Ã¤Ã Ã«Ã¥Ã­Ã­Ã»Ãµ Ã´Ã Ã©Ã«Ã®Ã¢ Ã¡Ã»Ã«Ã¨ Ã¯Ã¥Ã°Ã¥Ã¬Ã¥Ã¹Ã¥Ã­Ã» Ã¢ Ã±Ã®Ã®Ã²Ã¢Ã¥Ã²Ã±Ã¢Ã³Ã¾Ã¹Ã¨Ã¥ "Files updated on %date% by notification No. %notification%" Ã¯Ã Ã¯ÃªÃ¨.>>Report.txt
 ECHO.>>Report.txt
-FOR /F "tokens=*" %%G IN (Deletion.txt) DO (ECHO %%G>>Report.txt)) ELSE (ECHO Íè îäèí èç ôàéëîâ â 'List.txt' íå áûë ïîìå÷åí êàê "REM" ^(=óäàëèòü èç âñåõ "...\KPD\..." ïîäïàïîê^).>Report.txt)
+FOR /F "tokens=*" %%G IN (Deletion.txt) DO (ECHO %%G>>Report.txt)) ELSE (ECHO ÃÃ¨ Ã®Ã¤Ã¨Ã­ Ã¨Ã§ Ã´Ã Ã©Ã«Ã®Ã¢ Ã¢ 'List.txt' Ã­Ã¥ Ã¡Ã»Ã« Ã¯Ã®Ã¬Ã¥Ã·Ã¥Ã­ ÃªÃ Ãª "REM" ^(=Ã³Ã¤Ã Ã«Ã¨Ã²Ã¼ Ã¨Ã§ Ã¢Ã±Ã¥Ãµ "...\KPD\..." Ã¯Ã®Ã¤Ã¯Ã Ã¯Ã®Ãª^).>Report.txt)
 ECHO =====================================================================================================================================================================================================>>Report.txt
 ECHO =====================================================================================================================================================================================================>>Report.txt
-ECHO Íèæå ïðåäñòàâëåí ñïèñîê ôàéëîâ, êîòîðûå áûëè îáíîâëåíû âî âñåõ ïîäïàïêàõ "...\KPD\...".>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Report.txt"
-ECHO Êîïèè îáíîâëåííûõ ôàéëîâ áûëè ïåðåìåùåíû â ñîîòâåòñâóþùèå "Files updated on %date% by notification No. %notification%" ïàïêè.>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Report.txt"
+ECHO ÃÃ¨Ã¦Ã¥ Ã¯Ã°Ã¥Ã¤Ã±Ã²Ã Ã¢Ã«Ã¥Ã­ Ã±Ã¯Ã¨Ã±Ã®Ãª Ã´Ã Ã©Ã«Ã®Ã¢, ÃªÃ®Ã²Ã®Ã°Ã»Ã¥ Ã¡Ã»Ã«Ã¨ Ã®Ã¡Ã­Ã®Ã¢Ã«Ã¥Ã­Ã» Ã¢Ã® Ã¢Ã±Ã¥Ãµ Ã¯Ã®Ã¤Ã¯Ã Ã¯ÃªÃ Ãµ "...\KPD\...".>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Report.txt"
+ECHO ÃŠÃ®Ã¯Ã¨Ã¨ Ã®Ã¡Ã­Ã®Ã¢Ã«Ã¥Ã­Ã­Ã»Ãµ Ã´Ã Ã©Ã«Ã®Ã¢ Ã¡Ã»Ã«Ã¨ Ã¯Ã¥Ã°Ã¥Ã¬Ã¥Ã¹Ã¥Ã­Ã» Ã¢ Ã±Ã®Ã®Ã²Ã¢Ã¥Ã²Ã±Ã¢Ã³Ã¾Ã¹Ã¨Ã¥ "Files updated on %date% by notification No. %notification%" Ã¯Ã Ã¯ÃªÃ¨.>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Report.txt"
 ECHO.>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Report.txt"
 FINDSTR /M /C:"1)" PDF.txt >nul
-IF %ERRORLEVEL% EQU 0 (FOR /F "tokens=*" %%G IN (PDF.txt) DO ECHO %%G>>Report.txt) ELSE (ECHO Ôàéëû äîêóìåíòîâ óêàçàííûõ â List.txt íå áûëè íàéäåíû â ïàïêå Source documents pdf>>Report.txt)
+IF %ERRORLEVEL% EQU 0 (FOR /F "tokens=*" %%G IN (PDF.txt) DO ECHO %%G>>Report.txt) ELSE (ECHO Ã”Ã Ã©Ã«Ã» Ã¤Ã®ÃªÃ³Ã¬Ã¥Ã­Ã²Ã®Ã¢ Ã³ÃªÃ Ã§Ã Ã­Ã­Ã»Ãµ Ã¢ List.txt Ã­Ã¥ Ã¡Ã»Ã«Ã¨ Ã­Ã Ã©Ã¤Ã¥Ã­Ã» Ã¢ Ã¯Ã Ã¯ÃªÃ¥ Source documents pdf>>Report.txt)
 ECHO ------------------------------------------------------------------------------------------------------------------------------------------------------>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Report.txt"
 FINDSTR /M /C:"1)" DOC.txt >nul
-IF %ERRORLEVEL% EQU 0 (FOR /F "tokens=*" %%G IN (DOC.txt) DO ECHO %%G>>Report.txt) ELSE (ECHO Ôàéëû äîêóìåíòîâ óêàçàííûõ â List.txt íå áûëè íàéäåíû â ïàïêå Source documents docx, doc, xls, xlsx>>Report.txt)
+IF %ERRORLEVEL% EQU 0 (FOR /F "tokens=*" %%G IN (DOC.txt) DO ECHO %%G>>Report.txt) ELSE (ECHO Ã”Ã Ã©Ã«Ã» Ã¤Ã®ÃªÃ³Ã¬Ã¥Ã­Ã²Ã®Ã¢ Ã³ÃªÃ Ã§Ã Ã­Ã­Ã»Ãµ Ã¢ List.txt Ã­Ã¥ Ã¡Ã»Ã«Ã¨ Ã­Ã Ã©Ã¤Ã¥Ã­Ã» Ã¢ Ã¯Ã Ã¯ÃªÃ¥ Source documents docx, doc, xls, xlsx>>Report.txt)
 ECHO ------------------------------------------------------------------------------------------------------------------------------------------------------>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Report.txt"
 FINDSTR /M /C:"1)" MAPV_and_SDTT.txt >nul
-IF %ERRORLEVEL% EQU 0 (FOR /F "tokens=*" %%G IN (MAPV_and_SDTT.txt) DO ECHO %%G>>Report.txt) ELSE (ECHO Ôàéëû äîêóìåíòîâ óêàçàííûõ â List.txt íå áûëè íàéäåíû íè â ïàïêå Matches against previous version, íè â ïàïêå Source documents to be translated>>Report.txt)
+IF %ERRORLEVEL% EQU 0 (FOR /F "tokens=*" %%G IN (MAPV_and_SDTT.txt) DO ECHO %%G>>Report.txt) ELSE (ECHO Ã”Ã Ã©Ã«Ã» Ã¤Ã®ÃªÃ³Ã¬Ã¥Ã­Ã²Ã®Ã¢ Ã³ÃªÃ Ã§Ã Ã­Ã­Ã»Ãµ Ã¢ List.txt Ã­Ã¥ Ã¡Ã»Ã«Ã¨ Ã­Ã Ã©Ã¤Ã¥Ã­Ã» Ã­Ã¨ Ã¢ Ã¯Ã Ã¯ÃªÃ¥ Matches against previous version, Ã­Ã¨ Ã¢ Ã¯Ã Ã¯ÃªÃ¥ Source documents to be translated>>Report.txt)
 ECHO =====================================================================================================================================================================================================>>Report.txt
 ECHO =====================================================================================================================================================================================================>>Report.txt
 DEL PDF.txt
@@ -337,7 +337,7 @@ GOTO :EOF
 :end_of_script
 SETLOCAL ENABLEDELAYEDEXPANSION
 SET /a var_incr_not_found=1
-IF EXIST Not_found.txt (ECHO Äîêóìåíòû, êîòîðûå íå áûëè îáíîâëåíû, òàê êàê èõ ôàéëû îòñòóòñòâîâàëè íà ñåðâåðå:>>"%CD%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Report.txt"
+IF EXIST Not_found.txt (ECHO Ã„Ã®ÃªÃ³Ã¬Ã¥Ã­Ã²Ã», ÃªÃ®Ã²Ã®Ã°Ã»Ã¥ Ã­Ã¥ Ã¡Ã»Ã«Ã¨ Ã®Ã¡Ã­Ã®Ã¢Ã«Ã¥Ã­Ã», Ã²Ã Ãª ÃªÃ Ãª Ã¨Ãµ Ã´Ã Ã©Ã«Ã» Ã®Ã²Ã±Ã²Ã³Ã²Ã±Ã²Ã¢Ã®Ã¢Ã Ã«Ã¨ Ã­Ã  Ã±Ã¥Ã°Ã¢Ã¥Ã°Ã¥:>>"%CD%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Report.txt"
 ECHO Documents that were not updated as their files are missing on the server:
 ECHO.
 ECHO.>>"%CD%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Report.txt"
