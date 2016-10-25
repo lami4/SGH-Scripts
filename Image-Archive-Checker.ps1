@@ -4,6 +4,30 @@ $folderWithProcessedDocuments = "Processed files"
 $pathToImageStorage = "C:\Users\Анник\Desktop\Batch\# chest of images"
 
 #Functions
+
+Function Replace-FilesInArchive ($currentDirectoryName)
+{
+    #Creates temporary *.txt file to prevent the "media" folder from being delete after the script deletes the last file in it
+    New-Item -Path "$desktopPath\$folderWithProcessedDocuments\temporary.txt"
+    (New-Object -COM Shell.Application).NameSpace("$desktopPath\$folderWithProcessedDocuments\$currentDirectoryName.zip\word\media").MoveHere("$desktopPath\$folderWithProcessedDocuments\temporary.txt")
+Start-Sleep -Seconds 1
+    #Moves files from the current archive to the "Temporary zip" folder
+    Get-ChildItem "$desktopPath\$folderWithProcessedDocuments\Temporary" | % {
+    $currentImageNameMove = $_.Name
+    (New-Object -COM Shell.Application).NameSpace("$desktopPath\$folderWithProcessedDocuments\Temporary zip").MoveHere("$desktopPath\$folderWithProcessedDocuments\$currentDirectoryName.zip\word\media\$currentImageNameMove")
+    }
+Start-Sleep -Seconds 1
+    #Copies processed files to now empty "media" folder in archive
+    Get-ChildItem "$desktopPath\$folderWithProcessedDocuments\Temporary" | % {
+    $currentImageNameCopy = $_.Name
+    (New-Object -COM Shell.Application).NameSpace("$desktopPath\$folderWithProcessedDocuments\$currentDirectoryName.zip\word\media").CopyHere("$desktopPath\$folderWithProcessedDocuments\Temporary\$currentImageNameCopy")
+    Start-Sleep -Seconds 1
+    }
+Start-Sleep -Seconds 1
+    #Deletes temporary *.txt file in the "media" folder
+    (New-Object -COM Shell.Application).NameSpace("$desktopPath\$folderWithProcessedDocuments\Temporary zip").MoveHere("$desktopPath\$folderWithProcessedDocuments\$currentDirectoryName.zip\word\media\temporary.txt")
+    }
+
 Function Select-Folder
 {
     param([string]$Description="Please, specify a path to a folder with MS Word files to be processed",[string]$RootFolder="Desktop")
