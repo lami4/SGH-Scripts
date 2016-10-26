@@ -207,20 +207,20 @@ ECHO.
 ECHO Total files deleted: !var_incr_del_docs_suc!
 ECHO ------------------------------------------------------------------------------------------------------------------------------------------------------
 ECHO ------------------------------------------------------------------------------------------------------------------------------------------------------>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
-ECHO Ôàéëû óäàëåííûå â ïàïêàõ "...KPD\Matches against previous version" è "...KPD\Source documents to be translated":>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
+ECHO Файлы удаленные в папках "...KPD\Matches against previous version" и "...KPD\Source documents to be translated":>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
 ECHO.>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
 ECHO STATUS FOR "...KPD\Matches against previous version" and "...KPD\Source documents to be translated":
 ECHO.
 FOR /F "tokens=*" %%G IN (Del_temporary.txt) DO (IF EXIST "%CD%\KPD\# Matches against previous version\%%G.*" (ECHO !var_incr_del_both!^) *.doc^(x^)/xls^(x^) file for %%G found and deleted in '...KPD\Matches against previous version'
 DEL "%CD%\KPD\# Matches against previous version\%%G.*"
-ECHO !var_incr_del_both!^) *.doc^(x^)/xls^(x^) ôàéë äëÿ äîêóìåíòà %%G áûë íàéäåí è óäàëåí â ïàïêå "...KPD\Matches against previous version">>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
+ECHO !var_incr_del_both!^) *.doc^(x^)/xls^(x^) файл для документа %%G был найден и удален в папке "...KPD\Matches against previous version">>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
 SET /a var_incr_del_both+=1
 SET /a var_incr_del_both_suc+=1) ELSE (IF EXIST "%CD%\KPD\# Source documents to be translated\%%G.*" (ECHO !var_incr_del_both!^) *.doc^(x^)/xls^(x^) file for %%G found and deleted in '...\KPD\Source documents to be translated'
 DEL "%CD%\KPD\# Source documents to be translated\%%G.*"
-ECHO !var_incr_del_both!^) *.doc^(x^)/xls^(x^) ôàéë äëÿ äîêóìåíòà %%G áûë íàéäåí è óäàëåí â ïàïêå "...KPD\Source documents to be translated">>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
+ECHO !var_incr_del_both!^) *.doc^(x^)/xls^(x^) файл для документа %%G был найден и удален в папке "...KPD\Source documents to be translated">>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
 SET /a var_incr_del_both+=1
 SET /a var_incr_del_both_suc+=1) ELSE (ECHO !var_incr_del_both!^) Failed to delete *.doc^(x^)/xls^(x^) file for %%G as it was not found in the folders
-ECHO !var_incr_del_both!^) Íå óäàëîñü óäàëèòü *.doc^(x^)/xls^(x^) ôàéë äëÿ äîêóìåíòà %%G, òàê êàê îí íå áûë íàéäåí íè â îäíîé èç ïàïîê>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
+ECHO !var_incr_del_both!^) Не удалось удалить *.doc^(x^)/xls^(x^) файл для документа %%G, так как он не был найден ни в одной из папок>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Deletion.txt"
 SET /a var_incr_del_both+=1)))
 ECHO.
 ECHO Total files deleted: !var_incr_del_both_suc!
@@ -235,9 +235,9 @@ SET /a var_incr_upd_pdf=1
 SET /a var_incr_upd_docs=1
 SET /a var_incr_upd_both=1
 SETLOCAL ENABLEDELAYEDEXPANSION
-ECHO Îáíîâëåíèå â ïàïêå Matches against previous version è Source documents to be translated:>"%CD%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\MAPV_and_SDTT.txt"
-ECHO Îáíîâëåíèå â ïàïêå Source documents pdf:>"%CD%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\PDF.txt"
-ECHO Îáíîâëåíèå â ïàïêå Source documents docx, doc, xls, xlsx:>"%CD%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\DOC.txt"
+ECHO Обновление в папке Matches against previous version и Source documents to be translated:>"%CD%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\MAPV_and_SDTT.txt"
+ECHO Обновление в папке Source documents pdf:>"%CD%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\PDF.txt"
+ECHO Обновление в папке Source documents docx, doc, xls, xlsx:>"%CD%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\DOC.txt"
 CLS
 ECHO NOW, I WILL UPDATE DOCUMENTS SPECIFIED IN 'List.txt'.
 ECHO COPIES OF THE OLD FILES WILL BE STORED IN "...KPD\Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%" IN CASE YOU NEED THEM.
@@ -249,11 +249,11 @@ CD "%CD%\KPD\# Source documents pdf"
 FOR %%G IN ("%root_directory%\MemoQ import\*.pdf") DO IF EXIST %%~nxG (ECHO !var_incr_upd_pdf!^) %%~nxG was updated
 MOVE "%CD%\%%~nxG" "%CD%\Files updated on %date% by notification No. %notification%" >nul
 MOVE "%root_directory%\MemoQ import\%%~nxG" "%CD%" >nul
-ECHO !var_incr_upd_pdf!^) Ôàéë %%~nxG áûë íàéäåí è îáíîâëåí>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\PDF.txt"
+ECHO !var_incr_upd_pdf!^) Файл %%~nxG был найден и обновлен>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\PDF.txt"
 SET /a var_incr_upd_pdf+=1) ELSE (ECHO !var_incr_upd_pdf!^) %%~nxG was just copied to the folder ^(=new file, released for the first time^)
 ECHO This file was released for the first time.>"%CD%\Files updated on %date% by notification No. %notification%\%%~nG.txt"
 ECHO As there was nothing to copy to the current folder, the script created this *.txt file so you know that this file is a new one.>>"%CD%\Files updated on %date% by notification No. %notification%\%%~nG.txt"
-ECHO !var_incr_upd_pdf!^) Ôàéë %%~nxG áûë ïðîñòî ñêîïèðîâàí â ...KPD\Source documents pdf, òàê êàê îí áûë îïóáëèêîâàí âïåðâûå>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\PDF.txt"
+ECHO !var_incr_upd_pdf!^) Файл %%~nxG был просто скопирован в ...KPD\Source documents pdf, так как он был опубликован впервые>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\PDF.txt"
 MOVE "%root_directory%\MemoQ import\%%~nxG" "%CD%" >nul
 SET /a var_incr_upd_pdf+=1)
 ECHO.
@@ -267,11 +267,11 @@ CD "%root_directory%\KPD\# Source documents docx, doc, xls, xlsx"
 FOR %%G IN ("%root_directory%\MemoQ import\*") DO IF EXIST %%~nG.* (ECHO !var_incr_upd_docs!^) %%~nxG was updated
 MOVE "%CD%\%%~nG.*" "%CD%\Files updated on %date% by notification No. %notification%" >nul
 COPY "%root_directory%\MemoQ import\%%~nG.*" "%CD%" >nul
-ECHO !var_incr_upd_docs!^) Ôàéë %%~nxG áûë íàéäåí è îáíîâëåí>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\DOC.txt"
+ECHO !var_incr_upd_docs!^) Файл %%~nxG был найден и обновлен>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\DOC.txt"
 SET /a var_incr_upd_docs+=1) ELSE (ECHO !var_incr_upd_docs!^) %%~nxG was just copied to the folder ^(=new file, released for the first time^)
 ECHO This file was released for the first time.>"%CD%\Files updated on %date% by notification No. %notification%\%%~nG.txt"
 ECHO As there was nothing to copy to the current folder, the script created this *.txt file so you know that this file is a new one.>>"%CD%\Files updated on %date% by notification No. %notification%\%%~nG.txt"
-ECHO !var_incr_upd_docs!^) Ôàéë %%~nxG áûë ïðîñòî ñêîïèðîâàí â ...KPD\Source documents docx, doc, xls, xlsx, òàê êàê îí áûë îïóáëèêîâàí âïåðâûå>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\DOC.txt"
+ECHO !var_incr_upd_docs!^) Файл %%~nxG был просто скопирован в ...KPD\Source documents docx, doc, xls, xlsx, так как он был опубликован впервые>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\DOC.txt"
 COPY "%root_directory%\MemoQ import\%%~nG.*" "%CD%" >nul
 SET /a var_incr_upd_docs+=1)
 ECHO.
