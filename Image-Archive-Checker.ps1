@@ -1,14 +1,13 @@
 #Global variables
 $desktopPath = [Environment]::GetFolderPath("Desktop")
 $folderWithProcessedDocuments = "Processed files"
-$pathToImageStorage = "C:\Users\Анник\Desktop\Batch\# chest of images"
+$pathToImageStorage = "C:\Users\sergey.selyuto\Desktop\# chest of images"
 
 #Functions
-
 Function Replace-FilesInArchive ($currentDirectoryName)
 {
     #Creates temporary *.txt file to prevent the "media" folder from being delete after the script deletes the last file in it
-    New-Item -Path "$desktopPath\$folderWithProcessedDocuments\temporary.txt"
+    New-Item -Path "$desktopPath\$folderWithProcessedDocuments\temporary.txt" -ItemType "file"
     (New-Object -COM Shell.Application).NameSpace("$desktopPath\$folderWithProcessedDocuments\$currentDirectoryName.zip\word\media").MoveHere("$desktopPath\$folderWithProcessedDocuments\temporary.txt")
 Start-Sleep -Seconds 1
     #Moves files from the current archive to the "Temporary zip" folder
@@ -190,15 +189,15 @@ Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments" -Directory | % 
             Write-Host "EN file for" $currentFullName "was found in the image storage."
             #checks if extesions are equal: if yes, copies file to temporary folder and renames it as required; if no, changes extension as required and saves a file in Temporary folder using PNG format
             $imageInStorage = Get-ChildItem "$pathToImageStorage\*\$currentMD5.*"
-            if ($currentExtension -eq $imageInStorage.Extension)
+            if ($currentExtension -eq $imageInStorage[0].Extension)
                 {
                 Write-Host "Extension matches! File from the storage was copied to Temporary folder and renamed."
-                Copy-Item -Path "$imageInStorage" "$desktopPath\$folderWithProcessedDocuments\Temporary"
-                $fileToBeRenamed = $imageInStorage.Name
+                Copy-Item -Path $imageInStorage[0] "$desktopPath\$folderWithProcessedDocuments\Temporary"
+                $fileToBeRenamed = $imageInStorage[0].Name
                 Rename-Item -Path "$desktopPath\$folderWithProcessedDocuments\Temporary\$fileToBeRenamed" -NewName "$currentFullName"
                 } else {
                 Write-Host "Extension does not match! File from the storage was converted to match the required extension and then copied to Temporary folder"
-                Convert-Image -pathToImageInStorage "$imageInStorage" -saveTo "$desktopPath\$folderWithProcessedDocuments\Temporary\$currentFullName" -ImageFormat "Jpeg"
+                Convert-Image -pathToImageInStorage $imageInStorage[0] -saveTo "$desktopPath\$folderWithProcessedDocuments\Temporary\$currentFullName" -ImageFormat "Jpeg"
                 }
             } else {
             Copy-Item -Path "$desktopPath\$folderWithProcessedDocuments\$_\word\media\$currentFullName" "$desktopPath\$folderWithProcessedDocuments\Temporary WM"
@@ -212,17 +211,7 @@ Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments" -Directory | % 
 
     }
     #Moves images from the current archive (word/media) to Temporary zip folder
-    $currentDirectoryName = $_ 
-    Get-ChildItem "$desktopPath\$folderWithProcessedDocuments\Temporary" | % {
-    $currentImageName = $_.Name
-    (New-Object -COM Shell.Application).NameSpace("$desktopPath\$folderWithProcessedDocuments\Temporary zip").MoveHere("$desktopPath\$folderWithProcessedDocuments\$currentDirectoryName.zip\word\media\$currentImageName")
-    }
-    #Copies processed images to the current archive
-    Get-ChildItem "$desktopPath\$folderWithProcessedDocuments\Temporary" | % {
-    $currentImageName = $_.Name
-    (New-Object -COM Shell.Application).NameSpace("$desktopPath\$folderWithProcessedDocuments\$currentDirectoryName.zip\word\media").CopyHere("$desktopPath\$folderWithProcessedDocuments\Temporary\$currentImageName")
-    Start-Sleep -Seconds 1
-    }
+    Replace-FilesInArchive -currentDirectoryName "$_"
     Write-Host "--------LOOP FOR FILE STOPS HERE---------"
     #clears arrays
     $imageHashes = @()
