@@ -1,4 +1,5 @@
 clear
+$table = @()
 $var = "PABKRF"
 $filesToBeTranslated = @(Get-ChildItem "C:\Users\Анник\Desktop\# projects\PABKRF 7.0.0\Source documents to be translated" | % {$_.BaseName})
 $foldersToLoopThrough = @(Get-ChildItem "C:\Users\Анник\Desktop\# projects" | Where-Object {$_ -Match "$var .*\d$"} | Sort-Object -Descending)
@@ -10,8 +11,10 @@ for ($i = 0; $i -lt $filesToBeTranslated.Length; $i++)
         $currentFolder = $foldersToLoopThrough[$t]
         $boolean = Test-Path "C:\Users\Анник\Desktop\# projects\$currentFolder\LiveDocs\$currentFile.txt"
         if ($boolean -eq $true) {
-        #copy a shit file to a shit folder and breaks 
+        #copy a shit file to a shit folder and breaks
+        $table += @{Document="$currentFile"; Status="FOUND"; FoundIn="$currentFolder"}
         break}
         }
-    Write-Host $currentFile "found in" $currentFolder
-}
+        if ($t -eq $foldersToLoopThrough.Length) {$table += @{Document="$currentFile"; Status="NOT FOUND"; FoundIn="-NONE-"}}
+} 
+$table.ForEach({[PSCustomObject]$_}) | Format-Table Document, Status, FoundIn -AutoSize
