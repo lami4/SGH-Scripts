@@ -1,6 +1,6 @@
 Function Select-FolderDialog
 {
-    param([string]$Description="Select Folder",[string]$RootFolder="Desktop")
+    param([string]$Description="Specify a path to the folder with the documents need to be translated",[string]$RootFolder="Desktop")
 
  [System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms") |
      Out-Null     
