@@ -1,7 +1,7 @@
 clear
 #Global variables
 $desktopPath = [Environment]::GetFolderPath("Desktop")
-$folderWithProcessedDocuments = "Processed files1"
+$folderWithProcessedDocuments = "Processed files"
 $pathToImageStorage = "C:\Users\Анник\Desktop\2\# chest of images"
 
 #Functions
