@@ -1,8 +1,7 @@
-clear
 #Global variables
 $desktopPath = [Environment]::GetFolderPath("Desktop")
 $folderWithProcessedDocuments = "Processed files"
-$pathToImageStorage = "C:\Users\Анник\Desktop\2\# chest of images"
+$pathToImageStorage = "C:\Users\sergey.selyuto\Desktop\# chest of images"
 
 #Functions
 Function Replace-FilesInArchive ($currentDirectoryName)
@@ -24,7 +23,7 @@ Start-Sleep -Seconds 5
     Get-ChildItem "$desktopPath\$folderWithProcessedDocuments\Temporary" | % {
     $currentImageNameCopy = $_.Name
     (New-Object -COM Shell.Application).NameSpace("$desktopPath\$folderWithProcessedDocuments\$currentDirectoryName.zip\word\media").CopyHere("$desktopPath\$folderWithProcessedDocuments\Temporary\$currentImageNameCopy")
-    Start-Sleep -Seconds 1
+    Start-Sleep -Seconds 3
     }
 Start-Sleep -Seconds 1
     #Deletes temporary *.txt file in the "media" folder
@@ -131,7 +130,7 @@ Function Write-TextWaterMark
     $Image.DrawString($MessageText, $Font, $Brush, 10, 1) 
      
     #Save and close the files 
-    $tarImg.save($targetImage, [System.Drawing.Imaging.ImageFormat]::bmp) 
+    $tarImg.save($targetImage, [System.Drawing.Imaging.ImageFormat]::png) 
     $srcImg.Dispose() 
     $tarImg.Dispose() 
 }
