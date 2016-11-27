@@ -1,7 +1,11 @@
 #Global variables
 $desktopPath = [Environment]::GetFolderPath("Desktop")
 $folderWithProcessedDocuments = "Processed files"
-$pathToImageStorage = "C:\Users\sergey.selyuto\Desktop\# chest of images"
+$pathToImageStorage = "C:\Users\Анник\Desktop\2\# chest of images"
+$folderWithOldDocuments = "Previous version files"
+#Filter (images that are less than specified values will not be watermarked)
+$imageWidth = 110
+$imageHeight = 40
 
 #Functions
 Function Replace-FilesInArchive ($currentDirectoryName)
@@ -135,12 +139,6 @@ Function Write-TextWaterMark
     $tarImg.Dispose() 
 }
 
-Function Convert-Image ($pathToImageInStorage, $saveTo, $ImageFormat) {
-[Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms"); 
-$i = new-object System.Drawing.Bitmap($pathToImageInStorage); 
-$i.Save($saveTo, $ImageFormat);
-}
-
 #Get hashes of images in each unzipped document one by one, looks for images with the same hash in 'chest of images'
 #If image with the same hash not found, make watermarks
 Function Process-ImagesFromDocument
@@ -223,13 +221,27 @@ Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments" -Directory | % 
     Write-Host "Watermarking images that were not found in the chest..."
     #Watermarks images in Temporary WM folder and copies them to Temporary folder
     Get-ChildItem "$desktopPath\$folderWithProcessedDocuments\Temporary WM" | % {
-    $currentImage = $_.Name
-    Write-TextWaterMark -SourceImage "$desktopPath\$folderWithProcessedDocuments\Temporary WM\$currentImage" -TargetImage "$desktopPath\$folderWithProcessedDocuments\Temporary\$currentImage" -MessageText “*”
+        [int]$width = magick identify -ping -format "%w" $_.FullName
+        [int]$height = magick identify -ping -format "%h" $_.FullName
+        if ($width -lt $imageWidth -and $height -lt $imageHeight) { 
+        Copy-Item -Path $_.FullName -Destination "$desktopPath\$folderWithProcessedDocuments\Temporary"
+        Write-Host "Little image copied to temporary"
+        } else {
+        $currentImage = $_.Name
+        Write-TextWaterMark -SourceImage "$desktopPath\$folderWithProcessedDocuments\Temporary WM\$currentImage" -TargetImage "$desktopPath\$folderWithProcessedDocuments\Temporary\$currentImage" -MessageText “*”
+        }
     }
     #Watermarks bmp images in Temporary for WM folder and copies them to Temporary marked bmp folder
     Get-ChildItem "$desktopPath\$folderWithProcessedDocuments\Temporary bmp for WM" | % {
-    $currentImage = $_.Name
-    Write-TextWaterMark -SourceImage "$desktopPath\$folderWithProcessedDocuments\Temporary bmp for WM\$currentImage" -TargetImage "$desktopPath\$folderWithProcessedDocuments\Temporary marked bmp\$currentImage" -MessageText “*”
+        [int]$width = magick identify -ping -format "%w" $_.FullName
+        [int]$height = magick identify -ping -format "%h" $_.FullName
+        if ($width -lt $imageWidth -and $height -lt $imageHeight) { 
+        Copy-Item -Path $_.FullName -Destination "$desktopPath\$folderWithProcessedDocuments\Temporary marked bmp"
+        Write-Host "Little WDP image copied to temporary"
+        } else {
+        $currentImage = $_.Name
+        Write-TextWaterMark -SourceImage "$desktopPath\$folderWithProcessedDocuments\Temporary bmp for WM\$currentImage" -TargetImage "$desktopPath\$folderWithProcessedDocuments\Temporary marked bmp\$currentImage" -MessageText “*”
+        }
     }
     #Renames marked bmp images back to WDP and copies them to Temporary folder
     Get-ChildItem "$desktopPath\$folderWithProcessedDocuments\Temporary marked bmp\*.bmp" | % {
