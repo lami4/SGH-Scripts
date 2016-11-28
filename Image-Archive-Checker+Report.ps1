@@ -1,6 +1,6 @@
 #Global variables
 $desktopPath = [Environment]::GetFolderPath("Desktop")
-$folderWithProcessedDocuments = "Processed documents"
+$folderWithProcessedDocuments = "Processed documents1"
 $pathToImageStorage = "C:\Users\Анник\Desktop\2\# chest of images"
 $folderWithOldDocuments = "Source documents from previous version"
 #Filter (images that are less than specified values will not be watermarked)
@@ -144,11 +144,22 @@ $imageHashes = @()
 $imageFullNames = @()
 $imageNames = @()
 $imageExtensions = @()
+$oldImageHashes = @()
+$oldDocumentExistence = $false
 #Gets the list of unzipped documents
 Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments" -Directory | % {
     #Gets md5, image name, image extension, image full name and then adds them to appropriate arrays in each unzipped document one by one
     Write-Host "==============================================================================="
     Write-Host "Just started working on $_..."
+    $haha = $_
+    $oldDocumentExistence = Test-Path -Path "$desktopPath\$folderWithProcessedDocuments\$folderWithOldDocuments\$haha"
+    Write-Host $oldDocumentExistence
+    if ($oldDocumentExistence -eq $true) {
+        Get-FileHash -Path "$desktopPath\$folderWithProcessedDocuments\$folderWithOldDocuments\$_\word\media\*" -Algorithm MD5 | % {
+        $oldImageHash = $_.Hash
+        $oldImageHashes += $oldImageHash
+        }
+    }
     Get-FileHash -Path "$desktopPath\$folderWithProcessedDocuments\$_\word\media\*" -Algorithm MD5 | % {
         $imageHash = $_.Hash
         $imageHashes += $imageHash
@@ -164,6 +175,7 @@ Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments" -Directory | % 
     New-Item "$desktopPath\$folderWithProcessedDocuments\Temporary bmp", "$desktopPath\$folderWithProcessedDocuments\Temporary bmp for WM", "$desktopPath\$folderWithProcessedDocuments\Temporary marked bmp" -Type directory
     #Joins together arrays in the multidimensional array called imageProperties
     $imageProperties = $imageHashes, $imageFullNames, $imageNames, $imageExtensions
+    if ($oldDocumentExistence = $true) {Write-Host $oldImageHashes}
     Write-Host "Searching for translated images in the chest..."
     #Processes each image stored in 'imageProperties' array
     for ($i = 0; $i -lt $imageProperties[0].Length; $i++) 
@@ -249,11 +261,12 @@ Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments" -Directory | % 
     Start-Sleep -Seconds 5
     Replace-FilesInArchive -currentDirectoryName "$_"
     Write-Host "Document processed."
-    #clears arrays
+    #clears arrays and resets boolean values
     $imageHashes = @()
     $imageFullNames = @()
     $imageNames = @()
     $imageExtensions = @()
+    $oldImageHashes = @()
     #removes temporary folders
     Start-Sleep -Seconds 1
     Remove-Item -Path "$desktopPath\$folderWithProcessedDocuments\Temporary", "$desktopPath\$folderWithProcessedDocuments\Temporary WM", "$desktopPath\$folderWithProcessedDocuments\Temporary zip" -Recurse
