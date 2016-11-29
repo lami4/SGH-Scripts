@@ -1,3 +1,4 @@
+clear
 #Global variables
 $desktopPath = [Environment]::GetFolderPath("Desktop")
 $folderWithProcessedDocuments = "Processed documents1"
@@ -147,12 +148,11 @@ $imageExtensions = @()
 $oldImageHashes = @()
 $oldDocumentExistence = $false
 #Gets the list of unzipped documents
-Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments" -Directory | % {
+Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments" -Directory | Where-Object {$_ -NotMatch "$folderWithOldDocuments"} | % {
     #Gets md5, image name, image extension, image full name and then adds them to appropriate arrays in each unzipped document one by one
     Write-Host "==============================================================================="
     Write-Host "Just started working on $_..."
-    $haha = $_
-    $oldDocumentExistence = Test-Path -Path "$desktopPath\$folderWithProcessedDocuments\$folderWithOldDocuments\$haha"
+    $oldDocumentExistence = Test-Path -Path "$desktopPath\$folderWithProcessedDocuments\$folderWithOldDocuments\$_"
     Write-Host $oldDocumentExistence
     if ($oldDocumentExistence -eq $true) {
         Get-FileHash -Path "$desktopPath\$folderWithProcessedDocuments\$folderWithOldDocuments\$_\word\media\*" -Algorithm MD5 | % {
@@ -175,7 +175,6 @@ Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments" -Directory | % 
     New-Item "$desktopPath\$folderWithProcessedDocuments\Temporary bmp", "$desktopPath\$folderWithProcessedDocuments\Temporary bmp for WM", "$desktopPath\$folderWithProcessedDocuments\Temporary marked bmp" -Type directory
     #Joins together arrays in the multidimensional array called imageProperties
     $imageProperties = $imageHashes, $imageFullNames, $imageNames, $imageExtensions
-    if ($oldDocumentExistence = $true) {Write-Host $oldImageHashes}
     Write-Host "Searching for translated images in the chest..."
     #Processes each image stored in 'imageProperties' array
     for ($i = 0; $i -lt $imageProperties[0].Length; $i++) 
@@ -194,6 +193,9 @@ Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments" -Directory | % 
         $currentName = $imageProperties[2][$i]
         $currentExtension = $imageProperties[3][$i]
         #Checks if a file in the image storage has a name eqalling MD5 sum of the image being processed
+        if ($oldDocumentExistence -eq $true) {
+            if ($oldImageHashes -contains $currentMD5) {Write-Host "HIT!"}
+        }
         $existenceInImageStorage = Test-Path -Path "$pathToImageStorage\*\$currentMD5.*"
         if ($existenceInImageStorage -eq $true)
             {
@@ -321,6 +323,36 @@ if ($processedFilesExistenceCheck -eq $true)
 }
 #Memorises word document name to use it later for the renaming
 Get-WordFileExtension
+#Creates html report
+Add-Content "$PSScriptRoot\Image Report.html" "<!DOCTYPE html>
+<html lang=""en"">
+
+<head>
+<meta charset=""utf-8"">
+<title>LiveDoc Report</title>
+<style type=""text/css"">
+   div {
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+   }
+
+table {
+    border-collapse: collapse;
+}
+
+table, td, th {
+    border: 1px solid black;
+    padding: 3px;
+}
+td {
+    background-color: #FFC;
+}
+</style>
+</head>
+
+<body>
+<div>
+<h3>Hello.</h3>
+<h3>I searched through the following folders:</h3>"
 #Renames doc/docx as zip in '$folderWithProcessedDocuments'
 $totalFiles = @(Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments\*.doc*")
 Write-Host "There are" $totalFiles.Length "document(s) to process." 
