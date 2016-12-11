@@ -190,9 +190,9 @@ Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments" -Directory | Wh
         $oldImageHashes += $oldImageHash
         }
         #Total number of images in a document
-        $totalNumberOfImagesInDocument = (Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments\$_\word\media\*").Count
+        $totalNumberOfImagesInDocument = (Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments\$_\word\media\*" -Exclude "*.wdp").Count
         #Total number of filtered images in a document
-        Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments\$_\word\media\*" | % {
+        Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments\$_\word\media\*" -Exclude "*.wdp" | % {
         [int]$currentWidthForTotal = magick identify -ping -format "%w" $_.FullName
         [int]$currentHeightForTotal = magick identify -ping -format "%h" $_.FullName
         if ($currentWidthForTotal -gt $imageWidth -and $currentHeightForTotal -gt $imageHeight) {
@@ -232,16 +232,19 @@ Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments" -Directory | Wh
         #========Statistics========
         #checks total repetitions
         if ($oldDocumentExistence -eq $true) {
-            if ($oldImageHashes -contains $currentMD5) {
-                Write-Host "Repitition"
-                $totalRepetitionsCount += 1
-                } else {
-                Write-Host "No repitition"
+            if ($currentExtension -eq ".wdp") {continue} else {
+                if ($oldImageHashes -contains $currentMD5) {
+                    Write-Host "Repitition"
+                    $totalRepetitionsCount += 1
+                    } else {
+                    Write-Host "No repitition"
                 }
+            }
         }
         #checks true repetitions
         if ($oldDocumentExistence -eq $true) {
-            if ($oldImageHashes -contains $currentMD5) {
+            if ($currentExtension -eq ".wdp") {continue} else {
+                if ($oldImageHashes -contains $currentMD5) {
                     [int]$currentWidthForTrueRepetitions = magick identify -ping -format "%w" $currentFullPath
                     [int]$currentHeightForTrueRepetitions = magick identify -ping -format "%h" $currentFullPath
                     if ($currentWidthForTrueRepetitions -lt $imageWidth -and $currentHeightForTrueRepetitions -lt $imageHeight) {
@@ -250,6 +253,7 @@ Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments" -Directory | Wh
                     Write-Host "Big Repition Found"
                     $filteredRepetitionsCount += 1
                     }
+                }
             }
         }
         #========Statistics========
@@ -259,27 +263,31 @@ Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments" -Directory | Wh
         
         #========Statistics========
         if ($oldDocumentExistence -eq $true) {
-            if ($existenceInImageStorage -eq $true) {
-            #Adds +1 to total number of looted images
-            $totalNumberOfLootedImages += 1
-            } else {
-                #Adds +1 to filtered repitions in analysis
-                if ($oldImageHashes -contains $currentMD5) {
-                    [int]$currentWidthForTrueLootedAnalysis = magick identify -ping -format "%w" $currentFullPath
-                    [int]$currentHeightForTrueLootedAnalysis = magick identify -ping -format "%h" $currentFullPath
-                    if ($currentWidthForTrueLootedAnalysis -gt $imageWidth -and $currentHeightForTrueLootedAnalysis -gt $imageHeight) {
-                    $totalNumberOfFilteredRepetitionInAnalysis += 1
+            if ($currentExtension -eq ".wdp") {continue} else {
+                if ($existenceInImageStorage -eq $true) {
+                    #Adds +1 to total number of looted images
+                    $totalNumberOfLootedImages += 1
+                    } else {
+                    #Adds +1 to filtered repitions in analysis
+                    if ($oldImageHashes -contains $currentMD5) {
+                        [int]$currentWidthForTrueLootedAnalysis = magick identify -ping -format "%w" $currentFullPath
+                        [int]$currentHeightForTrueLootedAnalysis = magick identify -ping -format "%h" $currentFullPath
+                        if ($currentWidthForTrueLootedAnalysis -gt $imageWidth -and $currentHeightForTrueLootedAnalysis -gt $imageHeight) {
+                            $totalNumberOfFilteredRepetitionInAnalysis += 1
+                        }
                     }
                 }
             }
         }
         if ($oldDocumentExistence -eq $true) {
-            #Adds +1 to total number of filtered looted images
-            if ($existenceInImageStorage -eq $true) {
-            [int]$currentWidthForTrueLooted = magick identify -ping -format "%w" $currentFullPath
-            [int]$currentHeightForTrueLooted = magick identify -ping -format "%h" $currentFullPath
-                if ($currentWidthForTrueLooted -gt $imageWidth -and $currentHeightForTrueLooted -gt $imageHeight) {
-                $totaNumberOfFilteredLootedImages += 1
+            if ($currentExtension -eq ".wdp") {continue} else {
+                #Adds +1 to total number of filtered looted images
+                if ($existenceInImageStorage -eq $true) {
+                    [int]$currentWidthForTrueLooted = magick identify -ping -format "%w" $currentFullPath
+                    [int]$currentHeightForTrueLooted = magick identify -ping -format "%h" $currentFullPath
+                    if ($currentWidthForTrueLooted -gt $imageWidth -and $currentHeightForTrueLooted -gt $imageHeight) {
+                        $totaNumberOfFilteredLootedImages += 1
+                    }
                 }
             }
         }
