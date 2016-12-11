@@ -13,12 +13,17 @@ Function Replace-FilesInArchive ($currentDirectoryName)
 {
     #Creates temporary *.txt file to prevent the "media" folder from being delete after the script deletes the last file in it
     New-Item -Path "$desktopPath\$folderWithProcessedDocuments\temporary.txt" -ItemType "file"
-Start-Sleep -Seconds 1
+    Start-Sleep -Seconds 1
     (New-Object -COM Shell.Application).NameSpace("$desktopPath\$folderWithProcessedDocuments\$currentDirectoryName.zip\word\media").MoveHere("$desktopPath\$folderWithProcessedDocuments\temporary.txt")
-Start-Sleep -Seconds 2
+     Start-Sleep -Seconds 2
     #Moves files from the current archive to the "Temporary zip" folder
     Write-Host "Removing original images from the archive..."
-    Get-ChildItem "$desktopPath\$folderWithProcessedDocuments\Temporary" | % {
+    $filesInTemporary = Get-ChildItem "$desktopPath\$folderWithProcessedDocuments\Temporary"
+    Write-Host $filesInTemporary.Count
+    Write-Host $filesInTemporary
+    Start-Sleep -Seconds 5
+    $filesInTemporary | % {
+    Start-Sleep -Seconds 1
     $currentImageNameMove = $_.Name
     (New-Object -COM Shell.Application).NameSpace("$desktopPath\$folderWithProcessedDocuments\Temporary zip").MoveHere("$desktopPath\$folderWithProcessedDocuments\$currentDirectoryName.zip\word\media\$currentImageNameMove")
     }
@@ -28,12 +33,12 @@ Start-Sleep -Seconds 5
     Get-ChildItem "$desktopPath\$folderWithProcessedDocuments\Temporary" | % {
     $currentImageNameCopy = $_.Name
     (New-Object -COM Shell.Application).NameSpace("$desktopPath\$folderWithProcessedDocuments\$currentDirectoryName.zip\word\media").CopyHere("$desktopPath\$folderWithProcessedDocuments\Temporary\$currentImageNameCopy")
-    Start-Sleep -Seconds 3
+    Start-Sleep -Seconds 4
     }
 Start-Sleep -Seconds 1
     #Deletes temporary *.txt file in the "media" folder
     (New-Object -COM Shell.Application).NameSpace("$desktopPath\$folderWithProcessedDocuments\Temporary zip").MoveHere("$desktopPath\$folderWithProcessedDocuments\$currentDirectoryName.zip\word\media\temporary.txt")
-    }
+}
 
 Function Select-Folder ($description)
 {
@@ -145,13 +150,38 @@ $imageHashes = @()
 $imageFullNames = @()
 $imageNames = @()
 $imageExtensions = @()
+$imageFullPaths = @()
 $oldImageHashes = @()
+#========Statistics========
 $oldDocumentExistence = $false
+$totalRepetitionsCount = 0
+$filteredRepetitionsCount = 0
+$totalNumberOfImagesInDocument = 0
+$totalNumberOfFilterdImagesInDocument = 0
+$totalNumberOfLootedImages = 0
+$totaNumberOfFilteredLootedImages = 0
+$totalNumberOfFilteredRepetitionInAnalysis = 0
+#========Statistics========
+#Creates header-table
+Add-Content "$PSScriptRoot\Header-Table.html" "
+<table>
+    <tr>
+        <th>Document</th>
+        <th>Repetitions TotalCount</th>
+        <th>Repetitions FilteredCount</th>
+        <th>Looted TotalCount</th>
+        <th>Looted FilteredCount</th>
+        <th>Repetitons FilteredCount/Images To Go FilteredCount</th>
+    </tr>"
 #Gets the list of unzipped documents
 Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments" -Directory | Where-Object {$_ -NotMatch "$folderWithOldDocuments"} | % {
     #Gets md5, image name, image extension, image full name and then adds them to appropriate arrays in each unzipped document one by one
+    $currentDirectory = $_
     Write-Host "==============================================================================="
     Write-Host "Just started working on $_..."
+
+    #========Statistics========
+    #Checks if the document existed in the previous version
     $oldDocumentExistence = Test-Path -Path "$desktopPath\$folderWithProcessedDocuments\$folderWithOldDocuments\$_"
     Write-Host $oldDocumentExistence
     if ($oldDocumentExistence -eq $true) {
@@ -159,44 +189,102 @@ Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments" -Directory | Wh
         $oldImageHash = $_.Hash
         $oldImageHashes += $oldImageHash
         }
+        #Total number of images in a document
+        $totalNumberOfImagesInDocument = (Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments\$_\word\media\*").Count
+        #Total number of filtered images in a document
+        Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments\$_\word\media\*" | % {
+        [int]$currentWidthForTotal = magick identify -ping -format "%w" $_.FullName
+        [int]$currentHeightForTotal = magick identify -ping -format "%h" $_.FullName
+        if ($currentWidthForTotal -gt $imageWidth -and $currentHeightForTotal -gt $imageHeight) {
+            $totalNumberOfFilterdImagesInDocument += 1
+            }
+        }
     }
-    Get-FileHash -Path "$desktopPath\$folderWithProcessedDocuments\$_\word\media\*" -Algorithm MD5 | % {
+    #========Statistics========
+        Get-FileHash -Path "$desktopPath\$folderWithProcessedDocuments\$_\word\media\*" -Algorithm MD5 | % {
         $imageHash = $_.Hash
         $imageHashes += $imageHash
         $imageFullName = Split-Path $_.Path -Leaf
         $imageFullNames += $imageFullName
         $imageName = [IO.Path]::GetFileNameWithoutExtension($_.Path)
         $imageNames += $imageName
+        $imageFullPath = $_.Path
+        $imageFullPaths += $imageFullPath
         $imageExtension = [IO.Path]::GetExtension($_.Path)
         $imageExtensions += $imageExtension
+        #add width and height to arrays!!!!!
     }
     #Creates temporary folders
     New-Item "$desktopPath\$folderWithProcessedDocuments\Temporary", "$desktopPath\$folderWithProcessedDocuments\Temporary WM", "$desktopPath\$folderWithProcessedDocuments\Temporary zip"  -Type directory
     New-Item "$desktopPath\$folderWithProcessedDocuments\Temporary bmp", "$desktopPath\$folderWithProcessedDocuments\Temporary bmp for WM", "$desktopPath\$folderWithProcessedDocuments\Temporary marked bmp" -Type directory
     #Joins together arrays in the multidimensional array called imageProperties
-    $imageProperties = $imageHashes, $imageFullNames, $imageNames, $imageExtensions
+    $imageProperties = $imageHashes, $imageFullNames, $imageNames, $imageExtensions, $imageFullPaths
     Write-Host "Searching for translated images in the chest..."
     #Processes each image stored in 'imageProperties' array
     for ($i = 0; $i -lt $imageProperties[0].Length; $i++) 
         {
-        #========================================================
-        #Uncomment 4 strings below to check if parsing goes well on your PC
-        #Write-Host "Image MD5 sum:" $imageProperties[0][$i]
-        #Write-Host "Image full name:" $imageProperties[1][$i]
-        #Write-Host "Image name:" $imageProperties[2][$i]
-        #Write-Host "Image extension:" $imageProperties[3][$i]
-        #Write-Host "Image extension without '.':" $imageProperties[4][$i]
-        #Write-Host "-----next image-----"
-        #========================================================
         $currentMD5 = $imageProperties[0][$i]
         $currentFullName = $imageProperties[1][$i]
         $currentName = $imageProperties[2][$i]
         $currentExtension = $imageProperties[3][$i]
-        #Checks if a file in the image storage has a name eqalling MD5 sum of the image being processed
+        $currentFullPath = $imageProperties[4][$i]
+
+        #========Statistics========
+        #checks total repetitions
         if ($oldDocumentExistence -eq $true) {
-            if ($oldImageHashes -contains $currentMD5) {Write-Host "HIT!"}
+            if ($oldImageHashes -contains $currentMD5) {
+                Write-Host "Repitition"
+                $totalRepetitionsCount += 1
+                } else {
+                Write-Host "No repitition"
+                }
         }
+        #checks true repetitions
+        if ($oldDocumentExistence -eq $true) {
+            if ($oldImageHashes -contains $currentMD5) {
+                    [int]$currentWidthForTrueRepetitions = magick identify -ping -format "%w" $currentFullPath
+                    [int]$currentHeightForTrueRepetitions = magick identify -ping -format "%h" $currentFullPath
+                    if ($currentWidthForTrueRepetitions -lt $imageWidth -and $currentHeightForTrueRepetitions -lt $imageHeight) {
+                    Write-Host "Little Repititon Found"
+                    } else {
+                    Write-Host "Big Repition Found"
+                    $filteredRepetitionsCount += 1
+                    }
+            }
+        }
+        #========Statistics========
+
+        #Checks if a file in the image storage has a name eqalling MD5 sum of the image being processed
         $existenceInImageStorage = Test-Path -Path "$pathToImageStorage\*\$currentMD5.*"
+        
+        #========Statistics========
+        if ($oldDocumentExistence -eq $true) {
+            if ($existenceInImageStorage -eq $true) {
+            #Adds +1 to total number of looted images
+            $totalNumberOfLootedImages += 1
+            } else {
+                #Adds +1 to filtered repitions in analysis
+                if ($oldImageHashes -contains $currentMD5) {
+                    [int]$currentWidthForTrueLootedAnalysis = magick identify -ping -format "%w" $currentFullPath
+                    [int]$currentHeightForTrueLootedAnalysis = magick identify -ping -format "%h" $currentFullPath
+                    if ($currentWidthForTrueLootedAnalysis -gt $imageWidth -and $currentHeightForTrueLootedAnalysis -gt $imageHeight) {
+                    $totalNumberOfFilteredRepetitionInAnalysis += 1
+                    }
+                }
+            }
+        }
+        if ($oldDocumentExistence -eq $true) {
+            #Adds +1 to total number of filtered looted images
+            if ($existenceInImageStorage -eq $true) {
+            [int]$currentWidthForTrueLooted = magick identify -ping -format "%w" $currentFullPath
+            [int]$currentHeightForTrueLooted = magick identify -ping -format "%h" $currentFullPath
+                if ($currentWidthForTrueLooted -gt $imageWidth -and $currentHeightForTrueLooted -gt $imageHeight) {
+                $totaNumberOfFilteredLootedImages += 1
+                }
+            }
+        }
+        #========Statistics========
+
         if ($existenceInImageStorage -eq $true)
             {
             #Write-Host "EN file for" $currentFullName "was found in the image storage."
@@ -263,16 +351,45 @@ Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments" -Directory | Wh
     Start-Sleep -Seconds 5
     Replace-FilesInArchive -currentDirectoryName "$_"
     Write-Host "Document processed."
+
+    #========Statistics========
+    $completelyNewImages = $totalNumberOfFilterdImagesInDocument - $totaNumberOfFilteredLootedImages - $totalNumberOfFilteredRepetitionInAnalysis
+    #Adds collected statistics to header-table
+    Add-Content "$PSScriptRoot\Header-Table.html" "
+    <tr>
+        <td>$currentDirectory</td>
+        <td>$totalRepetitionsCount/$totalNumberOfImagesInDocument</td>
+        <td>$filteredRepetitionsCount/$totalNumberOfFilterdImagesInDocument</td>
+        <td>$totalNumberOfLootedImages/$totalNumberOfImagesInDocument</td>
+        <td>$totaNumberOfFilteredLootedImages/$totalNumberOfFilterdImagesInDocument</td>
+        <td>Repetitons FilteredCount/Images To Go FilteredCount</td>
+    </tr>
+    $currentDirectory contains $totalNumberOfFilterdImagesInDocument images: $totaNumberOfFilteredLootedImages - looted from chest, $totalNumberOfFilteredRepetitionInAnalysis - repetitions, $completelyNewImages - completely new images"
+    #========Statistics========
+    
     #clears arrays and resets boolean values
     $imageHashes = @()
     $imageFullNames = @()
     $imageNames = @()
     $imageExtensions = @()
+    $imageFullPaths = @()
     $oldImageHashes = @()
+
+    #========Statistics========
+    $oldDocumentExistence = $false
+    $totalRepetitionsCount = 0
+    $filteredRepetitionsCount = 0
+    $totalNumberOfImagesInDocument = 0
+    $totalNumberOfFilterdImagesInDocument = 0
+    $totalNumberOfLootedImages = 0
+    $totaNumberOfFilteredLootedImages = 0
+    $totalNumberOfFilteredRepetitionInAnalysis = 0
+    #========Statistics========
+
     #removes temporary folders
     Start-Sleep -Seconds 1
-    Remove-Item -Path "$desktopPath\$folderWithProcessedDocuments\Temporary", "$desktopPath\$folderWithProcessedDocuments\Temporary WM", "$desktopPath\$folderWithProcessedDocuments\Temporary zip" -Recurse
-    Remove-Item -Path "$desktopPath\$folderWithProcessedDocuments\Temporary bmp", "$desktopPath\$folderWithProcessedDocuments\Temporary bmp for WM", "$desktopPath\$folderWithProcessedDocuments\Temporary marked bmp" -Recurse
+    Remove-Item -Path "$desktopPath\$folderWithProcessedDocuments\Temporary", "$desktopPath\$folderWithProcessedDocuments\Temporary WM", "$desktopPath\$folderWithProcessedDocuments\Temporary zip" -Recurse -Force
+    Remove-Item -Path "$desktopPath\$folderWithProcessedDocuments\Temporary bmp", "$desktopPath\$folderWithProcessedDocuments\Temporary bmp for WM", "$desktopPath\$folderWithProcessedDocuments\Temporary marked bmp" -Recurse -Force
     Write-Host "==============================================================================="
 }
 }
