@@ -1,7 +1,6 @@
-clear
 #Global variables
 $desktopPath = [Environment]::GetFolderPath("Desktop")
-$folderWithProcessedDocuments = "Processed documents"
+$folderWithProcessedDocuments = "Processed documents1"
 $pathToImageStorage = "C:\Users\Анник\Desktop\2\# chest of images"
 $folderWithOldDocuments = "Source documents from previous version"
 #Filter (images that are less than specified values will not be watermarked)
@@ -273,6 +272,7 @@ Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments" -Directory | Wh
             }
         }
         #========Statistics========
+
         if ($existenceInImageStorage -eq $true)
             {
             #Write-Host "EN file for" $currentFullName "was found in the image storage."
@@ -297,7 +297,6 @@ Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments" -Directory | Wh
                     }
             } else {
             if ($currentExtension -eq ".wdp") {
-
             Start-Process -FilePath 'C:\WDP Converter\JXRDecApp\x64\JXRDecApp.exe' -ArgumentList "-i ""$desktopPath\$folderWithProcessedDocuments\$_\word\media\$currentFullName"" -o ""$desktopPath\$folderWithProcessedDocuments\Temporary bmp for WM\$currentName.bmp"" -c 0"
             } else {
             Copy-Item -Path "$desktopPath\$folderWithProcessedDocuments\$_\word\media\$currentFullName" "$desktopPath\$folderWithProcessedDocuments\Temporary WM"
@@ -434,7 +433,6 @@ Get-WordFileExtension
 #Creates html report
 Add-Content "$PSScriptRoot\Image Report.html" "<!DOCTYPE html>
 <html lang=""en"">
-
 <head>
 <meta charset=""utf-8"">
 <title>LiveDoc Report</title>
@@ -442,11 +440,9 @@ Add-Content "$PSScriptRoot\Image Report.html" "<!DOCTYPE html>
    div {
     font-family: Verdana, Arial, Helvetica, sans-serif;
    }
-
 table {
     border-collapse: collapse;
 }
-
 table, td, th {
     border: 1px solid black;
     padding: 3px;
@@ -456,7 +452,6 @@ td {
 }
 </style>
 </head>
-
 <body>
 <div>
 <h3>Hello.</h3>
