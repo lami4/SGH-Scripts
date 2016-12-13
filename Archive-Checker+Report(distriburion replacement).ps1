@@ -1,6 +1,6 @@
 #Global variables
 $desktopPath = [Environment]::GetFolderPath("Desktop")
-$folderWithProcessedDocuments = "Processed documents1"
+$folderWithProcessedDocuments = "Processed documents"
 $pathToImageStorage = "C:\Users\Анник\Desktop\2\# chest of images"
 $folderWithOldDocuments = "Source documents from previous version"
 #Filter (images that are less than specified values will not be watermarked)
@@ -13,11 +13,12 @@ Function Replace-FilesInArchive ($currentDirectoryName)
     #Moves files from the current archive to the "Temporary zip" folder
     Write-Host "Removing original images from the archive..."
     (New-Object -COM Shell.Application).NameSpace("$desktopPath\$folderWithProcessedDocuments\Temporary zip").MoveHere("$desktopPath\$folderWithProcessedDocuments\$currentDirectoryName.zip\word\media")
-    Start-Sleep -Seconds 15
+    Start-Sleep -Seconds 5
     Write-Host "Copying watermarked and translated images to the archive..."
+    if (Test-Path -Path "$desktopPath\$folderWithProcessedDocuments\media\Thumbs.db") {Remove-Item -Path "$desktopPath\$folderWithProcessedDocuments\media\Thumbs.db" -Force}
     #Copies processed files to now empty "media" folder in archive
     (New-Object -COM Shell.Application).NameSpace("$desktopPath\$folderWithProcessedDocuments\$currentDirectoryName.zip\word").CopyHere("$desktopPath\$folderWithProcessedDocuments\media")
-    Start-Sleep -Seconds 15
+    Start-Sleep -Seconds 5
 }
 
 Function Select-Folder ($description)
@@ -142,16 +143,29 @@ $totalNumberOfLootedImages = 0
 $totaNumberOfFilteredLootedImages = 0
 $totalNumberOfFilteredRepetitionInAnalysis = 0
 #========Statistics========
-#Creates header-table
-Add-Content "$PSScriptRoot\Header-Table.html" "
+#Creates Count table
+Add-Content "$PSScriptRoot\Test Report.html" "
+<h3>Counts</h3>
 <table>
     <tr>
         <th>Document</th>
-        <th>Repetitions TotalCount</th>
-        <th>Repetitions FilteredCount</th>
-        <th>Looted TotalCount</th>
-        <th>Looted FilteredCount</th>
-        <th>Repetitons FilteredCount/Images To Go FilteredCount</th>
+        <th>Repetition</th>
+        <th>Looted</th>
+        <th>Total</th>
+        <th>Repetition (Filtered)</th>
+        <th>Looted (Filtered)</th>
+        <th>Total (Filtered)</th>
+    </tr>"
+#Creates Analysis table
+Add-Content "$PSScriptRoot\Analysis.html" "
+<h3>Analysis</h3>
+<table>
+    <tr>
+        <th>Document</th>
+        <th>Looted</th>
+        <th>Repitition</th>
+        <th>New</th>
+        <th>Total</th>
     </tr>"
 #Gets the list of unzipped documents
 Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments" -Directory | Where-Object {$_ -NotMatch "$folderWithOldDocuments"} | % {
@@ -169,15 +183,15 @@ Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments" -Directory | Wh
         $oldImageHash = $_.Hash
         $oldImageHashes += $oldImageHash
         }
-        #Total number of images in a document
-        $totalNumberOfImagesInDocument = (Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments\$_\word\media\*" -Exclude "*.wdp").Count
-        #Total number of filtered images in a document
-        Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments\$_\word\media\*" -Exclude "*.wdp" | % {
+    }
+    #Total number of images in a document
+    $totalNumberOfImagesInDocument = (Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments\$_\word\media\*" -Exclude "*.wdp").Count
+    #Total number of filtered images in a document
+    Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments\$_\word\media\*" -Exclude "*.wdp" | % {
         [int]$currentWidthForTotal = magick identify -ping -format "%w" $_.FullName
         [int]$currentHeightForTotal = magick identify -ping -format "%h" $_.FullName
         if ($currentWidthForTotal -gt $imageWidth -and $currentHeightForTotal -gt $imageHeight) {
-            $totalNumberOfFilterdImagesInDocument += 1
-            }
+        $totalNumberOfFilterdImagesInDocument += 1
         }
     }
     #========Statistics========
@@ -242,7 +256,6 @@ Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments" -Directory | Wh
         $existenceInImageStorage = Test-Path -Path "$pathToImageStorage\*\$currentMD5.*"
         
         #========Statistics========
-        if ($oldDocumentExistence -eq $true) {
             if ($currentExtension -ne ".wdp") {
                 if ($existenceInImageStorage -eq $true) {
                     #Adds +1 to total number of looted images
@@ -258,8 +271,6 @@ Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments" -Directory | Wh
                     }
                 }
             }
-        }
-        if ($oldDocumentExistence -eq $true) {
             if ($currentExtension -ne ".wdp") {
                 #Adds +1 to total number of filtered looted images
                 if ($existenceInImageStorage -eq $true) {
@@ -270,7 +281,6 @@ Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments" -Directory | Wh
                     }
                 }
             }
-        }
         #========Statistics========
 
         if ($existenceInImageStorage -eq $true)
@@ -340,22 +350,32 @@ Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments" -Directory | Wh
     #Moves images from the current archive (word/media) to Temporary zip folder
     Start-Sleep -Seconds 5
     Replace-FilesInArchive -currentDirectoryName "$_"
-    Start-Sleep -Seconds 3
+    Start-Sleep -Seconds 5
     Write-Host "Document processed."
 
     #========Statistics========
     $completelyNewImages = $totalNumberOfFilterdImagesInDocument - $totaNumberOfFilteredLootedImages - $totalNumberOfFilteredRepetitionInAnalysis
-    #Adds collected statistics to header-table
-    Add-Content "$PSScriptRoot\Header-Table.html" "
+    #Adds collected statistics to Counts table
+    Add-Content "$PSScriptRoot\Test Report.html" "
     <tr>
         <td>$currentDirectory</td>
-        <td>$totalRepetitionsCount/$totalNumberOfImagesInDocument</td>
-        <td>$filteredRepetitionsCount/$totalNumberOfFilterdImagesInDocument</td>
-        <td>$totalNumberOfLootedImages/$totalNumberOfImagesInDocument</td>
-        <td>$totaNumberOfFilteredLootedImages/$totalNumberOfFilterdImagesInDocument</td>
-        <td>Repetitons FilteredCount/Images To Go FilteredCount</td>
-    </tr>
-    $currentDirectory contains $totalNumberOfFilterdImagesInDocument images: $totaNumberOfFilteredLootedImages - looted from chest, $totalNumberOfFilteredRepetitionInAnalysis - repetitions, $completelyNewImages - completely new images"
+        <td>$totalRepetitionsCount</td>
+        <td>$totalNumberOfLootedImages</td>
+        <td>$totalNumberOfImagesInDocument</td>
+        <td>$filteredRepetitionsCount</td>
+        <td>$totaNumberOfFilteredLootedImages</td>
+        <td>$totalNumberOfFilterdImagesInDocument</td>
+    </tr>"
+    #Adds collected statistics to Analysis table
+    Add-Content "$PSScriptRoot\Analysis.html" "
+    <tr>
+        <td>$currentDirectory</td>
+        <td>$totaNumberOfFilteredLootedImages</td>
+        <td>$totalNumberOfFilteredRepetitionInAnalysis</td>
+        <td>$completelyNewImages</td>
+        <td>$totalNumberOfFilterdImagesInDocument</td>
+    </tr>"
+    #$currentDirectory contains $totalNumberOfFilterdImagesInDocument images: $totaNumberOfFilteredLootedImages - looted from chest, $totalNumberOfFilteredRepetitionInAnalysis - repetitions, $completelyNewImages - completely new images"
     #========Statistics========
     #clears arrays and resets boolean values
     $imageHashes = @()
@@ -377,9 +397,10 @@ Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments" -Directory | Wh
     #========Statistics========
 
     #removes temporary folders
-    Start-Sleep -Seconds 1
-    Remove-Item -Path "$desktopPath\$folderWithProcessedDocuments\media", "$desktopPath\$folderWithProcessedDocuments\Temporary WM", "$desktopPath\$folderWithProcessedDocuments\Temporary zip" -Recurse -Force
+    Start-Sleep -Seconds 5
+    Remove-Item -Path "$desktopPath\$folderWithProcessedDocuments\media", "$desktopPath\$folderWithProcessedDocuments\Temporary WM" -Recurse -Force
     Remove-Item -Path "$desktopPath\$folderWithProcessedDocuments\Temporary bmp", "$desktopPath\$folderWithProcessedDocuments\Temporary bmp for WM", "$desktopPath\$folderWithProcessedDocuments\Temporary marked bmp" -Recurse -Force
+    Remove-Item -Path "$desktopPath\$folderWithProcessedDocuments\Temporary zip" -Recurse -Force
     Write-Host "==============================================================================="
 }
 }
@@ -430,8 +451,10 @@ if ($processedFilesExistenceCheck -eq $true)
 }
 #Memorises word document name to use it later for the renaming
 Get-WordFileExtension
+
+#========Statistics========
 #Creates html report
-Add-Content "$PSScriptRoot\Image Report.html" "<!DOCTYPE html>
+Add-Content "$PSScriptRoot\Test Report.html" "<!DOCTYPE html>
 <html lang=""en"">
 <head>
 <meta charset=""utf-8"">
@@ -448,6 +471,7 @@ table, td, th {
     padding: 3px;
 }
 td {
+    text-align:center;
     background-color: #FFC;
 }
 </style>
@@ -455,7 +479,9 @@ td {
 <body>
 <div>
 <h3>Hello.</h3>
-<h3>I searched through the following folders:</h3>"
+<h3>Here is some statistics...</h3>"
+#========Statistics========
+
 #Renames doc/docx as zip in '$folderWithProcessedDocuments'
 $totalFiles = @(Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments\*.doc*")
 Write-Host "There are" $totalFiles.Length "document(s) to process." 
@@ -467,10 +493,22 @@ Unzip-Archive -folderName "$folderWithProcessedDocuments" > $null
 Unzip-Archive -folderName "$folderWithProcessedDocuments\$folderWithOldDocuments" > $null
 #Gets all folders in '$folderWithProcessedDocuments', then computes MD5 sums in '*/media', checks them in 'chest of images' - hits are copied in zip files where no hits are water marked by *
 Process-ImagesFromDocument > $null
+
+#========Statistics========
+Add-Content "$PSScriptRoot\Test Report.html" "</table>
+<br>"
+Add-Content "$PSScriptRoot\Analysis.html" "</table>"
+Get-Content -Path "$PSScriptRoot\Analysis.html" | Add-Content -Path "$PSScriptRoot\Test Report.html"
+#========Statistics========
+
 #Deletes all folders in '$folderWithProcessedDocuments' folder
 Start-Sleep -Seconds 1
-Remove-Item "$desktopPath\$folderWithProcessedDocuments\*" -Exclude "*.zip" -Recurse
+Remove-Item "$desktopPath\$folderWithProcessedDocuments\*" -Exclude "*.zip" -Force -Recurse
 #Renames zip as doc/docx
 RenameBack-ZipFile
+Add-Content "$PSScriptRoot\Test Report.html" "
+</div>
+</body>
+</html>"
 Write-Host "Exiting the script"
 Start-Sleep -Seconds 1
