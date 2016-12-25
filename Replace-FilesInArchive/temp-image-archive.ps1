@@ -1,6 +1,6 @@
 #Global variables
 $desktopPath = [Environment]::GetFolderPath("Desktop")
-$folderWithProcessedDocuments = "Processed documents"
+$folderWithProcessedDocuments = "Processed documents1"
 $pathToImageStorage = "C:\Users\Анник\Desktop\2\# chest of images"
 $folderWithOldDocuments = "Source documents from previous version"
 #Filter (images that are less than specified values will not be watermarked)
@@ -212,11 +212,12 @@ Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments" -Directory | Wh
     }
     #Creates temporary folders
     New-Item "$desktopPath\$folderWithProcessedDocuments\media" -Type directory
-    New-Item "$desktopPath\$folderWithProcessedDocuments\watermark" -Type directory
-    New-Item "$desktopPath\$folderWithProcessedDocuments\waste"  -Type directory
+    New-Item "$desktopPath\$folderWithProcessedDocuments\repetition-watermark" -Type directory
+    New-Item "$desktopPath\$folderWithProcessedDocuments\new-watermark" -Type directory
+    New-Item "$desktopPath\$folderWithProcessedDocuments\waste" -Type directory
     New-Item "$desktopPath\$folderWithProcessedDocuments\converted-to-bmp" -Type directory
     New-Item "$desktopPath\$folderWithProcessedDocuments\bmp-watermark" -Type directory
-    New-Item "$desktopPath\$folderWithProcessedDocuments\Temporary marked bmp" -Type directory
+    New-Item "$desktopPath\$folderWithProcessedDocuments\bmp-watermarked" -Type directory
     #Joins together arrays in the multidimensional array called imageProperties
     $imageProperties = $imageHashes, $imageFullNames, $imageNames, $imageExtensions, $imageFullPaths
     Write-Host "Searching for translated images in the chest..."
@@ -234,10 +235,10 @@ Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments" -Directory | Wh
         if ($oldDocumentExistence -eq $true) {
             if ($currentExtension -ne ".wdp") {
                 if ($oldImageHashes -contains $currentMD5) {
-                    Write-Host "Repitition"
+                    #Write-Host "Repitition"
                     $totalRepetitionsCount += 1
                     } else {
-                    Write-Host "No repitition"
+                    #Write-Host "No repitition"
                 }
             }
         }
@@ -248,9 +249,9 @@ Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments" -Directory | Wh
                     [int]$currentWidthForTrueRepetitions = magick identify -ping -format "%w" $currentFullPath
                     [int]$currentHeightForTrueRepetitions = magick identify -ping -format "%h" $currentFullPath
                     if ($currentWidthForTrueRepetitions -lt $imageWidth -and $currentHeightForTrueRepetitions -lt $imageHeight) {
-                    Write-Host "Little Repititon Found"
+                    #Write-Host "Little Repititon Found"
                     } else {
-                    Write-Host "Big Repition Found"
+                    #Write-Host "Big Repition Found"
                     $filteredRepetitionsCount += 1
                     }
                 }
@@ -315,41 +316,51 @@ Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments" -Directory | Wh
             if ($currentExtension -eq ".wdp") {
             Start-Process -FilePath 'C:\WDP Converter\JXRDecApp\x64\JXRDecApp.exe' -ArgumentList "-i ""$desktopPath\$folderWithProcessedDocuments\$_\word\media\$currentFullName"" -o ""$desktopPath\$folderWithProcessedDocuments\bmp-watermark\$currentName.bmp"" -c 0"
             } else {
-            Copy-Item -Path "$desktopPath\$folderWithProcessedDocuments\$_\word\media\$currentFullName" "$desktopPath\$folderWithProcessedDocuments\watermark"
+            if ($oldImageHashes -contains $currentMD5) {
+            Copy-Item -Path "$desktopPath\$folderWithProcessedDocuments\$_\word\media\$currentFullName" "$desktopPath\$folderWithProcessedDocuments\repetition-watermark"
+            Write-Host "Repetition will be watermarked"
+            } else {
+            Copy-Item -Path "$desktopPath\$folderWithProcessedDocuments\$_\word\media\$currentFullName" "$desktopPath\$folderWithProcessedDocuments\new-watermark"
+            Write-Host "New file will be watermarked"
+            }
             #Write-Host "EN file for" $currentFullName "was NOT found in the image storage. Image will be watermarked."
             }
             }
         }
     Write-Host "Watermarking images that were not found in the chest..."
-    #Watermarks images in Temporary WM folder and copies them to Temporary folder
-    Get-ChildItem "$desktopPath\$folderWithProcessedDocuments\watermark" | % {
+    #Watermarks images in "repetition-watermark" folder and copies them to "media" folder
+    Get-ChildItem "$desktopPath\$folderWithProcessedDocuments\repetition-watermark" | % {
         [int]$width = magick identify -ping -format "%w" $_.FullName
         [int]$height = magick identify -ping -format "%h" $_.FullName
         if ($width -lt $imageWidth -and $height -lt $imageHeight) { 
         Copy-Item -Path $_.FullName -Destination "$desktopPath\$folderWithProcessedDocuments\media"
-        Write-Host "Little image copied to media"
+        #Write-Host "Little image copied to media"
         } else {
         $currentImage = $_.Name
-        Write-TextWaterMark -SourceImage "$desktopPath\$folderWithProcessedDocuments\watermark\$currentImage" -TargetImage "$desktopPath\$folderWithProcessedDocuments\media\$currentImage" -MessageText “*”
+        Write-TextWaterMark -SourceImage "$desktopPath\$folderWithProcessedDocuments\repetition-watermark\$currentImage" -TargetImage "$desktopPath\$folderWithProcessedDocuments\media\$currentImage" -MessageText “*”
         }
+    }
+    #Does nothing to new image in "new-watermark" folder - simply copies to "media" folder
+    Get-ChildItem "$desktopPath\$folderWithProcessedDocuments\new-watermark" | % {
+    Copy-Item -Path $_.FullName -Destination "$desktopPath\$folderWithProcessedDocuments\media"
     }
     #Watermarks bmp images in Temporary for WM folder and copies them to Temporary marked bmp folder
     Get-ChildItem "$desktopPath\$folderWithProcessedDocuments\bmp-watermark" | % {
         [int]$width = magick identify -ping -format "%w" $_.FullName
         [int]$height = magick identify -ping -format "%h" $_.FullName
         if ($width -lt $imageWidth -and $height -lt $imageHeight) { 
-        Copy-Item -Path $_.FullName -Destination "$desktopPath\$folderWithProcessedDocuments\Temporary marked bmp"
-        Write-Host "Little WDP image copied to media"
+        Copy-Item -Path $_.FullName -Destination "$desktopPath\$folderWithProcessedDocuments\bmp-watermarked"
+        #Write-Host "Little WDP image copied to media"
         } else {
         $currentImage = $_.Name
-        Write-TextWaterMark -SourceImage "$desktopPath\$folderWithProcessedDocuments\bmp-watermark\$currentImage" -TargetImage "$desktopPath\$folderWithProcessedDocuments\Temporary marked bmp\$currentImage" -MessageText “*”
+        Write-TextWaterMark -SourceImage "$desktopPath\$folderWithProcessedDocuments\bmp-watermark\$currentImage" -TargetImage "$desktopPath\$folderWithProcessedDocuments\bmp-watermarked\$currentImage" -MessageText “*”
         }
     }
     #Renames marked bmp images back to WDP and copies them to Temporary folder
-    Get-ChildItem "$desktopPath\$folderWithProcessedDocuments\Temporary marked bmp\*.bmp" | % {
+    Get-ChildItem "$desktopPath\$folderWithProcessedDocuments\bmp-watermarked\*.bmp" | % {
     $baseName = $_.BaseName
     Rename-Item -Path $_.FullName -NewName "$baseName.wdp"
-    Copy-Item -Path "$desktopPath\$folderWithProcessedDocuments\Temporary marked bmp\$baseName.wdp" -Destination "$desktopPath\$folderWithProcessedDocuments\media"
+    Copy-Item -Path "$desktopPath\$folderWithProcessedDocuments\bmp-watermarked\$baseName.wdp" -Destination "$desktopPath\$folderWithProcessedDocuments\media"
     }
     #Moves images from the current archive (word/media) to Temporary zip folder
     Start-Sleep -Seconds 5
@@ -403,10 +414,11 @@ Get-ChildItem -Path "$desktopPath\$folderWithProcessedDocuments" -Directory | Wh
     #removes temporary folders
     Start-Sleep -Seconds 3
     Remove-Item -Path "$desktopPath\$folderWithProcessedDocuments\media" -Recurse -Force
-    Remove-Item -Path "$desktopPath\$folderWithProcessedDocuments\watermark" -Recurse -Force
+    Remove-Item -Path "$desktopPath\$folderWithProcessedDocuments\repetition-watermark" -Recurse -Force
+    Remove-Item -Path "$desktopPath\$folderWithProcessedDocuments\new-watermark" -Recurse -Force
     Remove-Item -Path "$desktopPath\$folderWithProcessedDocuments\converted-to-bmp" -Recurse -Force
     Remove-Item -Path "$desktopPath\$folderWithProcessedDocuments\bmp-watermark" -Recurse -Force
-    Remove-Item -Path "$desktopPath\$folderWithProcessedDocuments\Temporary marked bmp" -Recurse -Force
+    Remove-Item -Path "$desktopPath\$folderWithProcessedDocuments\bmp-watermarked" -Recurse -Force
     Remove-Item -Path "$desktopPath\$folderWithProcessedDocuments\waste" -Recurse -Force
     Write-Host "==============================================================================="
 }
