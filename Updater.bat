@@ -285,12 +285,12 @@ CD "%root_directory%\KPD\# Matches against previous version"
 FOR %%G IN ("%root_directory%\MemoQ import\*") DO IF EXIST %%~nG.* (ECHO !var_incr_upd_both!^) %%~nxG was found and updated in '...KPD\Matches against previous version'
 DEL %%~nG.*
 COPY "%root_directory%\MemoQ import\%%~nG.*" "%root_directory%\KPD\# Source documents to be translated" >nul
-ECHO !var_incr_upd_both!^) Ôàéë %%~nxG áûë íàéäåí è îáíîâëåí â ïàïêå ...KPD\Matches against previous version>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\MAPV_and_SDTT.txt"
+ECHO !var_incr_upd_both!^) Файл %%~nxG был найден и обновлен в папке ...KPD\Matches against previous version>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\MAPV_and_SDTT.txt"
 SET /a var_incr_upd_both+=1) ELSE (IF EXIST "%root_directory%\KPD\# Source documents to be translated\%%~nG.*" (ECHO !var_incr_upd_both!^) %%~nxG was found and updated in '...KPD\Source documents to be translated'
 COPY "%root_directory%\MemoQ import\%%~nG.*" "%root_directory%\KPD\# Source documents to be translated" >nul
-ECHO !var_incr_upd_both!^) Ôàéë %%~nxG áûë íàéäåí è îáíîâëåí â ïàïêå ...KPD\Source documents to be translated>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\MAPV_and_SDTT.txt"
+ECHO !var_incr_upd_both!^) Файл %%~nxG был найден и обновлен в папке ...KPD\Source documents to be translated>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\MAPV_and_SDTT.txt"
 SET /a var_incr_upd_both+=1) ELSE (ECHO !var_incr_upd_both!^) %%~nxG was just copied to '...KPD\Source documents to be translated' ^(=new file, released for the first time^)
-ECHO !var_incr_upd_both!^) Ôàéë %%~nxG áûë ïðîñòî ñêîïèðîâàí â ...KPD\Source documents to be translated, òàê êàê îí áûë îïóáëèêîâàí âïåðâûå>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\MAPV_and_SDTT.txt"
+ECHO !var_incr_upd_both!^) Файл %%~nxG был просто скопирован в ...KPD\Source documents to be translated, так как он был опубликован впервые>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\MAPV_and_SDTT.txt"
 COPY "%root_directory%\MemoQ import\%%~nG.*" "%root_directory%\KPD\# Source documents to be translated" >nul
 SET /a var_incr_upd_both+=1))
 ECHO.
@@ -301,23 +301,23 @@ ENDLOCAL
 
 
 CD "%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%"
-IF EXIST Deletion.txt (ECHO Íèæå ïðåäñòàâëåí ñïèñîê ôàéëîâ, êîòîðûå áûëè óäàëåíû âî âñåõ ïîäïàïêàõ "...\KPD\...".>Report.txt
-ECHO Êîïèè óäàëåííûõ ôàéëîâ áûëè ïåðåìåùåíû â ñîîòâåòñâóþùèå "Files updated on %date% by notification No. %notification%" ïàïêè.>>Report.txt
+IF EXIST Deletion.txt (ECHO Ниже представлен список файлов, которые были удалены во всех подпапках "...\KPD\...".>Report.txt
+ECHO Копии удаленных файлов были перемещены в соответсвующие "Files updated on %date% by notification No. %notification%" папки.>>Report.txt
 ECHO.>>Report.txt
-FOR /F "tokens=*" %%G IN (Deletion.txt) DO (ECHO %%G>>Report.txt)) ELSE (ECHO Íè îäèí èç ôàéëîâ â 'List.txt' íå áûë ïîìå÷åí êàê "REM" ^(=óäàëèòü èç âñåõ "...\KPD\..." ïîäïàïîê^).>Report.txt)
+FOR /F "tokens=*" %%G IN (Deletion.txt) DO (ECHO %%G>>Report.txt)) ELSE (ECHO Ни один из файлов в 'List.txt' не был помечен как "REM" ^(=удалить из всех "...\KPD\..." подпапок^).>Report.txt)
 ECHO =====================================================================================================================================================================================================>>Report.txt
 ECHO =====================================================================================================================================================================================================>>Report.txt
-ECHO Íèæå ïðåäñòàâëåí ñïèñîê ôàéëîâ, êîòîðûå áûëè îáíîâëåíû âî âñåõ ïîäïàïêàõ "...\KPD\...".>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Report.txt"
-ECHO Êîïèè îáíîâëåííûõ ôàéëîâ áûëè ïåðåìåùåíû â ñîîòâåòñâóþùèå "Files updated on %date% by notification No. %notification%" ïàïêè.>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Report.txt"
+ECHO Ниже представлен список файлов, которые были обновлены во всех подпапках "...\KPD\...".>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Report.txt"
+ECHO Копии обновленных файлов были перемещены в соответсвующие "Files updated on %date% by notification No. %notification%" папки.>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Report.txt"
 ECHO.>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Report.txt"
 FINDSTR /M /C:"1)" PDF.txt >nul
-IF %ERRORLEVEL% EQU 0 (FOR /F "tokens=*" %%G IN (PDF.txt) DO ECHO %%G>>Report.txt) ELSE (ECHO Ôàéëû äîêóìåíòîâ óêàçàííûõ â List.txt íå áûëè íàéäåíû â ïàïêå Source documents pdf>>Report.txt)
+IF %ERRORLEVEL% EQU 0 (FOR /F "tokens=*" %%G IN (PDF.txt) DO ECHO %%G>>Report.txt) ELSE (ECHO Файлы документов указанных в List.txt не были найдены в папке Source documents pdf>>Report.txt)
 ECHO ------------------------------------------------------------------------------------------------------------------------------------------------------>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Report.txt"
 FINDSTR /M /C:"1)" DOC.txt >nul
-IF %ERRORLEVEL% EQU 0 (FOR /F "tokens=*" %%G IN (DOC.txt) DO ECHO %%G>>Report.txt) ELSE (ECHO Ôàéëû äîêóìåíòîâ óêàçàííûõ â List.txt íå áûëè íàéäåíû â ïàïêå Source documents docx, doc, xls, xlsx>>Report.txt)
+IF %ERRORLEVEL% EQU 0 (FOR /F "tokens=*" %%G IN (DOC.txt) DO ECHO %%G>>Report.txt) ELSE (ECHO Файлы документов указанных в List.txt не были найдены в папке Source documents docx, doc, xls, xlsx>>Report.txt)
 ECHO ------------------------------------------------------------------------------------------------------------------------------------------------------>>"%root_directory%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Report.txt"
 FINDSTR /M /C:"1)" MAPV_and_SDTT.txt >nul
-IF %ERRORLEVEL% EQU 0 (FOR /F "tokens=*" %%G IN (MAPV_and_SDTT.txt) DO ECHO %%G>>Report.txt) ELSE (ECHO Ôàéëû äîêóìåíòîâ óêàçàííûõ â List.txt íå áûëè íàéäåíû íè â ïàïêå Matches against previous version, íè â ïàïêå Source documents to be translated>>Report.txt)
+IF %ERRORLEVEL% EQU 0 (FOR /F "tokens=*" %%G IN (MAPV_and_SDTT.txt) DO ECHO %%G>>Report.txt) ELSE (ECHO Файлы документов указанных в List.txt не были найдены ни в папке Matches against previous version, ни в папке Source documents to be translated>>Report.txt)
 ECHO =====================================================================================================================================================================================================>>Report.txt
 ECHO =====================================================================================================================================================================================================>>Report.txt
 DEL PDF.txt
@@ -337,7 +337,7 @@ GOTO :EOF
 :end_of_script
 SETLOCAL ENABLEDELAYEDEXPANSION
 SET /a var_incr_not_found=1
-IF EXIST Not_found.txt (ECHO Äîêóìåíòû, êîòîðûå íå áûëè îáíîâëåíû, òàê êàê èõ ôàéëû îòñòóòñòâîâàëè íà ñåðâåðå:>>"%CD%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Report.txt"
+IF EXIST Not_found.txt (ECHO Документы, которые не были обновлены, так как их файлы отстутствовали на сервере:>>"%CD%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Report.txt"
 ECHO Documents that were not updated as their files are missing on the server:
 ECHO.
 ECHO.>>"%CD%\KPD\# Source documents docx, doc, xls, xlsx\Files updated on %date% by notification No. %notification%\Report.txt"
