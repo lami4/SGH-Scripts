@@ -36,3 +36,12 @@ $document.Close()
 $word.Quit()
 Write-Host $documentTitles
 Write-Host $documentNames
+
+#get under value
+$word = New-Object -ComObject Word.Application
+$word.Visible = $false
+$document = $word.Documents.Open("C:\Users\Светлана\Desktop\test\2.docx")
+$underValue = $document.Sections.Item(1).Footers.Item(1).Range.Tables.Item(1).Cell(5, 8).Range.Text
+Write-Host $underValue
+$document.Close()
+$word.Quit()
