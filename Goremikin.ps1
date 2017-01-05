@@ -1,6 +1,13 @@
+#1) DONE. Выяснить почему не добавляется строка в массив (апдейт - последняя строка в таблице не добавляется. Фор луп работает некорректно.)
+#2) DONE. Добавить фильтр для файлов и добавлять их в отдельный массив
+#3) DONE. Сделать проверку на существование файла
+#4) Царский парсинг значений из ворда.
+#5) Написать функцию сравнения сравнения
+clear
 #Global arrays and variables
 $script:documentTitles = @()
 $script:documentNames = @()
+$script:fileNames = @()
 
 #Functions
 Function Select-Folder ($description)
@@ -23,27 +30,26 @@ Function Get-InformationFromSPC ($selectedFolder, $currentSPCName)
 $word = New-Object -ComObject Word.Application
 $word.Visible = $false
 $document = $word.Documents.Open("$selectedFolder\$currentSPCName")
-[int]$rowCount = $document.Tables.Item(1).Rows.Count
+[int]$rowCount = $document.Tables.Item(1).Rows.Count + 1
 for ($i = 2; $i -lt $rowCount; $i++) {
-#takes value from SPC for document title
+#gets document title, document name and notification number from SPC
 [string]$valueInDocumentTitleCell = $document.Tables.Item(1).Cell($i,2).Range.Text
-$parsedDocumentTitleValue = $valueInDocumentTitleCell -replace '\.', ' ' -replace '\s+', ' ' -replace 'ё', 'е' -replace '\s', ' '
-    if ($parsedDocumentTitleValue.Length -le 2) {
-    Write-Host "Empty Cell"
-    } else {
-    $script:documentTitles += $parsedDocumentTitleValue.ToLower()
-    }
-#takes value from SPC for document name
 [string]$valueInDocumentNameCell = $document.Tables.Item(1).Cell($i,1).Range.Text
+[string]$script:valueInNotificationNoCell = ((($document.Sections.Item(1).Footers.Item(1).Range.Tables.Item(1).Cell(2, 3).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ') 
+#checks if cells are empty
+$parsedDocumentTitleValue = $valueInDocumentTitleCell -replace '\.', ' ' -replace '\s+', ' ' -replace 'ё', 'е'
 $parsedDocumentNameValue = $valueInDocumentNameCell -replace '\s+', ' '
-    if ($parsedDocumentNameValue.Length -le 2) {
-    Write-Host $parsedDocumentNameValue.Length
-    Write-Host "Empty Cell"
+#if document name and document title are filled out, puts their value in corresponding arrays
+    if ($parsedDocumentTitleValue.Length -gt 2 -and $parsedDocumentNameValue.Length -gt 2) {
+    $script:documentTitles += $parsedDocumentTitleValue.ToLower().Trim(' ')
+    $script:documentNames += $parsedDocumentNameValue.Trim([char]0x0007, ' ')
     } else {
-    $script:documentNames += $valueInDocumentNameCell
+        if ($parsedDocumentTitleValue.Length -le 2 -and $parsedDocumentNameValue.Length -gt 2) {
+        $script:fileNames += $parsedDocumentNameValue
+        } else {
+        Write-Host "Cells are empty"
+        }
     }
-#takes value from SPC for notification number
-[string]$script:valueInNotificationNoCell = $document.Sections.Item(1).Footers.Item(1).Range.Tables.Item(1).Cell(2, 3).Range.Text
 }
 $document.Close()
 $word.Quit()
@@ -53,10 +59,22 @@ $word.Quit()
 $pathToFolder = Select-Folder -description "Выберите папку, в которой нужно проверить входимость."
 Get-ChildItem "$pathToFolder\*.*" -File -Exclude "*.pdf" | Where-Object {$_.Name -match "SPC"} | % {
 Get-InformationFromSPC -selectedFolder $pathToFolder -currentSPCName $_.Name
+$SPCdata = $script:documentNames, $script:documentTitles
 Write-Host $script:valueInNotificationNoCell
-$SPCdata = $script:documentTitles, $script:documentNames
-Write-Host $SPCdata
-
+Write-Host $script:valueInNotificationNoCell.Length
+for ($i = 0; $i -lt $SPCdata[0].Length; $i++) {
+#checks if the document exist
+$currentDocumentName = $SPCdata[0][$i]
+$documentExistence = Test-Path -Path "$pathToFolder\$currentDocumentName.*" -Exclude "*.pdf"
+    if ($documentExistence -eq $true) {
+    Write-Host "Document exists"
+    } else {
+    Write-Host "Document does not exist"
+    }
+}
+#clears variables and arrays
+Clear-Variable -Name "valueInNotificationNoCell" -Scope Script
 $script:documentTitles = @()
 $script:documentNames = @()
+$script:fileNames = @()
 }
