@@ -1,47 +1,62 @@
-$word = New-Object -ComObject Word.Application
-$word.Visible = $false
-$document = $word.Documents.Open("C:\Users\Светлана\Desktop\test\13.docx")
-[string]$valueInCell = $document.Tables.Item(1).Cell(4,2).Range.Text
-$newvalue = $valueInCell -replace '\.', ' ' -replace '\s+', ' ' -replace 'ё', 'е'
-Write-Host $newvalue.ToLower()
-$document.Close()
-$word.Quit()
+#Global arrays and variables
+$script:documentTitles = @()
+$script:documentNames = @()
 
-#Newest
-$documentTitles = @()
-$documentNames = @()
+#Functions
+Function Select-Folder ($description)
+{
+[System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms") | Out-Null     
+$objForm = New-Object System.Windows.Forms.FolderBrowserDialog
+$objForm.Rootfolder = "Desktop"
+$objForm.Description = $description
+$Show = $objForm.ShowDialog()
+If ($Show -eq "OK")
+    {
+    Return $objForm.SelectedPath
+    } Else {
+    Exit
+    }
+}
+
+Function Get-InformationFromSPC ($selectedFolder, $currentSPCName)
+{
 $word = New-Object -ComObject Word.Application
 $word.Visible = $false
-$document = $word.Documents.Open("C:\Users\Светлана\Desktop\test\13.docx")
+$document = $word.Documents.Open("$selectedFolder\$currentSPCName")
 [int]$rowCount = $document.Tables.Item(1).Rows.Count
-for ($i = 0; $i -lt $rowCount; $i++) {
-#takes value for document title
+for ($i = 2; $i -lt $rowCount; $i++) {
+#takes value from SPC for document title
 [string]$valueInDocumentTitleCell = $document.Tables.Item(1).Cell($i,2).Range.Text
-$parsedDocumentTitleValue = $valueInDocumentTitleCell -replace '\.', ' ' -replace '\s+', ' ' -replace 'ё', 'е'
-    if ($valueInDocumentTitleCell.Length -le 2) {
+$parsedDocumentTitleValue = $valueInDocumentTitleCell -replace '\.', ' ' -replace '\s+', ' ' -replace 'ё', 'е' -replace '\s', ' '
+    if ($parsedDocumentTitleValue.Length -le 2) {
     Write-Host "Empty Cell"
     } else {
-    $documentTitles += $parsedDocumentTitleValue.ToLower()
+    $script:documentTitles += $parsedDocumentTitleValue.ToLower()
     }
-#takes value for document title
+#takes value from SPC for document name
 [string]$valueInDocumentNameCell = $document.Tables.Item(1).Cell($i,1).Range.Text
 $parsedDocumentNameValue = $valueInDocumentNameCell -replace '\s+', ' '
     if ($parsedDocumentNameValue.Length -le 2) {
+    Write-Host $parsedDocumentNameValue.Length
     Write-Host "Empty Cell"
     } else {
-    $documentNames += $valueInDocumentNameCell
+    $script:documentNames += $valueInDocumentNameCell
     }
+#takes value from SPC for notification number
+[string]$script:valueInNotificationNoCell = $document.Sections.Item(1).Footers.Item(1).Range.Tables.Item(1).Cell(2, 3).Range.Text
 }
 $document.Close()
 $word.Quit()
-Write-Host $documentTitles
-Write-Host $documentNames
+}
 
-#get under value
-$word = New-Object -ComObject Word.Application
-$word.Visible = $false
-$document = $word.Documents.Open("C:\Users\Светлана\Desktop\test\2.docx")
-$underValue = $document.Sections.Item(1).Footers.Item(1).Range.Tables.Item(1).Cell(5, 8).Range.Text
-Write-Host $underValue
-$document.Close()
-$word.Quit()
+#Script code
+$pathToFolder = Select-Folder -description "Выберите папку, в которой нужно проверить входимость."
+Get-ChildItem "$pathToFolder\*.*" -File -Exclude "*.pdf" | Where-Object {$_.Name -match "SPC"} | % {
+Get-InformationFromSPC -selectedFolder $pathToFolder -currentSPCName $_.Name
+Write-Host $script:valueInNotificationNoCell
+$SPCdata = $script:documentTitles, $script:documentNames
+Write-Host $SPCdata
+
+$script:documentTitles = @()
+$script:documentNames = @()
+}
