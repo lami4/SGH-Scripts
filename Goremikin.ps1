@@ -134,7 +134,8 @@ Add-Content "$PSScriptRoot\Test Report.html" "
     }
 #========Statistics========
 Add-Content "$PSScriptRoot\Test Report.html" "</table>
-<br>" -Encoding UTF8
+<br>
+<hr>" -Encoding UTF8
 #========Statistics========
 }
 
@@ -148,25 +149,40 @@ Add-Content "$PSScriptRoot\Test Report.html" "<!DOCTYPE html>
 <meta charset=""utf-8"">
 <title>LiveDoc Report</title>
 <style type=""text/css"">
-   div {
-    font-family: Verdana, Arial, Helvetica, sans-serif;
-   }
+div {
+font-family: Verdana, Arial, Helvetica, sans-serif;
+}
 table {
     border-collapse: collapse;
 }
-table, td, th {
-    border: 1px solid black;
-    padding: 3px;
+th {
+padding: 3px;
+	border: 1px solid black;
+    text-align:center;
+    background-color: #bfbfbf;
 }
 td {
+	padding: 3px;
+	border: 1px solid black;
     text-align:center;
     background-color: #FFC;
+}
+#tableHeader {
+background-color: white;
+text-align: left;
+border: none;
+padding: 0px;
+}
+hr {
+	border-top: 1px solid #8c8b8b;
+	border-bottom: 1px solid #fff;
+    width: 80%;
 }
 </style>
 </head>
 <body>
 <div>
-<h3>Hello.</h3>" -Encoding UTF8
+<h3>Результаты сравнения</h3>" -Encoding UTF8
 #========Statistics========
 
 Get-ChildItem "$pathToFolder\*.*" -File -Exclude "*.pdf" | Where-Object {$_.Name -match "SPC"} | % {
@@ -178,7 +194,7 @@ $curSpc = $_.Name
 Add-Content "$PSScriptRoot\Test Report.html" "
 <table style=""width:100%"">
 <tr>
-<td colspan=""5"">$curSpc</td>
+<td colspan=""5"" id=""tableHeader""><h2>$curSpc</h2></td>
 </tr>" -Encoding UTF8
 #========Statistics========
 
