@@ -9,6 +9,7 @@
 #5) DONE. Выяснить как забирать значения из ячеек и очищать их от мусора (тэги, перенос строки, символ конца строки и т.п.)
 #6) DONE. Написать функцию сравнения
 #7) DONE. HTML статистика
+#8) DONE. Просмотр значений из специйикации и документа
 clear
 #Global arrays and variables
 $script:documentTitles = @()
@@ -64,14 +65,40 @@ Function Compare-Strings ($SPCvalue, $valueFromDocument, $message, $positive, $n
     Write-Host "Hit for $message"
 
 #========Statistics========
-Add-Content "$PSScriptRoot\Test Report.html" "<td><font color=""green""><b>$positive</b></font></td>" -Encoding UTF8
+Add-Content "$PSScriptRoot\Test Report.html" "<td><font color=""green"" id=""text""><b>$positive</b></font>
+<div id=""hide"">
+<table>
+<tr>
+<td id=""indication"">Спецификация:</td>
+<td id=""indication"">$SPCvalue</td>
+</tr>
+<tr>
+<td id=""indication"">Документ:</td>
+<td id=""indication"">$valueFromDocument</td>
+</tr>
+</table>
+</div>
+</td>" -Encoding UTF8
 #========Statistics========
 
     } else {
     Write-Host "No hit for $message"
 
 #========Statistics========
-Add-Content "$PSScriptRoot\Test Report.html" "<td><font color=""red""><b>$negative</b></font></td>" -Encoding UTF8
+Add-Content "$PSScriptRoot\Test Report.html" "<td><font color=""red"" id=""text""><b>$negative</b></font>
+<div id=""hide"">
+<table>
+<tr>
+<td id=""indication"">Спецификация:</td>
+<td id=""indication"">$SPCvalue</td>
+</tr>
+<tr>
+<td id=""indication"">Документ:</td>
+<td id=""indication"">$valueFromDocument</td>
+</tr>
+</table>
+</div>
+</td>" -Encoding UTF8
 #========Statistics========
 
     }
@@ -178,6 +205,20 @@ hr {
 	border-bottom: 1px solid #fff;
     width: 80%;
 }
+#hide {
+    display: none;
+	position: absolute;
+	background-color: white;
+	text-align: left;
+}
+#text:hover + #hide {
+display: block;
+}
+#indication {
+text-align: left;
+border: 0px;
+background-color: #bfbfbf;
+}
 </style>
 </head>
 <body>
@@ -192,7 +233,7 @@ Get-DataFromSPC -selectedFolder $pathToFolder -currentSPCName $_.Name
 #========Statistics========
 $curSpc = $_.Name
 Add-Content "$PSScriptRoot\Test Report.html" "
-<table style=""width:100%"">
+<table style=""width:90%"">
 <tr>
 <td colspan=""5"" id=""tableHeader""><h2>$curSpc</h2></td>
 </tr>" -Encoding UTF8
@@ -213,3 +254,4 @@ Add-Content "$PSScriptRoot\Test Report.html" "
 </body>
 </html>" -Encoding UTF8
 #========Statistics========
+Invoke-Item "$PSScriptRoot\Test Report.html"
