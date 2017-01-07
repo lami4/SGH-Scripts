@@ -69,11 +69,11 @@ Add-Content "$PSScriptRoot\Test Report.html" "<td><font color=""green"" id=""tex
 <div id=""hide"">
 <table>
 <tr>
-<td id=""indication"">Спецификация:</td>
+<td id=""indication"">В спецификации:</td>
 <td id=""indication"">$SPCvalue</td>
 </tr>
 <tr>
-<td id=""indication"">Документ:</td>
+<td id=""indication"">В документе:</td>
 <td id=""indication"">$valueFromDocument</td>
 </tr>
 </table>
@@ -89,11 +89,11 @@ Add-Content "$PSScriptRoot\Test Report.html" "<td><font color=""red"" id=""text"
 <div id=""hide"">
 <table>
 <tr>
-<td id=""indication"">Спецификация:</td>
+<td id=""indication"">В спецификации:</td>
 <td id=""indication"">$SPCvalue</td>
 </tr>
 <tr>
-<td id=""indication"">Документ:</td>
+<td id=""indication"">В документе:</td>
 <td id=""indication"">$valueFromDocument</td>
 </tr>
 </table>
