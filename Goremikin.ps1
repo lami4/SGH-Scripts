@@ -262,6 +262,7 @@ ONCLICK INFO
 #Возникшие проблемы
 #1) Колонтитул "Особый колонтитул для первой страницы" Вкл.\Выкл
 #2) Грамматические ошибки
+#3) Как различать документ и файлы?
 
 #1) DONE. Выяснить почему не добавляется строка в массив (апдейт - последняя строка в таблице не добавляется. Фор луп работает некорректно.)
 #2) DONE. Добавить фильтр для файлов и добавлять их в отдельный массив.
@@ -487,7 +488,7 @@ background-color: #bfbfbf;
 <script>
 function my_f(objName) {
 var object = document.getElementById(objName);
-object.style.display == 'none' ? object.style.display = 'block' : object.style.display = 'none'
+object.style.display == 'block' ? object.style.display = 'none' : object.style.display = 'block'
 }
 </script>
 </head>
@@ -503,7 +504,7 @@ Get-DataFromSPC -selectedFolder $pathToFolder -currentSPCName $_.Name
 #========Statistics========
 $curSpc = $_.Name
 Add-Content "$PSScriptRoot\Test Report.html" "
-<table style=""width:90%"">
+<table style=""width:80%"">
 <tr>
 <td colspan=""5"" id=""tableHeader""><h2>$curSpc</h2></td>
 </tr>" -Encoding UTF8
