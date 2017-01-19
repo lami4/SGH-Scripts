@@ -29,7 +29,13 @@ Add-Content -Path "$PSScriptRoot\Test Report.html" "
     #фильтр для excel файла
     $fileExtension = [IO.Path]::GetExtension($currentSpecification)
     if ($fileExtension -eq ".xlsx" -or $fileExtension -eq ".xls") {
-    Write-Host "Excel файл. Требуется ручная проверка"
+    Write-Host "Excel файл. Требуется ручная проверка."
+#========Statistics========
+Add-Content -Path "$PSScriptRoot\Test Report.html" "<td colspan=""4"">
+Excel файл. Требуется ручная проверка.
+</td>" -Encoding UTF8
+$script:JSvariable += 1
+#========Statistics========
     } else {
         #Write-Host "$selectedFOlder\$currentSpecification"
         $word = New-Object -ComObject Word.Application
@@ -62,7 +68,7 @@ Add-Content -Path "$PSScriptRoot\Test Report.html" "<td>" -Encoding UTF8
             for ($i = 1; $i -lt $rowCount; $i++) {
             [string]$valueInDocumentNameCell = ((($document.Tables.Item(1).Cell($i,4).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')
                 #добавить подсчет совпадений и вывод полученного значения в статистику (Ссылается на <количество документов>)
-                if ($valueInDocumentNameCell -match '\b(.{13})\d\d\.\d\d\.\d\d\.(.{4})\.\d\d\.\d\d([^\s]*)') {
+                if ($valueInDocumentNameCell -match '\b(.{13})\d\d\.\d\d\.\d\d\.(.{4})\.\d\d\.\d\d([^\s]*)' -or $valueInDocumentNameCell -match '[Rr][Ff]([^a-zA-Zа-яА-я\d])[Gg][Ll]' -or $valueInDocumentNameCell -match '\d\d[^a-zA-Zа-яА-я\d\s:\-_[\]]\d\d[^a-zA-Zа-яА-я\d\s:\-_[\]]\d\d[^a-zA-Zа-яА-я\d\s:\-_[\]]') {
                     $referenceToDocs += 1
                     if ($valueInDocumentNameCell -notmatch '\b([A-Z]{6})-([A-Z]{2})-([A-Z]{2})-\d\d\.\d\d\.\d\d\.([a-z]{1})([A-Z]{3})\.\d\d\.\d\d([^\s]*)') {
                     Write-Host "Обозначение содержит русские буквы или недопустимые символы."
@@ -84,6 +90,7 @@ $no_match_count =+ 1
                     }
                 } else {
                 [string]$valueInMd5Cell = ((($document.Tables.Item(1).Cell($i,7).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')
+                [string]$valueIFileNameCell = ((($document.Tables.Item(1).Cell($i,4).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')
                     if ($valueInMd5Cell -match '([m,M]\s*[d,D]\s*5)') {
                     $referenceToFiles +=1
                         if ($valueInMd5Cell -notmatch '([m,M]\s*[d,D]\s*5)\s*:') {
@@ -92,34 +99,34 @@ $no_match_count =+ 1
 if ($no_match_count -eq 0) {
 Add-Content -Path "$PSScriptRoot\Test Report.html" "<font color=""red"" onclick=""my_f('div_$script:JSvariable')""><b>-</b></font>
 <div class=""hide"" id=""div_$script:JSvariable"">
-Ячейка с MD5 для файла оформлена некорректно: Отсутствует разделитель." -Encoding UTF8
+Ячейка с MD5 для файла $valueIFileNameCell оформлена некорректно: отсутствует разделитель "":""." -Encoding UTF8
 $script:JSvariable += 1
 $no_match_count =+ 1
 } else {
 Add-Content -Path "$PSScriptRoot\Test Report.html" "<br>
-Ячейка с MD5 для файла оформлена некорректно: Отсутствует разделитель." -Encoding UTF8
+Ячейка с MD5 для файла $valueIFileNameCell оформлена некорректно: отсутствует разделитель "":""." -Encoding UTF8
 $no_match_count =+ 1
 }
 #========Statistics========
                         } else {
-                        Write-Host "Ячейка с MD5 суммой формлена корректно"
+                        Write-Host "Ячейка с MD5 суммой формлена корректно."
                     }
                     #сделать еще проверку - если есть нет мд5, но есть маска самой суммы неправильно оформлена ячейка
                     #добавить подсчет файлов и вывод полученного значения в статистику (Ссылается на <количество документов>)
                     } else {
                         if ($valueInMd5Cell -match '[a-zA-Z0-9]{32}') {
                         $referenceToFiles +=1
-                        Write-Host "Ячейка с MD5 оформлена некорректно. Отсутствует ключ md5"
+                        Write-Host "Ячейка с MD5 для файла $valueIFileNameCell оформлена некорректно: не соответствует маске."
 #========Statistics========
 if ($no_match_count -eq 0) {
 Add-Content -Path "$PSScriptRoot\Test Report.html" "<font color=""red"" onclick=""my_f('div_$script:JSvariable')""><b>-</b></font>
 <div class=""hide"" id=""div_$script:JSvariable"">
-Ячейка с MD5 оформлена некорректно: отсутствует ключ md5." -Encoding UTF8
+Ячейка с MD5 для файла $valueIFileNameCell оформлена некорректно: не соответствует маске." -Encoding UTF8
 $script:JSvariable += 1
 $no_match_count =+ 1
 } else {
 Add-Content -Path "$PSScriptRoot\Test Report.html" "<br>
-Ячейка с MD5 оформлена некорректно: отсутствует ключ md5." -Encoding UTF8
+Ячейка с MD5 для файла $valueIFileNameCell оформлена некорректно: не соответствует маске." -Encoding UTF8
 $no_match_count =+ 1
 }
 #========Statistics========
@@ -170,7 +177,7 @@ Add-Content -Path "$PSScriptRoot\Test Report.html" "<td>
 <td>
 <b>$referenceToFiles</b>
 </td>
-</tr>"
+</tr>" -Encoding UTF8
 #========Statistics========
     Write-Host "-------End of document-------"   
     }
@@ -180,7 +187,16 @@ Add-Content -Path "$PSScriptRoot\Test Report.html" "<td>
 Function Check-Rest ($selectedFolder, $currentDocument) {
     $fileExtension = [IO.Path]::GetExtension($currentDocument)
     if ($fileExtension -eq ".xlsx" -or $fileExtension -eq ".xls") {
-    Write-Host "Excel файл. Требуется ручная проверка"
+    Write-Host "Excel файл. Требуется ручная проверка."
+#========Statistics========
+Add-Content -Path "$PSScriptRoot\Test Report.html" "<tr>
+<td class=""filename"">$currentDocument
+</td>
+<td>
+Excel файл. Требуется ручная проверка.
+</td>
+</tr>" -Encoding UTF8
+#========Statistics========
     } else {
     $word = New-Object -ComObject Word.Application
     $word.Visible = $false
@@ -193,8 +209,29 @@ Function Check-Rest ($selectedFolder, $currentDocument) {
     [string]$valueInDocTitleCell = try {$document.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(4, 5).Range.Text} catch {""}
             if ($valueInDocVersionCell.Length -eq 0 -or $valueInNotificationNoCell.Length -eq 0 -or $valueInDocNameCell.Length -eq 0 -or $valueInDocTitleCell.Length -eq 0) {
             Write-Host "Невозможно получить значения из штампа. Штамп либо отсутствует, либо неверно заверстан."
+#========Statistics========
+Add-Content -Path "$PSScriptRoot\Test Report.html" "<tr>
+<td class=""filename"">$currentDocument
+</td>
+<td>
+<font color=""red"" onclick=""my_f('div_$script:JSvariable')""><b>-</b></font>
+<div class=""hide"" id=""div_$script:JSvariable"">
+Невозможно получить значения из штампа. Штамп либо отсутствует, либо неверно заверстан.
+</div>
+</td>
+</tr>" -Encoding UTF8
+#========Statistics========
             } else {
             Write-Host "Значения из штампа получены."
+#========Statistics========
+Add-Content -Path "$PSScriptRoot\Test Report.html" "<tr>
+<td class=""filename"">$currentDocument
+</td>
+<td>
+<font color=""green""><b>+</b></font>
+</td>
+</tr>" -Encoding UTF8
+#========Statistics========
             }
     $document.Close()
     $word.Quit()
@@ -249,10 +286,10 @@ object.style.display == 'block' ? object.style.display = 'none' : object.style.d
 </head>
 <body>
 <div>
-<h3>Проверка на соответвствие требованиям оформления и составления документа</h3>
+<h3>Проверка на соответвствие требованиям оформления документа</h3>
 <ul>
 <li>Файл спецификации должен содержать только одну таблицу, строки которой при необходимости переносятся на следующую страницу;</li>
-<li>При указании обозначения и наименования документа, обозначение размещается в четвертом столбцу таблицы, а наименование в пятом;</li>
+<li>При указании обозначения и наименования документа, обозначение размещается в четвертом столбце таблицы, а наименование в пятом;</li>
 <li>Обозначение документов в спецификации должно состоять только из заглавных/строчных латинских букв, точки ('.'), знака минус ('-') и цифр;</li>
 <li>Обозначение документов в спецификации должно соответствовать маске <b>ББББББ-ББ-ББ-ЦЦ.ЦЦ.ЦЦ.бБББ.ЦЦ.ЦЦ</b>, где
 <ul>
@@ -261,10 +298,11 @@ object.style.display == 'block' ? object.style.display = 'none' : object.style.d
     <li>б — строчная латинская буква.</li>
 </ul>
 </li>
-<li>При указании контрольной суммы файла в спецификации, название файла размещается в четвертом столбце таблицы, а его контрольная сумма правом крайнем;</li>
+<li>При указании контрольной суммы файла в спецификации, название файла размещается в четвертом столбце таблицы, а его контрольная сумма в правом крайнем;</li>
 <li>При указании контрольной суммы файла в спецификации, необходимо использовать маску <b>MD5: <контрольная сумма></b>;</li>
 <li>В документах должен использоваться штамп, который позволяет считывать указанные в нем значения.</li>
 </ul>
+<h3>Спецификации</h3>
 <table style=""width:60%"">
 <tr>
 <th>Документ</th>
@@ -278,12 +316,20 @@ object.style.display == 'block' ? object.style.display = 'none' : object.style.d
 Get-ChildItem -Path "$pathToFolder\*" -Include "*.doc*", "*.xls*" | Where-Object  {$_.BaseName -match 'SPC'} | % {
 Check-Specification -selectedFolder $pathToFolder -currentSpecification $_.Name
 }
+Add-Content "$PSScriptRoot\Test Report.html" "</table>
+
+<h3>Остальные документы</h3>
+<table style=""width:60%"">
+<tr>
+<th>Документ</th>
+<th>Штамп</th>
+</tr>" -Encoding UTF8
+Get-ChildItem -Path "$pathToFolder\*" -Include "*.doc*", "*.xls*" | Where-Object  {$_.BaseName -notmatch 'SPC'} | % {
+Check-Rest -selectedFolder $pathToFolder -currentDocument $_.Name
+}
 #========Statistics========
 Add-Content "$PSScriptRoot\Test Report.html" "</table>
 </div>
 </body>" -Encoding UTF8
 #========Statistics========
-Get-ChildItem -Path "$pathToFolder\*" -Include "*.doc*", "*.xls*" | Where-Object  {$_.BaseName -notmatch 'SPC'} | % {
-Check-Rest -selectedFolder $pathToFolder -currentDocument $_.Name
-}
 }
