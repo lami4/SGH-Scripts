@@ -20,10 +20,12 @@ Function Check-Specification ($selectedFolder, $currentSpecification) {
 #========Statistics========
 Add-Content -Path "$PSScriptRoot\Test Report.html" "
 <tr>
-<td>$currentSpecification</td>" -Encoding UTF8
+<td class=""filename"">$currentSpecification</td>" -Encoding UTF8
 #========Statistics========
     #function variable
     $no_match_count = 0
+    $referenceToFiles = 0
+    $referenceToDocs = 0
     #фильтр для excel файла
     $fileExtension = [IO.Path]::GetExtension($currentSpecification)
     if ($fileExtension -eq ".xlsx" -or $fileExtension -eq ".xls") {
@@ -61,19 +63,19 @@ Add-Content -Path "$PSScriptRoot\Test Report.html" "<td>" -Encoding UTF8
             [string]$valueInDocumentNameCell = ((($document.Tables.Item(1).Cell($i,4).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')
                 #добавить подсчет совпадений и вывод полученного значения в статистику (Ссылается на <количество документов>)
                 if ($valueInDocumentNameCell -match '\b(.{13})\d\d\.\d\d\.\d\d\.(.{4})\.\d\d\.\d\d([^\s]*)') {
+                    $referenceToDocs += 1
                     if ($valueInDocumentNameCell -notmatch '\b([A-Z]{6})-([A-Z]{2})-([A-Z]{2})-\d\d\.\d\d\.\d\d\.([a-z]{1})([A-Z]{3})\.\d\d\.\d\d([^\s]*)') {
                     Write-Host "Обозначение содержит русские буквы или недопустимые символы."
 #========Statistics========
 if ($no_match_count -eq 0) {
-Add-Content -Path "$PSScriptRoot\Test Report.html" "
-<font color=""red"" onclick=""my_f('div_$script:JSvariable')""><b>-</b></font>
+Add-Content -Path "$PSScriptRoot\Test Report.html" "<font color=""red"" onclick=""my_f('div_$script:JSvariable')""><b>-</b></font>
 <div class=""hide"" id=""div_$script:JSvariable"">
-Обозначение ""$valueInDocumentNameCell"" содержит русские буквы/недопустимые символы или не соответствует требованиям обозначения." -Encoding UTF8
+Обозначение ""$valueInDocumentNameCell"" содержит русские буквы/недопустимые символы или не соответствует маске." -Encoding UTF8
 $script:JSvariable += 1
 $no_match_count =+ 1
 } else {
 Add-Content -Path "$PSScriptRoot\Test Report.html" "<br>
-Обозначение ""$valueInDocumentNameCell"" содержит русские буквы/недопустимые символы или не соответствует требованиям обозначения." -Encoding UTF8
+Обозначение ""$valueInDocumentNameCell"" содержит русские буквы/недопустимые символы или не соответствует маске." -Encoding UTF8
 $no_match_count =+ 1
 }
 #========Statistics========
@@ -83,12 +85,12 @@ $no_match_count =+ 1
                 } else {
                 [string]$valueInMd5Cell = ((($document.Tables.Item(1).Cell($i,7).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')
                     if ($valueInMd5Cell -match '([m,M]\s*[d,D]\s*5)') {
+                    $referenceToFiles +=1
                         if ($valueInMd5Cell -notmatch '([m,M]\s*[d,D]\s*5)\s*:') {
                         Write-Host "Ячейка с MD5 оформлена некорректно. Отсутствует разделитель."
 #========Statistics========
 if ($no_match_count -eq 0) {
-Add-Content -Path "$PSScriptRoot\Test Report.html" "
-<font color=""red"" onclick=""my_f('div_$script:JSvariable')""><b>-</b></font>
+Add-Content -Path "$PSScriptRoot\Test Report.html" "<font color=""red"" onclick=""my_f('div_$script:JSvariable')""><b>-</b></font>
 <div class=""hide"" id=""div_$script:JSvariable"">
 Ячейка с MD5 для файла оформлена некорректно: Отсутствует разделитель." -Encoding UTF8
 $script:JSvariable += 1
@@ -106,11 +108,11 @@ $no_match_count =+ 1
                     #добавить подсчет файлов и вывод полученного значения в статистику (Ссылается на <количество документов>)
                     } else {
                         if ($valueInMd5Cell -match '[a-zA-Z0-9]{32}') {
+                        $referenceToFiles +=1
                         Write-Host "Ячейка с MD5 оформлена некорректно. Отсутствует ключ md5"
 #========Statistics========
 if ($no_match_count -eq 0) {
-Add-Content -Path "$PSScriptRoot\Test Report.html" "
-<font color=""red"" onclick=""my_f('div_$script:JSvariable')""><b>-</b></font>
+Add-Content -Path "$PSScriptRoot\Test Report.html" "<font color=""red"" onclick=""my_f('div_$script:JSvariable')""><b>-</b></font>
 <div class=""hide"" id=""div_$script:JSvariable"">
 Ячейка с MD5 оформлена некорректно: отсутствует ключ md5." -Encoding UTF8
 $script:JSvariable += 1
@@ -154,14 +156,22 @@ $script:JSvariable += 1
             } else {
             Write-Host "Значения из штампа получены."
 #========Statistics========
-Add-Content -Path "$PSScriptRoot\Test Report.html" "
-<td>
+Add-Content -Path "$PSScriptRoot\Test Report.html" "<td>
 <font color=""green""><b>+</b></font>
 </td>" -Encoding UTF8
 #========Statistics========
             }
         $document.Close()
         $word.Quit()
+#========Statistics========
+Add-Content -Path "$PSScriptRoot\Test Report.html" "<td>
+<b>$referenceToDocs</b>
+</td>
+<td>
+<b>$referenceToFiles</b>
+</td>
+</tr>"
+#========Statistics========
     Write-Host "-------End of document-------"   
     }
 }
@@ -219,16 +229,8 @@ td {
     text-align:center;
     background-color: #FFC;
 }
-#tableHeader {
-background-color: white;
-text-align: left;
-border: none;
-padding: 0px;
-}
-hr {
-	border-top: 1px solid #8c8b8b;
-	border-bottom: 1px solid #fff;
-    width: 80%;
+.filename {
+    text-align: left;  
 }
 .hide {
     display: none;
@@ -236,11 +238,6 @@ hr {
 	background-color: white;
 	text-align: left;
 	border: solid 1px black;
-}
-#indication {
-text-align: left;
-border: 0px;
-background-color: #bfbfbf;
 }
 </style>
 <script>
@@ -252,12 +249,29 @@ object.style.display == 'block' ? object.style.display = 'none' : object.style.d
 </head>
 <body>
 <div>
-<h3>Проверка на соответвствие требованиям оформления</h3>
-<table style=""width:80%"">
+<h3>Проверка на соответвствие требованиям оформления и составления документа</h3>
+<ul>
+<li>Файл спецификации должен содержать только одну таблицу, строки которой при необходимости переносятся на следующую страницу;</li>
+<li>При указании обозначения и наименования документа, обозначение размещается в четвертом столбцу таблицы, а наименование в пятом;</li>
+<li>Обозначение документов в спецификации должно состоять только из заглавных/строчных латинских букв, точки ('.'), знака минус ('-') и цифр;</li>
+<li>Обозначение документов в спецификации должно соответствовать маске <b>ББББББ-ББ-ББ-ЦЦ.ЦЦ.ЦЦ.бБББ.ЦЦ.ЦЦ</b>, где
+<ul>
+    <li>Б — заглавная латинская буква;</li>
+    <li>Ц — цифра;</li>
+    <li>б — строчная латинская буква.</li>
+</ul>
+</li>
+<li>При указании контрольной суммы файла в спецификации, название файла размещается в четвертом столбце таблицы, а его контрольная сумма правом крайнем;</li>
+<li>При указании контрольной суммы файла в спецификации, необходимо использовать маску <b>MD5: <контрольная сумма></b>;</li>
+<li>В документах должен использоваться штамп, который позволяет считывать указанные в нем значения.</li>
+</ul>
+<table style=""width:60%"">
 <tr>
 <th>Документ</th>
-<th>Обозначения/MD5</th> 
+<th>Обозначения/MD5/<br>Таблица</th> 
 <th>Штамп</th>
+<th>Ссылки на<br>документы</th>
+<th>Ссылки на<br>файлы</th>
 </tr>" -Encoding UTF8
 
 #========Statistics========
