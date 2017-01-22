@@ -526,3 +526,292 @@ Add-Content "$PSScriptRoot\Test Report.html" "
 </html>" -Encoding UTF8
 #========Statistics========
 Invoke-Item "$PSScriptRoot\Test Report.html"
+Release version ++++++++++++
+clear
+#Script arrays and variables
+$script:JSvariable = 0
+
+Function Select-Folder ($description)
+{
+    [System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms") | Out-Null
+    $objForm = New-Object System.Windows.Forms.FolderBrowserDialog
+    $objForm.Rootfolder = "Desktop"
+    $objForm.Description = $description
+    $Show = $objForm.ShowDialog()
+        If ($Show -eq "OK") {
+        Return $objForm.SelectedPath
+        } Else {
+        Exit
+        }
+}
+
+Function Compare-Strings ($SPCvalue, $valueFromDocument, $message, $positive, $negative) 
+{
+    if ($valueFromDocument -eq $SPCvalue) {
+    Write-Host "Hit for $message"
+#========Statistics========
+Add-Content "$PSScriptRoot\Test Report.html" "<td><font color=""green"" onclick=""my_f('div_$script:JSvariable')""><b>$positive</b></font>
+<div class=""hide"" id=""div_$script:JSvariable"">
+<table>
+<tr>
+<td id=""indication"">Спецификация:</td>
+<td id=""indication"">$SPCvalue</td>
+</tr>
+<tr>
+<td id=""indication"">Документ:</td>
+<td id=""indication"">$valueFromDocument</td>
+</tr>
+</table>
+</div>
+</td>" -Encoding UTF8
+$script:JSvariable += 1
+#========Statistics========
+    } else {
+    Write-Host "No hit for $message"
+#========Statistics========
+Add-Content "$PSScriptRoot\Test Report.html" "<td><font color=""red"" onclick=""my_f('div_$script:JSvariable')""><b>$negative</b></font>
+<div class=""hide"" id=""div_$script:JSvariable"">
+<table>
+<tr>
+<td id=""indication"">Спецификация:</td>
+<td id=""indication"">$SPCvalue</td>
+</tr>
+<tr>
+<td id=""indication"">Документ:</td>
+<td id=""indication"">$valueFromDocument</td>
+</tr>
+</table>
+</div>
+</td>" -Encoding UTF8
+$script:JSvariable += 1
+#========Statistics========
+    }
+}
+
+Function Get-DataFromSpecification ($selectedFolder, $currentSPCName) {
+    $documentNames = @()
+    $documentTitles = @()
+    $fileNames = @()
+    $fileMd5s = @()
+    $word = New-Object -ComObject Word.Application
+    $word.Visible = $false
+    $document = $word.Documents.Open("$selectedFolder\$currentSPCName")
+    [int]$rowCount = $document.Tables.Item(1).Rows.Count + 1
+    for ($i = 1; $i -lt $rowCount; $i++) {
+        [string]$valueInDocumentNameCell = ((($document.Tables.Item(1).Cell($i,4).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')
+        if ($valueInDocumentNameCell.length -ne 0) {
+        if ($valueInDocumentNameCell -match '\b([A-Z]{6})-([A-Z]{2})-([A-Z]{2})-\d\d\.\d\d\.\d\d\.([a-z]{1})([A-Z]{3})\.\d\d\.\d\d([^\s]*)') {
+            [string]$valueInDocumentTitleCell = (((($document.Tables.Item(1).Cell($i,5).Range.Text).Trim([char]0x0007)) -replace '\.', ' ' -replace '\s+', ' ' -replace 'ё', 'е').Trim(' ')).ToLower()
+            $documentNames += $valueInDocumentNameCell
+            $documentTitles += $valueInDocumentTitleCell
+            } else {
+            [string]$valueInFileMd5Cell = (((($document.Tables.Item(1).Cell($i,7).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')).ToLower()
+            if ($valueInFileMd5Cell -match '([m,M]\s*[d,D]\s*5)\s*:') {
+            [string]$valueInFileNameCell = ((($document.Tables.Item(1).Cell($i,4).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')
+            $fileMd5s += $valueInFileMd5Cell
+            $fileNames += $valueInFileNameCell
+            }
+            }
+        }
+        }
+    $document.Close()
+    $documentData = $documentNames, $documentTitles
+    $fileData = $fileNames, $fileMd5s
+#========Statistics========
+Add-Content "$PSScriptRoot\Test Report.html" "<tr>
+<th>Название документа/Файла</th>
+<th>Документ/Файл</th> 
+<th>Обозначение</th>
+<th>Наименование</th>
+<th>MD5</th>
+</tr>" -Encoding UTF8
+#========Statistics========
+    for ($i = 0; $i -lt $documentData[0].Length; $i++) {
+    $currentDocumentBaseName = $documentData[0][$i]
+#========Statistics========
+Add-Content "$PSScriptRoot\Test Report.html" "<tr>
+<td>$currentDocumentBaseName</td>" -Encoding UTF8
+#========Statistics========
+    $documentExistence = Test-Path -Path "$selectedFolder\$currentDocumentBaseName.*" -Exclude "*.pdf"
+        if ($documentExistence -eq $true) {
+#========Statistics========
+Add-Content "$PSScriptRoot\Test Report.html" "<td><font color=""green""><b>Найден</b></font></td>" -Encoding UTF8
+#========Statistics========
+            if ($currentDocumentBaseName -match 'SPC') {
+            #FOR SPC
+            Write-Host "***** PROCESSING SPECIFICAGTION ******"
+            $currentDocumentFullName = Get-ChildItem -Path "$selectedFolder\$currentDocumentBaseName.*" -Exclude "*.pdf"
+            Write-Host "$currentDocumentFullName найден."
+            $document = $word.Documents.Open("$currentDocumentFullName")
+            [string]$valueForDocTitle = (((($document.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(4, 5).Range.Text).Trim([char]0x0007)) -replace '\.', ' ' -replace '\s+', ' ' -replace 'ё', 'е').Trim(' ')).ToLower()
+            [string]$valueForDocName = ((($document.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(1, 6).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')
+            Write-Host $valueForDocTitle
+            Write-Host $valueForDocName
+            Compare-Strings -SPCvalue $documentData[0][$i] -valueFromDocument $valueForDocName -message "document name" -positive "Совпадает" -negative "Не совпадает"
+            Compare-Strings -SPCvalue $documentData[1][$i] -valueFromDocument $valueForDocTitle -message "document title" -positive "Совпадает" -negative "Не совпадает"
+            $document.Close()
+#========Statistics========
+Add-Content "$PSScriptRoot\Test Report.html" "<td>---</td>
+</tr>" -Encoding UTF8
+#========Statistics========
+            } else {
+            #FOR REST
+            $currentDocumentFullName = Get-ChildItem -Path "$selectedFolder\$currentDocumentBaseName.*" -Exclude "*.pdf"
+            Write-Host "$currentDocumentFullName найден."
+            $document = $word.Documents.Open("$currentDocumentFullName")
+            [string]$valueForDocTitle = (((($document.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(4, 5).Range.Text).Trim([char]0x0007)) -replace '\.', ' ' -replace '\s+', ' ' -replace 'ё', 'е').Trim(' ')).ToLower()
+            [string]$valueForDocName = ((($document.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(1, 6).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')
+            Write-Host $valueForDocTitle
+            Write-Host $valueForDocName
+            Compare-Strings -SPCvalue $documentData[0][$i] -valueFromDocument $valueForDocName -message "document name"  -positive "Совпадает" -negative "Не совпадает"
+            Compare-Strings -SPCvalue $documentData[1][$i] -valueFromDocument $valueForDocTitle -message "document title"  -positive "Совпадает" -negative "Не совпадает"
+            $document.Close()
+#========Statistics========
+Add-Content "$PSScriptRoot\Test Report.html" "<td>---</td>
+</tr>" -Encoding UTF8
+#========Statistics========
+            }
+        } else {
+#========Statistics========
+Add-Content "$PSScriptRoot\Test Report.html" "
+<td><font color=""red""><b>Не найден</b></font></td>
+<td>---</td>
+<td>---</td>
+<td>---</td>
+</tr>" -Encoding UTF8
+#========Statistics========
+        }
+    }
+    for ($i = 0; $i -lt $fileData[0].Length; $i++) {
+        $currentFileName = $fileData[0][$i]
+#========Statistics========
+Add-Content "$PSScriptRoot\Test Report.html" "<tr>
+<td>$currentFileName</td>" -Encoding UTF8
+#========Statistics========
+        $fileExistence = Test-Path -Path "$selectedFolder\$currentFileName"
+        if ($fileExistence -eq $true) {
+#========Statistics========
+Add-Content "$PSScriptRoot\Test Report.html" "<td><font color=""green""><b>Найден</b></font></td>
+<td>---</td>
+<td>---</td>" -Encoding UTF8
+#========Statistics========
+            Write-Host "File found"
+            $fileHash = Get-FileHash -Path "$selectedFolder\$currentFileName" -Algorithm MD5
+            $fileHashFromSpc = $fileData[1][$i] -split (":")
+            Compare-Strings -SPCvalue $fileHashFromSpc[1].Trim(' ') -valueFromDocument $fileHash.Hash.ToLower() -message "md5" -positive "Совпадает" -negative "Не совпадает"
+#========Statistics========
+Add-Content "$PSScriptRoot\Test Report.html" "</tr>" -Encoding UTF8
+#========Statistics========
+           # if ($fileHashFromSpc[1].Trim(' ') -eq $fileHash.Hash.ToLower()) {
+           # Write-Host "Hash sum matches"
+            #} else {
+            #Write-Host "Hash sum does not match"
+           #}
+        } else {
+        Write-Host "File not found"
+#========Statistics========
+Add-Content "$PSScriptRoot\Test Report.html" "
+<td><font color=""red""><b>Не найден</b></font></td>
+<td>---</td>
+<td>---</td>
+<td>---</td>
+</tr>" -Encoding UTF8
+#========Statistics========
+        }
+    }
+    Write-Host "-------------------------------"
+    $word.Quit()
+    Write-Host $documentNames
+    Write-Host $documentTitles
+    Write-Host $fileNames
+    Write-Host $fileMd5s
+#========Statistics========
+Add-Content "$PSScriptRoot\Test Report.html" "</table>
+<br>
+<hr>" -Encoding UTF8
+#========Statistics========
+}
+
+
+#script codee
+$pathToFolder = Select-Folder -description "Выберите папку, в которой нужно проверить входимость."
+#========Statistics========
+Add-Content "$PSScriptRoot\Test Report.html" "<!DOCTYPE html>
+<html lang=""ru"">
+<head>
+<meta charset=""utf-8"">
+<title>LiveDoc Report</title>
+<style type=""text/css"">
+div {
+font-family: Verdana, Arial, Helvetica, sans-serif;
+}
+table {
+    border-collapse: collapse;
+}
+th {
+padding: 3px;
+	border: 1px solid black;
+    text-align:center;
+    background-color: #bfbfbf;
+}
+td {
+	padding: 3px;
+	border: 1px solid black;
+    text-align:center;
+    background-color: #FFC;
+}
+#tableHeader {
+background-color: white;
+text-align: left;
+border: none;
+padding: 0px;
+}
+hr {
+	border-top: 1px solid #8c8b8b;
+	border-bottom: 1px solid #fff;
+    width: 80%;
+}
+.hide {
+    display: none;
+	position: absolute;
+	background-color: white;
+	text-align: left;
+	border: solid 1px black;
+}
+#indication {
+text-align: left;
+border: 0px;
+background-color: #bfbfbf;
+}
+</style>
+<script>
+function my_f(objName) {
+var object = document.getElementById(objName);
+object.style.display == 'block' ? object.style.display = 'none' : object.style.display = 'block'
+}
+</script>
+</head>
+<body>
+<div>
+<h3>Результаты сравнения</h3>" -Encoding UTF8
+#========Statistics========
+Measure-Command {
+Get-ChildItem "$pathToFolder\*.*" -File -Exclude "*.pdf" | Where-Object {$_.Name -match "SPC"} | % {
+#========Statistics========
+$curSpc = $_.Name
+Add-Content "$PSScriptRoot\Test Report.html" "
+<table style=""width:80%"">
+<tr>
+<td colspan=""5"" id=""tableHeader""><h2>$curSpc</h2></td>
+</tr>" -Encoding UTF8
+#========Statistics========
+Get-DataFromSpecification -selectedFolder $pathToFolder -currentSPCName $_.Name
+}
+}
+#========Statistics========
+Add-Content "$PSScriptRoot\Test Report.html" "
+</div>
+</body>
+</html>" -Encoding UTF8
+#========Statistics========
+Invoke-Item "$PSScriptRoot\Test Report.html"
