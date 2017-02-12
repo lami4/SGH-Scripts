@@ -262,4 +262,24 @@ approvals.Font.Name = "Times New Roman"
 approvals.ParagraphFormat.Alignment = wdAlignParagraphRight
 ActiveDocument.Tables(1).Tables(1).LeftPadding = PixelsToPoints(7)
 ActiveDocument.Tables(1).Tables(1).RightPadding = PixelsToPoints(7)
+'Place captions
+ActiveDocument.Sections(1).Headers(1).Shapes(1).RelativeHorizontalPosition = wdRelativeHorizontalPositionRightMarginArea
+ActiveDocument.Sections(1).Headers(1).Shapes(1).Left = CentimetersToPoints(-8.2)
+ActiveDocument.Sections(1).Headers(1).Shapes(1).RelativeVerticalPosition = wdRelativeVerticalPositionTopMarginArea
+ActiveDocument.Sections(1).Headers(1).Shapes(1).Top = CentimetersToPoints(0.4)
+ActiveDocument.Sections(1).Footers(1).Shapes(2).RelativeHorizontalPosition = wdRelativeHorizontalPositionRightMarginArea
+ActiveDocument.Sections(1).Footers(1).Shapes(2).Left = CentimetersToPoints(-8.2)
+ActiveDocument.Sections(1).Footers(1).Shapes(2).RelativeVerticalPosition = wdRelativeVerticalPositionBottomMarginArea
+ActiveDocument.Sections(1).Footers(1).Shapes(2).Top = CentimetersToPoints(0)
+End Sub
+Sub ApplyCustomPageMargins()
+With ActiveDocument.PageSetup
+    .TopMargin = CentimetersToPoints(1)
+    .BottomMargin = CentimetersToPoints(1)
+    .LeftMargin = CentimetersToPoints(0.7)
+    .RightMargin = CentimetersToPoints(0.9)
+    .FooterDistance = CentimetersToPoints(0.9)
+    .HeaderDistance = CentimetersToPoints(0.9)
+    .Gutter = CentimetersToPoints(0)
+End With
 End Sub
