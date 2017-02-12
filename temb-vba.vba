@@ -273,7 +273,7 @@ ActiveDocument.Sections(1).Footers(1).Shapes(2).RelativeVerticalPosition = wdRel
 ActiveDocument.Sections(1).Footers(1).Shapes(2).Top = CentimetersToPoints(0)
 End Sub
 Sub ApplyCustomPageMargins()
-With ActiveDocument.PageSetup
+With ActiveDocument.Sections(1).PageSetup
     .TopMargin = CentimetersToPoints(1)
     .BottomMargin = CentimetersToPoints(1)
     .LeftMargin = CentimetersToPoints(0.7)
@@ -283,3 +283,16 @@ With ActiveDocument.PageSetup
     .Gutter = CentimetersToPoints(0)
 End With
 End Sub
+Sub TestTable()
+izm = ActiveDocument.Tables(1).Cell(7, 3).Range.Text
+izveshenie = ActiveDocument.Tables(1).Cell(7, 5).Range.Text
+oboznachenie = ActiveDocument.Tables(1).Cell(6, 8).Range.Text
+nazvanie = ActiveDocument.Tables(1).Cell(9, 7).Range.Text
+izm = Mid(izm, 1, Len(izm) - 1)
+izveshenie = Mid(izveshenie, 1, Len(izveshenie) - 1)
+oboznachenie = Mid(oboznachenie, 1, Len(oboznachenie) - 1)
+nazvanie = Mid(nazvanie, 1, Len(nazvanie) - 1)
+MsgBox ("Изм.: " & izm & vbNewLine & "Номер извещения: " & izveshenie & vbNewLine & "Обозначение: " & oboznachenie & vbNewLine & "Название: " & nazvanie)
+End Sub
+
+
