@@ -10,7 +10,8 @@ nazvanie = Mid(nazvanie, 1, Len(nazvanie) - 1)
 MsgBox ("Изм.: " & izm & vbNewLine & "Номер извещения: " & izveshenie & vbNewLine & "Обозначение: " & oboznachenie & vbNewLine & vbNewLine & "Название: " & nazvanie)
 End Sub
 Sub ApplyTitleFormatting()
-ActiveDocument.Sections(1).Headers(2).PageNumbers.StartingNumber = 1
+ActiveDocument.Sections(1).Footers(1).PageNumbers.NumberStyle = wdPageNumberStyleArabic
+ActiveDocument.Sections(1).Footers(1).PageNumbers.StartingNumber = 1
 Set part1 = ActiveDocument.Tables(1).Cell(2, 1).Range
 part1.SetRange Start:=part1.Start, _
 End:=ActiveDocument.Tables(1).Cell(9, 2).Range.End
@@ -279,15 +280,15 @@ ActiveDocument.Tables(1).Tables(1).LeftPadding = PixelsToPoints(7)
 ActiveDocument.Tables(1).Tables(1).RightPadding = PixelsToPoints(7)
 'Place captions
 For Each Shape In ActiveDocument.Sections(1).Headers(wdHeaderFooterPrimary).Shapes
-If Shape.Width = 240.9 Then
+Confidential = Shape.TextFrame.TextRange.Text
+Confidential = Mid(Confidential, 1, Len(Confidential) - 1)
+If Shape.Width = 240.9 And Confidential = "Конфиденциально" Then
 Shape.RelativeHorizontalPosition = wdRelativeHorizontalPositionRightMarginArea
 Shape.Left = CentimetersToPoints(-8.2)
 Shape.RelativeVerticalPosition = wdRelativeVerticalPositionTopMarginArea
 Shape.Top = CentimetersToPoints(0.4)
 End If
-Next
-For Each Shape In ActiveDocument.Sections(1).Footers(wdHeaderFooterPrimary).Shapes
-If Shape.Width = 240.9 Then
+If Shape.Width = 240.9 And Confidential = "Коммерческая тайна" Then
 Shape.RelativeHorizontalPosition = wdRelativeHorizontalPositionRightMarginArea
 Shape.Left = CentimetersToPoints(-8.2)
 Shape.RelativeVerticalPosition = wdRelativeVerticalPositionBottomMarginArea
