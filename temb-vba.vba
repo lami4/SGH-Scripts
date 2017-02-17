@@ -269,12 +269,14 @@ header = ActiveDocument.Tables(1).Cell(1, 2)
 header.ParagraphFormat.SpaceAfter = 12
 header.Font.Name = "Times New Roman"
 header.Font.Bold = True
+header.Font.Size = 20
 header.ParagraphFormat.Alignment = wdAlignParagraphCenter
 'List of approvals
 approvals = ActiveDocument.Tables(1).Tables(1)
 approvals.ParagraphFormat.SpaceAfter = 0
 approvals.Font.Bold = False
 approvals.Font.Name = "Times New Roman"
+approvals.Font.Size = 12
 approvals.ParagraphFormat.Alignment = wdAlignParagraphRight
 ActiveDocument.Tables(1).Tables(1).LeftPadding = PixelsToPoints(7)
 ActiveDocument.Tables(1).Tables(1).RightPadding = PixelsToPoints(7)
