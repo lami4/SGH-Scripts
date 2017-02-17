@@ -23,25 +23,25 @@ $path = Select-Folder -description "Укажите папку с файлами,
 $word = New-Object -ComObject Word.Application
 $word.Visible = $false
 $excel = New-Object -ComObject Excel.Application
-$excel.Visible = $true
+$excel.Visible = $false
 $workbook = $excel.WorkBooks.Add()
 $worksheet = $workbook.Worksheets.Item(1)
 $worksheet.Cells.Item(1, 1) = "File name"
 $worksheet.Cells.Item(1, 2) = "Images"
 $row = 2
-Get-ChildItem -Path "$path/*.*" -Include "*.doc*" | % {
+Get-ChildItem -Path "$path\*.*" -Include "*.doc*" | % {
     Write-Host $_.Name "is being processed"
     $counter = 0
     $document = $word.Documents.Open($_.FullName)
     $iShapes = $document.InlineShapes
         foreach ($iShape in $iShapes) {
-            If ($iShape.Width -ge 112 -and $iShape.Height -ge 20) {
+            If ($iShape.Width -ge $width -and $iShape.Height -ge $height) {
             $counter += 1
             }
         }
     $Shapes = $document.Shapes
         foreach ($Shape in $Shapes) {
-            If ($Shape.Width -ge 112 -and $Shape.Height -ge 20) {
+            If ($Shape.Width -ge $width -and $Shape.Height -ge $height) {
             $counter += 1
             }
         }
@@ -65,3 +65,5 @@ $worksheet.Cells.Item($row, 1).Font.Bold = $true
 $formula = $row - 1
 $worksheet.Cells.Item($row, 2).Formula = "=СУММ(B2:B$formula)"
 $word.Quit()
+$workbook.SaveAs("$PSScriptRoot\ImageCountReport.xlsx")
+$excel.Quit()
