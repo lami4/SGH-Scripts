@@ -12,9 +12,9 @@ End Sub
 Sub ApplyTitleFormatting()
 ActiveDocument.Sections(1).Footers(wdHeaderFooterPrimary).Range.ParagraphFormat.SpaceAfter = 0
 ActiveDocument.Sections(1).Footers(wdHeaderFooterPrimary).Range.ParagraphFormat.SpaceBefore = 0
-ActiveDocument.Sections(1).Headers(wdHeaderFooterPrimary).Range.ParagraphFormat.Alignment = wdAlignParagraphLeft
-ActiveDocument.Sections(1).Headers(wdHeaderFooterPrimary).Range.Font.Name = "Arial"
-ActiveDocument.Sections(1).Headers(wdHeaderFooterPrimary).Range.Font.Size = 10
+ActiveDocument.Sections(1).Footers(wdHeaderFooterPrimary).Range.ParagraphFormat.Alignment = wdAlignParagraphLeft
+ActiveDocument.Sections(1).Footers(wdHeaderFooterPrimary).Range.Font.Name = "Arial"
+ActiveDocument.Sections(1).Footers(wdHeaderFooterPrimary).Range.Font.Size = 10
 ActiveDocument.Sections(1).Headers(wdHeaderFooterPrimary).Range.ParagraphFormat.SpaceBefore = 0
 ActiveDocument.Sections(1).Headers(wdHeaderFooterPrimary).Range.ParagraphFormat.SpaceBefore = 0
 ActiveDocument.Sections(1).Headers(wdHeaderFooterPrimary).Range.ParagraphFormat.Alignment = wdAlignParagraphLeft
