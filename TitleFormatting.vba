@@ -10,6 +10,13 @@ nazvanie = Mid(nazvanie, 1, Len(nazvanie) - 1)
 MsgBox ("Изм.: " & izm & vbNewLine & "Номер извещения: " & izveshenie & vbNewLine & "Обозначение: " & oboznachenie & vbNewLine & vbNewLine & "Название: " & nazvanie)
 End Sub
 Sub ApplyTitleFormatting()
+ActiveDocument.Sections(1).Footers(wdHeaderFooterPrimary).Range.ParagraphFormat.SpaceAfter = 0
+ActiveDocument.Sections(1).Footers(wdHeaderFooterPrimary).Range.ParagraphFormat.SpaceBefore = 0
+ActiveDocument.Sections(1).Headers(wdHeaderFooterPrimary).Range.ParagraphFormat.SpaceBefore = 0
+ActiveDocument.Sections(1).Headers(wdHeaderFooterPrimary).Range.ParagraphFormat.SpaceBefore = 0
+ActiveDocument.Sections(1).Headers(wdHeaderFooterPrimary).Range.ParagraphFormat.Alignment = wdAlignParagraphLeft
+ActiveDocument.Sections(1).Headers(wdHeaderFooterPrimary).Range.Font.Name = "Arial"
+ActiveDocument.Sections(1).Headers(wdHeaderFooterPrimary).Range.Font.Size = 8
 ActiveDocument.Sections(1).Footers(1).PageNumbers.NumberStyle = wdPageNumberStyleArabic
 ActiveDocument.Sections(1).Footers(1).PageNumbers.StartingNumber = 1
 Set part1 = ActiveDocument.Tables(1).Cell(2, 1).Range
