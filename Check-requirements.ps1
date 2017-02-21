@@ -1,4 +1,3 @@
-clear
 #Global variables
 $script:JSvariable = 0
 #Functions
@@ -203,10 +202,10 @@ Excel файл. Требуется ручная проверка.
     $document = $word.Documents.Open("$selectedFolder\$currentDocument")
     Write-Host "$currentDocument"
     #checks values in cells
-    [string]$valueInDocVersionCell = try {$document.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(2, 1).Range.Text} catch {""}
-    [string]$valueInNotificationNoCell = try {$document.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(2, 3).Range.Text} catch {""}
-    [string]$valueInDocNameCell = try {$document.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(1, 6).Range.Text} catch {""}
-    [string]$valueInDocTitleCell = try {$document.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(4, 5).Range.Text} catch {""}
+    [string]$valueInDocVersionCell = try {$document.Tables.Item(1).Cell(7, 3).Range.Text} catch {""}
+    [string]$valueInNotificationNoCell = try {$document.Tables.Item(1).Cell(7, 5).Range.Text} catch {""}
+    [string]$valueInDocNameCell = try {$document.Tables.Item(1).Cell(6, 8).Range.Text} catch {""}
+    [string]$valueInDocTitleCell = try {$document.Tables.Item(1).Cell(9, 7).Range.Text} catch {""}
             if ($valueInDocVersionCell.Length -eq 0 -or $valueInNotificationNoCell.Length -eq 0 -or $valueInDocNameCell.Length -eq 0 -or $valueInDocTitleCell.Length -eq 0) {
             Write-Host "Невозможно получить значения из штампа. Штамп либо отсутствует, либо неверно заверстан."
 #========Statistics========
@@ -220,6 +219,7 @@ Add-Content -Path "$PSScriptRoot\Test Report.html" "<tr>
 </div>
 </td>
 </tr>" -Encoding UTF8
+$script:JSvariable += 1
 #========Statistics========
             } else {
             Write-Host "Значения из штампа получены."
@@ -298,9 +298,15 @@ object.style.display == 'block' ? object.style.display = 'none' : object.style.d
     <li>б — строчная латинская буква.</li>
 </ul>
 </li>
-<li>При указании контрольной суммы файла в спецификации, название файла размещается в четвертом столбце таблицы, а его контрольная сумма в правом крайнем;</li>
-<li>При указании контрольной суммы файла в спецификации, необходимо использовать маску <b>MD5: <контрольная сумма></b>;</li>
-<li>В документах должен использоваться штамп, который позволяет считывать указанные в нем значения.</li>
+<li>При указании контрольной суммы файла, название файла указывается в четвертом столбце таблицы, а его контрольная сумма в правом крайнем;</li>
+<li>При указании контрольной суммы файла, необходимо использовать маску <b>MD5: <контрольная сумма></b>, где
+<ul>
+    <li>MD5: — слово-ключ, с помощью которого скрипт понимает, что в данной ячейке указана контрольная сумма. Использование знака ':' обязательно, иначе скрипт не сможет забрать значение контрольной суммы;</li>
+    <li><контрольная сумма> — контрольная сумма файла, рассчитанная по алгоритму MD5. Например, 988C393310E97032890DB2BD6BD74135;</li>
+</ul>
+</li>
+<li>При указании названия файла, оно должно обязательно иметь расширение. Например, meteo-server-6.3.0.11.<b>war</b>;</li>
+<li>Во всех документах должен использоваться штамп, который позволяет считывать указанные в нем значения.</li>
 </ul>
 <h3>Спецификации</h3>
 <table style=""width:60%"">
@@ -313,11 +319,21 @@ object.style.display == 'block' ? object.style.display = 'none' : object.style.d
 </tr>" -Encoding UTF8
 
 #========Statistics========
-Get-ChildItem -Path "$pathToFolder\*" -Include "*.doc*", "*.xls*" | Where-Object  {$_.BaseName -match 'SPC'} | % {
-Check-Specification -selectedFolder $pathToFolder -currentSpecification $_.Name
-}
+$spcCount = Get-ChildItem -Path "$pathToFolder\*" -Include "*.doc*", "*.xls*" | Where-Object  {$_.BaseName -match 'SPC'}
+    if ($spcCount.Count -eq 0) {
+#========Statistics========
+Add-Content -Path "$PSScriptRoot\Test Report.html" "<tr>
+<td colspan=""5"">
+Спецификации не найдены
+</td>
+</tr>"
+#========Statistics========
+    } else {
+    Get-ChildItem -Path "$pathToFolder\*" -Include "*.doc*", "*.xls*" | Where-Object  {$_.BaseName -match 'SPC'} | % {
+    Check-Specification -selectedFolder $pathToFolder -currentSpecification $_.Name
+    }
+    }
 Add-Content "$PSScriptRoot\Test Report.html" "</table>
-
 <h3>Остальные документы</h3>
 <table style=""width:60%"">
 <tr>
