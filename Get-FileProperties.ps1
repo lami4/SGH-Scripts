@@ -30,6 +30,7 @@ $worksheet.Cells.Item(1, 1) = "Property name"
 $worksheet.Cells.Item(1, 2) = "Property value"
 $worksheet.Cells.Item(1, 3) = "Property holder"
 $worksheet.Cells.Item(1, 4) = "Processed files"
+$worksheet.Cells.Item(1, 5) = "Property type"
 Get-ChildItem -Path "$selectedPath\*.*" -Include "*.doc*" | % {
 Write-Host "Taking properties from" $_.Name
 $document = $application.documents.open($_.FullName)
@@ -49,6 +50,7 @@ $pn = [System.__ComObject].InvokeMember(“name”,$binding::GetProperty,$null,$
     $worksheet.Cells.Item($row, 1) = "$propertyName"
     $worksheet.Cells.Item($row, 2) = "$propertyValue"
     $worksheet.Cells.Item($row, 3) = $document.Name
+    $worksheet.Cells.Item($row, 5) = "B"
     $row += 1
     }
 }
@@ -68,6 +70,7 @@ $pn = [System.__ComObject].InvokeMember(“name”,$binding::GetProperty,$null,$
     $worksheet.Cells.Item($row, 1) = "$propertyName"
     $worksheet.Cells.Item($row, 2) = "$propertyValue"
     $worksheet.Cells.Item($row, 3) = $document.Name
+    $worksheet.Cells.Item($row, 5) = "C"
     $row += 1
     }
 }
@@ -76,21 +79,22 @@ $listOfFiles += 1
 Write-Host "------End of document-----"
 $document.Close()
 }
-$worksheet.Columns.Item("A").ColumnWidth = 45
-$worksheet.Columns.Item("B").ColumnWidth = 45
-$worksheet.Columns.Item("C").ColumnWidth = 45
+$worksheet.Columns.Item("A").ColumnWidth = 20
+$worksheet.Columns.Item("B").ColumnWidth = 60
+$worksheet.Columns.Item("C").ColumnWidth = 40
+$worksheet.Columns.Item("D").ColumnWidth = 40
+$worksheet.Columns.Item("E").ColumnWidth = 20
+$worksheet.Cells.Item(1, 1).Font.Bold = $true
+$worksheet.Cells.Item(1, 2).Font.Bold = $true
+$worksheet.Cells.Item(1, 3).Font.Bold = $true
+$worksheet.Cells.Item(1, 4).Font.Bold = $true
+$worksheet.Cells.Item(1, 5).Font.Bold = $true
+$worksheet.Cells.Item(1, 1).HorizontalAlignment = -4108
+$worksheet.Cells.Item(1, 2).HorizontalAlignment = -4108
+$worksheet.Cells.Item(1, 3).HorizontalAlignment = -4108
+$worksheet.Cells.Item(1, 4).HorizontalAlignment = -4108
+$worksheet.Cells.Item(1, 5).HorizontalAlignment = -4108
 $application.quit()
 $workbook.SaveAs("$PSScriptRoot\Properties.xlsx")
 $workbook.Close()
 $excel.Quit()
-<#
-$excel = New-Object -ComObject Excel.Application
-$excel.Visible = $false
-$workbook = $excel.WorkBooks.Open("C:\Users\Светлана\Desktop\Properties.xlsx")
-$worksheet = $workbook.Worksheets.Item(1)
-$xlup = -4121
-$kek = $worksheet.Range("B2").End($xlup).row
-Write-Host $kek
-$workbook.Close()
-$excel.Quit()
-#>
