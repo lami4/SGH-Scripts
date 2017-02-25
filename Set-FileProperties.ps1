@@ -50,7 +50,7 @@ $files += $valueInCell
 for ($i = 0; $i -lt $files.Count; $i++) {
     $currentFileName = $files[$i]
     $document = $application.documents.open("$selectedFolder\$currentFileName")
-    $properties = $document.BuiltInDocumentProperties
+    $builtInProperties = $document.BuiltInDocumentProperties
     $customProperties = $document.CustomDocumentProperties
     $binding = “System.Reflection.BindingFlags” -as [type]
     $range = $worksheet.Range("C:C")
@@ -71,7 +71,7 @@ for ($i = 0; $i -lt $files.Count; $i++) {
     Write-Host "Type:" $propertyType
         if ($propertyType -eq "B") {
         #set new translated values for BuiltInProperties
-        Set-Properties -PropertyName $propertyName -PropertyValue $propertyValue -DocumentProperties $properties -Binding $binding
+        Set-Properties -PropertyName $propertyName -PropertyValue $propertyValue -DocumentProperties $builtInProperties -Binding $binding
         } else {
         #set new translated values for CustomProperties
         Set-Properties -PropertyName $propertyName -PropertyValue $propertyValue -DocumentProperties $customProperties -Binding $binding
