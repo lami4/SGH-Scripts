@@ -25,6 +25,11 @@ Function Select-Folder ($description)
         }
 }
 
+Function Set-Properties ($PropertyName, $PropertyValue, $DocumentProperties, $Binding) {
+$pn = [System.__ComObject].InvokeMember(“item”,$Binding::GetProperty,$null,$DocumentProperties,$PropertyName)
+[System.__ComObject].InvokeMember(“value”,$Binding::SetProperty,$null,$pn,$PropertyValue)
+}
+
 $selectedFolder = Select-Folder -description "Select folder with files whose properties are to be changed"
 $selectedFile = Select-File
 #word
@@ -45,10 +50,13 @@ $files += $valueInCell
 for ($i = 0; $i -lt $files.Count; $i++) {
     $currentFileName = $files[$i]
     $document = $application.documents.open("$selectedFolder\$currentFileName")
+    $properties = $document.BuiltInDocumentProperties
+    $customProperties = $document.CustomDocumentProperties
+    $binding = “System.Reflection.BindingFlags” -as [type]
     $range = $worksheet.Range("C:C")
     $target = $range.Find($files[$i])
         if ($target -eq $null) {
-        Write-Host "No properties for" $files[$i]
+        Write-Host "No properties to set for" $files[$i]
         } else {
         $firstHit = $target
         Do
@@ -63,10 +71,10 @@ for ($i = 0; $i -lt $files.Count; $i++) {
     Write-Host "Type:" $propertyType
         if ($propertyType -eq "B") {
         #set new translated values for BuiltInProperties
-        Write-Host "This is B"
+        Set-Properties -PropertyName $propertyName -PropertyValue $propertyValue -DocumentProperties $properties -Binding $binding
         } else {
         #set new translated values for CustomProperties
-        Write-Host "This is C"
+        Set-Properties -PropertyName $propertyName -PropertyValue $propertyValue -DocumentProperties $customProperties -Binding $binding
         }
         $target = $range.FindNext($target)
         }
