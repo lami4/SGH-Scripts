@@ -31,7 +31,7 @@ $worksheet.Cells.Item(1, 2) = "Property value"
 $worksheet.Cells.Item(1, 3) = "Property holder"
 $worksheet.Cells.Item(1, 4) = "Processed files"
 $worksheet.Cells.Item(1, 5) = "Property type"
-Get-ChildItem -Path "$selectedPath\*.*" -Include "*.doc*" | % {
+Get-ChildItem -Path "$selectedPath\*.*" -Include "*.doc*", "*.dot*" | % {
 Write-Host "Taking properties from" $_.Name
 $document = $application.documents.open($_.FullName)
 $properties = $document.BuiltInDocumentProperties
@@ -94,7 +94,7 @@ $worksheet.Cells.Item(1, 2).HorizontalAlignment = -4108
 $worksheet.Cells.Item(1, 3).HorizontalAlignment = -4108
 $worksheet.Cells.Item(1, 4).HorizontalAlignment = -4108
 $worksheet.Cells.Item(1, 5).HorizontalAlignment = -4108
-$application.quit()
+$application.Quit()
 $workbook.SaveAs("$PSScriptRoot\Properties.xlsx")
 $workbook.Close()
 $excel.Quit()
