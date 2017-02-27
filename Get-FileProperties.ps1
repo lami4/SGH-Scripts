@@ -77,7 +77,7 @@ $pn = [System.__ComObject].InvokeMember(“name”,$binding::GetProperty,$null,$
 $worksheet.Cells.Item($listOfFiles, 4) = $_.Name
 $listOfFiles += 1
 Write-Host "------End of document-----"
-$document.Close()
+$document.Close([ref]0)
 }
 $worksheet.Columns.Item("A").ColumnWidth = 20
 $worksheet.Columns.Item("B").ColumnWidth = 60
