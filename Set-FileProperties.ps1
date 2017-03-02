@@ -40,7 +40,7 @@ $pn = [System.__ComObject].InvokeMember(“item”,$Binding::GetProperty,$null,$
 [System.__ComObject].InvokeMember(“value”,$Binding::SetProperty,$null,$pn,$PropertyValue)
 }
 
-Input-YesOrNo -Question "Do you want to update fields in documents?" -BoxTitle "Update document fields"
+Input-YesOrNo -Question "Do you want to update fields and TOC in documents?" -BoxTitle "Update document fields"
 $selectedFolder = Select-Folder -description "Select folder with files whose properties are to be changed"
 $selectedFile = Select-File
 #word
@@ -92,7 +92,19 @@ for ($i = 0; $i -lt $files.Count; $i++) {
         While ($target.AddressLocal() -ne $firstHit.AddressLocal())
         }
 if ($script:yesNoUserInput -eq 1) {
+#updates fields in the document body
 $document.Fields.Update()
+#updates fields in footers and headers
+$count = $document.Sections.Count
+for ($i = 1; $i -le $count; $i++) {
+$range = $document.Sections.Item($i).Headers.Item(1).Range
+$range.Fields.Update()
+$range = $document.Sections.Item($i).Footers.Item(1).Range
+$range.Fields.Update()
+#updates TOC
+$document.TablesOfContents.Item(1).Update()
+$document.TablesOfContents.Item(1).UpdatePageNumbers()
+}
 }
 Write-Host "End of document"
 $document.Close()
