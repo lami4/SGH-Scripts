@@ -1,5 +1,15 @@
 $files = @()
+$script:yesNoUserInput = 0
+
 #Functions
+Function Input-YesOrNo ($Question, $BoxTitle) {
+$a = New-Object -ComObject wscript.shell
+$intAnswer = $a.popup($Question,0,$BoxTitle,4)
+If ($intAnswer -eq 6) {
+  $script:yesNoUserInput += 1
+}
+}
+
 Function Select-File {
 Add-Type -AssemblyName System.Windows.Forms
 $f = new-object Windows.Forms.OpenFileDialog
@@ -30,6 +40,7 @@ $pn = [System.__ComObject].InvokeMember(“item”,$Binding::GetProperty,$null,$
 [System.__ComObject].InvokeMember(“value”,$Binding::SetProperty,$null,$pn,$PropertyValue)
 }
 
+Input-YesOrNo -Question "Do you want to update fields in documents?" -BoxTitle "Update document fields"
 $selectedFolder = Select-Folder -description "Select folder with files whose properties are to be changed"
 $selectedFile = Select-File
 #word
@@ -80,10 +91,13 @@ for ($i = 0; $i -lt $files.Count; $i++) {
         }
         While ($target.AddressLocal() -ne $firstHit.AddressLocal())
         }
+if ($script:yesNoUserInput -eq 1) {
+$document.Fields.Update()
+}
 Write-Host "End of document"
 $document.Close()
 }
 Write-Host $files
 $workbook.Close()
 $excel.Quit()
-$application.quit()
+$application.Quit()
