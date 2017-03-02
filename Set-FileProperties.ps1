@@ -58,8 +58,11 @@ for ($i = 2; $i -le $lastNonemptyCellInColumn; $i++) {
 [string]$valueInCell = $worksheet.Cells.Item($i, "D").Value()
 $files += $valueInCell
 }
+Write-Host $files.Count
+Write-Host $files
 for ($i = 0; $i -lt $files.Count; $i++) {
     $currentFileName = $files[$i]
+    Write-Host "Processing $currentFileName..."
     $document = $application.documents.open("$selectedFolder\$currentFileName")
     $builtInProperties = $document.BuiltInDocumentProperties
     $customProperties = $document.CustomDocumentProperties
@@ -95,13 +98,16 @@ if ($script:yesNoUserInput -eq 1) {
 #updates fields in the document body
 $document.Fields.Update()
 #updates fields in footers and headers
-$count = $document.Sections.Count
-for ($i = 1; $i -le $count; $i++) {
-$range = $document.Sections.Item($i).Headers.Item(1).Range
-$range.Fields.Update()
-$range = $document.Sections.Item($i).Footers.Item(1).Range
-$range.Fields.Update()
+$sectionCount = $document.Sections.Count
+for ($t = 1; $t -le $sectionCount; $t++) {
+$rangeHeader = $document.Sections.Item($t).Headers.Item(1).Range
+$rangeHeader.Fields.Update()
+$rangeFooter = $document.Sections.Item($t).Footers.Item(1).Range
+$rangeFooter.Fields.Update()
+}
 #updates TOC
+$tocCount = $document.TablesOfContents.Count
+if ($tocCount -ge 1) {
 $document.TablesOfContents.Item(1).Update()
 $document.TablesOfContents.Item(1).UpdatePageNumbers()
 }
