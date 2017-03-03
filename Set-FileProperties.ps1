@@ -40,7 +40,7 @@ $pn = [System.__ComObject].InvokeMember(“item”,$Binding::GetProperty,$null,$
 [System.__ComObject].InvokeMember(“value”,$Binding::SetProperty,$null,$pn,$PropertyValue)
 }
 
-Input-YesOrNo -Question "Do you want to update fields and TOC in documents?" -BoxTitle "Update document fields"
+Input-YesOrNo -Question "Do you want to update fields and TOCs in documents?" -BoxTitle "Update document fields"
 $selectedFolder = Select-Folder -description "Select folder with files whose properties are to be changed"
 $selectedFile = Select-File
 #word
@@ -63,6 +63,9 @@ Write-Host $files
 for ($i = 0; $i -lt $files.Count; $i++) {
     $currentFileName = $files[$i]
     Write-Host "Processing $currentFileName..."
+    #checks if the document exists
+    $existence = Test-Path -Path "$selectedFolder\$currentFileName"
+    if ($existence -eq $true) {
     $document = $application.documents.open("$selectedFolder\$currentFileName")
     $builtInProperties = $document.BuiltInDocumentProperties
     $customProperties = $document.CustomDocumentProperties
@@ -110,10 +113,14 @@ $tocCount = $document.TablesOfContents.Count
 if ($tocCount -ge 1) {
 $document.TablesOfContents.Item(1).Update()
 $document.TablesOfContents.Item(1).UpdatePageNumbers()
+#unhide hidden text 
+$wholestory = $document.Range()
+$wholestory.Font.Hidden = $false
 }
 }
 Write-Host "End of document"
 $document.Close()
+} else {Write-Host "Document not found"}
 }
 Write-Host $files
 $workbook.Close()
