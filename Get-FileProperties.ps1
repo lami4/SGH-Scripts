@@ -25,7 +25,11 @@ $worksheet = $workbook.Worksheets.Item(1)
 #word
 $application = New-Object -ComObject word.application
 $application.Visible = $false
+$worksheet.Range("A:A").NumberFormat = "@"
 $worksheet.Range("B:B").NumberFormat = "@"
+$worksheet.Range("C:C").NumberFormat = "@"
+$worksheet.Range("D:D").NumberFormat = "@"
+$worksheet.Range("E:E").NumberFormat = "@"
 $worksheet.Cells.Item(1, 1) = "Property name"
 $worksheet.Cells.Item(1, 2) = "Property value"
 $worksheet.Cells.Item(1, 3) = "Property holder"
