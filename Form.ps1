@@ -1,3 +1,15 @@
+clear
+$script:SetPathToFileWithTranslatedProperties = $false
+$script:TranslateBuiltInProperties = $false
+$script:TranslateCustomProperties = $false
+$script:UpdateFieldsInDocumentBody = $false
+$script:UpdateFieldsInFootersAndHeaders = $false
+$script:UpdateTOC = $false
+$script:UnhideHiddenText = $false
+$script:RunATFmacro = $false
+$script:RunLWIDBmacro = $false
+
+Function Custom-Form {
 $dialog = New-Object System.Windows.Forms.Form
 $dialog.ShowIcon = $false
 $dialog.AutoSize = $true
@@ -22,7 +34,13 @@ $buttonRunScript.Location = $SystemDrawingPoint
 $SystemWindowsFormsMargin = New-Object System.Windows.Forms.Padding
 $SystemWindowsFormsMargin.Bottom = 25
 $buttonRunScript.Margin = $SystemWindowsFormsMargin
-$buttonRunScript.Add_Click($onClickRunScript)
+$buttonRunScript.Add_Click({
+                            if ($checkboxTranslateBuiltInProperties.Checked -or $checkboxTranslateCustomProperties.Checked) {$script:SetPathToFileWithTranslatedProperties = $true};
+                            if ($checkboxTranslateBuiltInProperties.Checked) {$script:TranslateBuiltInProperties = $true};
+                            if ($checkboxTranslateCustomProperties.Checked) {$script:TranslateCustomProperties = $true};
+                            if ($checkboxUpdateFieldsBody.Checked) {$script:UpdateFieldsInDocumentBody = $true};
+                            if ($checkboxUpdateFieldsFooterHeader.Checked) {$script:UpdateFieldsInFootersAndHeaders = $true};
+                            $dialog.Close()})
 $buttonRunScript.Enabled = $false
 #Exit
 $buttonExit = New-Object System.Windows.Forms.Button
@@ -36,7 +54,7 @@ $buttonExit.Location = $SystemDrawingPoint
 $SystemWindowsFormsMargin = New-Object System.Windows.Forms.Padding
 $SystemWindowsFormsMargin.Bottom = 25
 $buttonExit.Margin = $SystemWindowsFormsMargin
-$buttonExit.Add_Click($onClickRunScript)
+$buttonExit.Add_Click({$dialog.Close();Break})
 #Checkboxes
 #Translate Built-In Properties
 $checkboxTranslateBuiltInProperties = New-Object System.Windows.Forms.CheckBox
@@ -111,7 +129,6 @@ $SystemDrawingPoint.Y = 200
 $checkboxRunLWIDBmacro.Location = $SystemDrawingPoint
 $checkboxRunLWIDBmacro.Add_CheckStateChanged({if ($checkboxRunLWIDBmacro.Checked -or $checkboxTranslateBuiltInProperties.Checked -or $checkboxTranslateCustomProperties.Checked -or $checkboxUpdateFieldsBody.Checked -or $checkboxUpdateFieldsFooterHeader.Checked -or $checkboxUpdateTOC.Checked -or $checkboxUnhideHiddenText.Checked -or $checkboxRunATFmacro.Checked) {$buttonRunScript.Enabled = $true} else {$buttonRunScript.Enabled = $false}})
 #Event handler
-$onClickRunScript = {if ($checkboxTranslateBuiltInProperties.Checked -or $checkboxTranslateCustomProperties.Checked) {Write-Host "Script started"} else {Write-Host "Script cannot be started"}}
 $dialog.Controls.Add($checkboxTranslateBuiltInProperties)
 $dialog.Controls.Add($checkboxTranslateCustomProperties)
 $dialog.Controls.Add($checkboxUpdateFieldsBody)
@@ -123,3 +140,10 @@ $dialog.Controls.Add($checkboxRunLWIDBmacro)
 $dialog.Controls.Add($buttonRunScript)
 $dialog.Controls.Add($buttonExit)
 $dialog.ShowDialog()
+}
+Custom-Form
+Write-Host "$script:SetPathToFileWithTranslatedProperties"
+Write-Host "$script:TranslateBuiltInProperties"
+Write-Host "$script:TranslateCustomProperties"
+Write-Host "$script:UpdateFieldsInDocumentBody"
+Write-Host "$script:UpdateFieldsInFootersAndHeaders"
