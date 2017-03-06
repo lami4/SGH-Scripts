@@ -13,6 +13,7 @@ $script:RunATFmacro = $false
 $script:RunLWIDBmacro = $false
 
 Function Custom-Form {
+Add-Type -AssemblyName System.Windows.Forms
 $dialog = New-Object System.Windows.Forms.Form
 $dialog.ShowIcon = $false
 $dialog.AutoSize = $true
@@ -70,7 +71,7 @@ $dialog.DialogResult = "Cancel"
 #Translate Built-In Properties
 $checkboxTranslateBuiltInProperties = New-Object System.Windows.Forms.CheckBox
 $checkboxTranslateBuiltInProperties.Width = 300
-$checkboxTranslateBuiltInProperties.Text = "Translate Document Built-In Properties"
+$checkboxTranslateBuiltInProperties.Text = "Replace Document Built-In Properties"
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 25
 $SystemDrawingPoint.Y = 25
@@ -79,7 +80,7 @@ $checkboxTranslateBuiltInProperties.Add_CheckStateChanged({if ($checkboxRunLWIDB
 #Translate Custom Properties
 $checkboxTranslateCustomProperties = New-Object System.Windows.Forms.CheckBox
 $checkboxTranslateCustomProperties.Width = 300
-$checkboxTranslateCustomProperties.Text = "Translate Document Custom Properties"
+$checkboxTranslateCustomProperties.Text = "Replace Document Custom Properties"
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 25
 $SystemDrawingPoint.Y = 50
