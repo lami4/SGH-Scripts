@@ -319,3 +319,29 @@ With ActiveDocument.Sections(1).PageSetup
 .Gutter = CentimetersToPoints(0)
 End With
 End Sub
+Sub PositionCapturesInDocument()
+For Each Shape In ActiveDocument.Sections(1).Headers(wdHeaderFooterPrimary).Shapes
+ImageText = Shape.TextFrame.TextRange.Text
+ImageText = Mid(ImageText, 1, Len(ImageText) - 1)
+If ImageText = "Коммерческая тайна" And Not Shape.Width = 240.9 Then
+Shape.Height = CentimetersToPoints(0.8)
+Shape.Width = CentimetersToPoints(8.6)
+Shape.TextFrame.TextRange.ParagraphFormat.Alignment = wdAlignParagraphRight
+Shape.TextFrame.TextRange.Font.ColorIndex = wdBlack
+Shape.RelativeHorizontalPosition = wdRelativeHorizontalPositionPage
+Shape.Left = CentimetersToPoints(11.55)
+Shape.RelativeVerticalPosition = wdRelativeVerticalPositionPage
+Shape.Top = CentimetersToPoints(28)
+End If
+If ImageText = "Конфиденциально" And Not Shape.Width = 240.9 Then
+Shape.Height = CentimetersToPoints(0.8)
+Shape.Width = CentimetersToPoints(8.6)
+Shape.TextFrame.TextRange.ParagraphFormat.Alignment = wdAlignParagraphRight
+Shape.TextFrame.TextRange.Font.ColorIndex = wdBlack
+Shape.RelativeHorizontalPosition = wdRelativeHorizontalPositionPage
+Shape.Left = CentimetersToPoints(11.55)
+Shape.RelativeVerticalPosition = wdRelativeVerticalPositionTopMarginArea
+Shape.Top = CentimetersToPoints(0.7)
+End If
+Next
+End Sub
