@@ -1,3 +1,4 @@
+$script:yesNoUserInput = 0
 #global arrays
 $fileNames = @()
 $fileMD5s = @()
@@ -16,12 +17,41 @@ Function Select-Folder ($description)
         Exit
         }
 }
+
+Function Input-YesOrNo ($Question, $BoxTitle) {
+$a = New-Object -ComObject wscript.shell
+$intAnswer = $a.popup($Question,0,$BoxTitle,4)
+If ($intAnswer -eq 6) {
+  $script:yesNoUserInput = 1
+}
+}
+
+Function Prompt-Overwrite ($FileName, $TestPath, $FileFullName, $Statistics) {
+$check = Test-Path -Path "$TestPath\$FileName"
+    if ($check -eq $false) {
+    Copy-Item -Path $FileFullName -Destination "$TestPath"
+    Add-Content -Path "$PSScriptRoot\Comparison Report.html" -Value "        <td>Copied to '$Statistics'</td>
+</tr>"
+    } else {
+    Input-YesOrNo -Question "$FileName already exists in $TestPath. Do you want to overwrite it?"
+        if ($script:yesNoUserInput -eq 1) {
+        Copy-Item -Path $FileFullName -Destination "$TestPath"
+        Add-Content -Path "$PSScriptRoot\Comparison Report.html" -Value "        <td>Copied to '$Statistics'</td>
+</tr>"
+        } else {
+        Add-Content -Path "$PSScriptRoot\Comparison Report.html" -Value "        <td>Copying to '$Statistics' failed.<br>Overwrite cancelled by user.</td>
+</tr>"
+}
+    $script:yesNoUserInput = 0
+    }
+}
+
 #==========Statistics==========#
 Add-Content -Path "$PSScriptRoot\Comparison Report.html" -Value "
 <html lang=""en"">
 <head>
 <meta charset=""utf-8"">
-<title>LiveDoc Report</title>
+<title>Compare and Distribute</title>
 <style type=""text/css"">
    div {
     font-family: Verdana, Arial, Helvetica, sans-serif;
@@ -73,35 +103,32 @@ for ($i = 0; $i -lt $fileData[0].Length ; $i++) {
 Add-Content -Path "$PSScriptRoot\Comparison Report.html" -Value "<tr>
         <td>$statFileName</td>
         <td>Found</td>
-        <td>Match</td>
-        <td>Copied to '# Matches against previous version'</td>
-</tr>" -Encoding UTF8
+        <td>Match</td>" -Encoding UTF8
 #==========Statistics==========#
         Write-Host "MDs match" -ForegroundColor Green
-        Copy-Item -Path $fileData[2][$i] -Destination "$PSScriptRoot\KPD\# Matches against previous version\" 
+        Prompt-Overwrite -FileName $fileData[0][$i] -TestPath "$PSScriptRoot\KPD\# Matches against previous version" -FileFullName $fileData[2][$i] -Statistics "# Matches against previous version"
+        #Copy-Item -Path $fileData[2][$i] -Destination "$PSScriptRoot\KPD\# Matches against previous version\" 
         } else {
 #==========Statistics==========#
 Add-Content -Path "$PSScriptRoot\Comparison Report.html" -Value "<tr>
         <td>$statFileName</td>
         <td>Found</td>
-        <td>No match</td>
-        <td>Copied to '# Source documents to be translated'</td>
-</tr>" -Encoding UTF8
+        <td>No match</td>" -Encoding UTF8
 #==========Statistics==========#
         Write-Host "MDs DO NOT match" -ForegroundColor Red
-        Copy-Item -Path $fileData[2][$i] -Destination "$PSScriptRoot\KPD\# Source documents to be translated\"
+        Prompt-Overwrite -FileName $fileData[0][$i] -TestPath "$PSScriptRoot\KPD\# Source documents to be translated" -FileFullName $fileData[2][$i] -Statistics "# Source documents to be translated"
+        #Copy-Item -Path $fileData[2][$i] -Destination "$PSScriptRoot\KPD\# Source documents to be translated\"
         }
     } else {
 #==========Statistics==========#
 Add-Content -Path "$PSScriptRoot\Comparison Report.html" -Value "<tr>
         <td>$statFileName</td>
         <td>Not found</td>
-        <td>---</td>
-        <td>Copied to '# Source documents to be translated'</td>
-</tr>" -Encoding UTF8
+        <td>---</td>" -Encoding UTF8
 #==========Statistics==========#
     Write-Host "Previous version NOT found" -ForegroundColor Red
-    Copy-Item -Path $fileData[2][$i] -Destination "$PSScriptRoot\KPD\# Source documents to be translated\"
+    Prompt-Overwrite -FileName $fileData[0][$i] -TestPath "$PSScriptRoot\KPD\# Source documents to be translated" -FileFullName $fileData[2][$i] -Statistics "# Source documents to be translated"
+    #Copy-Item -Path $fileData[2][$i] -Destination "$PSScriptRoot\KPD\# Source documents to be translated\"
     }
 Write-Host "-----------"
 }
