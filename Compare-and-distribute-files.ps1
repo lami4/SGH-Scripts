@@ -31,16 +31,16 @@ $check = Test-Path -Path "$TestPath\$FileName"
     if ($check -eq $false) {
     Copy-Item -Path $FileFullName -Destination "$TestPath"
     Add-Content -Path "$PSScriptRoot\Comparison Report.html" -Value "        <td>Copied to '$Statistics'</td>
-</tr>"
+</tr>" -Encoding UTF8
     } else {
     Input-YesOrNo -Question "$FileName already exists in $TestPath. Do you want to overwrite it?"
         if ($script:yesNoUserInput -eq 1) {
         Copy-Item -Path $FileFullName -Destination "$TestPath"
         Add-Content -Path "$PSScriptRoot\Comparison Report.html" -Value "        <td>Copied to '$Statistics'</td>
-</tr>"
+</tr>" -Encoding UTF8
         } else {
         Add-Content -Path "$PSScriptRoot\Comparison Report.html" -Value "        <td>Copying to '$Statistics' failed.<br>Overwrite cancelled by user.</td>
-</tr>"
+</tr>" -Encoding UTF8
 }
     $script:yesNoUserInput = 0
     }
