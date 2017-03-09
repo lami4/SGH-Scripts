@@ -815,3 +815,88 @@ Add-Content "$PSScriptRoot\Test Report.html" "
 </html>" -Encoding UTF8
 #========Statistics========
 Invoke-Item "$PSScriptRoot\Test Report.html"
+#####################################################
+clear
+$script:CheckTitlesAndNames = $false
+$script:CheckMD5 = $false
+
+Function Custom-Form {
+Add-Type -AssemblyName  System.Windows.Forms
+$dialog = New-Object System.Windows.Forms.Form
+$dialog.ShowIcon = $false
+$dialog.AutoSize = $true
+$dialog.Text = "Настройки скрипта"
+$dialog.AutoSizeMode = "GrowAndShrink"
+$dialog.WindowState = "Normal"
+$dialog.SizeGripStyle = "Hide"
+$dialog.ShowInTaskbar = $true
+$dialog.StartPosition = "CenterScreen"
+$dialog.MinimizeBox = $false
+$dialog.MaximizeBox = $false
+#Buttons
+#Run Script
+$buttonRunScript = New-Object System.Windows.Forms.Button
+$buttonRunScript.Height = 35
+$buttonRunScript.Width = 100
+$buttonRunScript.Text = "Запустить скрипт"
+$SystemDrawingPoint = New-Object System.Drawing.Point
+$SystemDrawingPoint.X = 25
+$SystemDrawingPoint.Y = 100
+$buttonRunScript.Location = $SystemDrawingPoint
+$SystemWindowsFormsMargin = New-Object System.Windows.Forms.Padding
+$SystemWindowsFormsMargin.Bottom = 25
+$buttonRunScript.Margin = $SystemWindowsFormsMargin
+$buttonRunScript.Add_Click({
+                            #if (if checkbox checked) {change value of global variable to true};
+                            #if (if checkbox checked) {change value of global variable to true};
+                            $dialog.DialogResult = "OK"
+                            $dialog.Close()})
+$buttonRunScript.Enabled = $false
+#Exit
+$buttonExit = New-Object System.Windows.Forms.Button
+$buttonExit.Height = 35
+$buttonExit.Width = 100
+$buttonExit.Text = "Отменить"
+$SystemDrawingPoint = New-Object System.Drawing.Point
+$SystemDrawingPoint.X = 130
+$SystemDrawingPoint.Y = 100
+$buttonExit.Location = $SystemDrawingPoint
+$SystemWindowsFormsMargin = New-Object System.Windows.Forms.Padding
+$SystemWindowsFormsMargin.Bottom = 25
+$buttonExit.Margin = $SystemWindowsFormsMargin
+$buttonExit.Add_Click({
+$dialog.Close();
+$dialog.DialogResult = "Cancel"
+})
+#Checkboxes
+#Check Titles and Names
+$checkboxCheckTitlesAndNames = New-Object System.Windows.Forms.CheckBox
+$checkboxCheckTitlesAndNames.Width = 300
+$checkboxCheckTitlesAndNames.Text = "Проверить обозначения и имена документов"
+$SystemDrawingPoint = New-Object System.Drawing.Point
+$SystemDrawingPoint.X = 25
+$SystemDrawingPoint.Y = 25
+$checkboxCheckTitlesAndNames.Location = $SystemDrawingPoint
+$checkboxCheckTitlesAndNames.Add_CheckStateChanged({if ($checkboxCheckTitlesAndNames.Checked -or $checkboxCheckMD5.Checked) {$buttonRunScript.Enabled = $true} else {$buttonRunScript.Enabled = $false}})
+#Check MD5
+$checkboxCheckMD5 = New-Object System.Windows.Forms.CheckBox
+$checkboxCheckMD5.Width = 300
+$checkboxCheckMD5.Text = "Проверить контрольные суммы"
+$SystemDrawingPoint = New-Object System.Drawing.Point
+$SystemDrawingPoint.X = 25
+$SystemDrawingPoint.Y = 50
+$checkboxCheckMD5.Location = $SystemDrawingPoint
+$checkboxCheckMD5.Add_CheckStateChanged({if ($checkboxCheckTitlesAndNames.Checked -or $checkboxCheckMD5.Checked) {$buttonRunScript.Enabled = $true} else {$buttonRunScript.Enabled = $false}})
+#Add UI elements to the form
+$dialog.Controls.Add($checkboxCheckTitlesAndNames)
+$dialog.Controls.Add($checkboxCheckMD5)
+$dialog.Controls.Add($buttonRunScript)
+$dialog.Controls.Add($buttonExit)
+$dialog.ShowDialog()
+}
+#Run the function
+$result = Custom-Form
+if ($result -ne "OK") {Exit}
+Write-Host $script:CheckTitlesAndNames
+Write-Host $script:CheckMD5
+#####################################################
