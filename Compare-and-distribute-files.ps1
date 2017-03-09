@@ -127,7 +127,7 @@ function filter(filterid, columnnumber) {
 <div>
 <h3>Hello.</h3>
 <br>
-<table id=""Stats"">
+<table id=""Stats"" width=""60%"">
 <tr>
         <td id=""indication"">
 	        <input type=""text"" id=""nameInput"" onkeyup=""nameInputFilter()"" placeholder=""Search for names..."">
