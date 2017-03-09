@@ -816,7 +816,6 @@ Add-Content "$PSScriptRoot\Test Report.html" "
 #========Statistics========
 Invoke-Item "$PSScriptRoot\Test Report.html"
 #####################################################
-clear
 $script:CheckTitlesAndNames = $false
 $script:CheckMD5 = $false
 
@@ -847,8 +846,8 @@ $SystemWindowsFormsMargin = New-Object System.Windows.Forms.Padding
 $SystemWindowsFormsMargin.Bottom = 25
 $buttonRunScript.Margin = $SystemWindowsFormsMargin
 $buttonRunScript.Add_Click({
-                            #if (if checkbox checked) {change value of global variable to true};
-                            #if (if checkbox checked) {change value of global variable to true};
+                            if ($checkboxCheckTitlesAndNames.Checked) {$script:CheckTitlesAndNames = $true};
+                            if ($checkboxCheckMD5.Checked) {$script:CheckMD5 = $true};
                             $dialog.DialogResult = "OK"
                             $dialog.Close()})
 $buttonRunScript.Enabled = $false
