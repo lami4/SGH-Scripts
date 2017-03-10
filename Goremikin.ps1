@@ -818,13 +818,14 @@ Invoke-Item "$PSScriptRoot\Test Report.html"
 #####################################################
 $script:CheckTitlesAndNames = $false
 $script:CheckMD5 = $false
+$script:SelectedList = ""
 
 Function Custom-Form {
 Add-Type -AssemblyName  System.Windows.Forms
 $dialog = New-Object System.Windows.Forms.Form
 $dialog.ShowIcon = $false
 $dialog.AutoSize = $true
-$dialog.Text = "Настройки скрипта"
+$dialog.Text = "Настройки"
 $dialog.AutoSizeMode = "GrowAndShrink"
 $dialog.WindowState = "Normal"
 $dialog.SizeGripStyle = "Hide"
@@ -840,7 +841,7 @@ $buttonRunScript.Width = 100
 $buttonRunScript.Text = "Запустить скрипт"
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 25
-$SystemDrawingPoint.Y = 100
+$SystemDrawingPoint.Y = 225
 $buttonRunScript.Location = $SystemDrawingPoint
 $SystemWindowsFormsMargin = New-Object System.Windows.Forms.Padding
 $SystemWindowsFormsMargin.Bottom = 25
@@ -848,17 +849,17 @@ $buttonRunScript.Margin = $SystemWindowsFormsMargin
 $buttonRunScript.Add_Click({
                             if ($checkboxCheckTitlesAndNames.Checked) {$script:CheckTitlesAndNames = $true};
                             if ($checkboxCheckMD5.Checked) {$script:CheckMD5 = $true};
-                            $dialog.DialogResult = "OK"
+                            $dialog.DialogResult = "OK";
                             $dialog.Close()})
 $buttonRunScript.Enabled = $false
 #Exit
 $buttonExit = New-Object System.Windows.Forms.Button
 $buttonExit.Height = 35
 $buttonExit.Width = 100
-$buttonExit.Text = "Отменить"
+$buttonExit.Text = "Закрыть"
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 130
-$SystemDrawingPoint.Y = 100
+$SystemDrawingPoint.Y = 225
 $buttonExit.Location = $SystemDrawingPoint
 $SystemWindowsFormsMargin = New-Object System.Windows.Forms.Padding
 $SystemWindowsFormsMargin.Bottom = 25
@@ -867,11 +868,37 @@ $buttonExit.Add_Click({
 $dialog.Close();
 $dialog.DialogResult = "Cancel"
 })
-#Checkboxes
+#Browse
+$buttonBrowse = New-Object System.Windows.Forms.Button
+$buttonBrowse.Height = 35
+$buttonBrowse.Width = 100
+$buttonBrowse.Text = "Обзор..."
+$SystemDrawingPoint = New-Object System.Drawing.Point
+$SystemDrawingPoint.X = 28
+$SystemDrawingPoint.Y = 91
+$buttonBrowse.Location = $SystemDrawingPoint
+$buttonBrowse.Enabled = $false
+$buttonBrowse.Add_Click({
+                        Select-File
+                        if ($script:SelectedList -ne "") {
+                        $buttonRunScript.Enabled = $true
+                        $BrowseFileName = [System.IO.Path]::GetFileName($script:SelectedList)
+                        $labelBrowse.Text = "Выбран: $BrowseFileName"
+                        }
+})
+#Labels
+$labelBrowse = New-Object System.Windows.Forms.Label
+$labelBrowse.Text = "Выберите файл со списком MD5 неизмененных файлов"
+$SystemDrawingPoint = New-Object System.Drawing.Point
+$SystemDrawingPoint.X = 140
+$SystemDrawingPoint.Y = 102
+$labelBrowse.Location = $SystemDrawingPoint
+$labelBrowse.Width = 305
+$labelBrowse.Enabled = $false
 #Check Titles and Names
 $checkboxCheckTitlesAndNames = New-Object System.Windows.Forms.CheckBox
-$checkboxCheckTitlesAndNames.Width = 300
-$checkboxCheckTitlesAndNames.Text = "Проверить обозначения и имена документов"
+$checkboxCheckTitlesAndNames.Width = 475
+$checkboxCheckTitlesAndNames.Text = "Сравнить обозначения и имена документов"
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 25
 $SystemDrawingPoint.Y = 25
@@ -879,21 +906,72 @@ $checkboxCheckTitlesAndNames.Location = $SystemDrawingPoint
 $checkboxCheckTitlesAndNames.Add_CheckStateChanged({if ($checkboxCheckTitlesAndNames.Checked -or $checkboxCheckMD5.Checked) {$buttonRunScript.Enabled = $true} else {$buttonRunScript.Enabled = $false}})
 #Check MD5
 $checkboxCheckMD5 = New-Object System.Windows.Forms.CheckBox
-$checkboxCheckMD5.Width = 300
-$checkboxCheckMD5.Text = "Проверить контрольные суммы"
+$checkboxCheckMD5.Width = 475
+$checkboxCheckMD5.Text = "Сравнить контрольные суммы"
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 25
 $SystemDrawingPoint.Y = 50
 $checkboxCheckMD5.Location = $SystemDrawingPoint
-$checkboxCheckMD5.Add_CheckStateChanged({if ($checkboxCheckTitlesAndNames.Checked -or $checkboxCheckMD5.Checked) {$buttonRunScript.Enabled = $true} else {$buttonRunScript.Enabled = $false}})
+$checkboxCheckMD5.Add_CheckStateChanged({
+                                        if ($checkboxCheckTitlesAndNames.Checked -or $checkboxCheckMD5.Checked) {$buttonRunScript.Enabled = $true} else {$buttonRunScript.Enabled = $false};
+                                        if ($checkboxCheckMD5.Checked) {$groupboxMD5.Enabled = $true} else {$groupboxMD5.Enabled = $false};
+                                        if ($checkboxCheckMD5.Checked) {$radioCalculateMD5.Checked = $true} else {$radioCalculateMD5.Checked = $false; $radioUsePrecalculatedMD5.Checked = $false; $buttonBrowse.Enabled = $false; $labelBrowse.Enabled = $false}
+                                        })
+#radio button
+$groupboxMD5 = New-Object System.Windows.Forms.GroupBox
+$groupboxMD5.Height = 140
+$groupboxMD5.Width = 450
+$SystemDrawingPoint = New-Object System.Drawing.Point
+$SystemDrawingPoint.X = 25
+$SystemDrawingPoint.Y = 75
+$groupboxMD5.Text = "Выберите способ"
+$groupboxMD5.Location = $SystemDrawingPoint
+$groupboxMD5.Enabled = $false
+$radioCalculateMD5 = New-Object System.Windows.Forms.RadioButton
+$SystemDrawingPoint = New-Object System.Drawing.Point
+$SystemDrawingPoint.X = 10
+$SystemDrawingPoint.Y = 25
+$radioCalculateMD5.Location = $SystemDrawingPoint
+$radioCalculateMD5.Text = "Подсчитывать MD5 для каждого неизмененного файла перед сравнением"
+$radioCalculateMD5.Width = 435
+$radioCalculateMD5.Add_CLick({
+                            if ($radioCalculateMD5.Checked) {$buttonBrowse.Enabled = $false; $labelBrowse.Enabled = $false}
+                            })
+#$radioCalculateMD5.Enabled = $false
+$radioUsePrecalculatedMD5 = New-Object System.Windows.Forms.RadioButton
+$SystemDrawingPoint = New-Object System.Drawing.Point
+$SystemDrawingPoint.X = 10
+$SystemDrawingPoint.Y = 60
+$radioUsePrecalculatedMD5.Location = $SystemDrawingPoint
+$radioUsePrecalculatedMD5.Text = "Использовать заранне подсчитанные MD5 неизмененных файлов"
+$radioUsePrecalculatedMD5.Width = 435
+$radioUsePrecalculatedMD5.Add_Click({
+                                    if ($radioUsePrecalculatedMD5.Checked) {$buttonBrowse.Enabled = $true; $labelBrowse.Enabled = $true};
+                                    if ($script:SelectedList -eq "") {$buttonRunScript.Enabled = $false} else {$buttonRunScript.Enabled = $true}
+                                    })
+#$radioUsePrecalculatedMD5.Enabled = $false
 #Add UI elements to the form
 $dialog.Controls.Add($checkboxCheckTitlesAndNames)
 $dialog.Controls.Add($checkboxCheckMD5)
 $dialog.Controls.Add($buttonRunScript)
 $dialog.Controls.Add($buttonExit)
+$dialog.Controls.Add($groupboxMD5)
+$groupboxMD5.Controls.Add($radioCalculateMD5)
+$groupboxMD5.Controls.Add($radioUsePrecalculatedMD5)
+$groupboxMD5.Controls.Add($buttonBrowse)
+$groupboxMD5.Controls.Add($labelBrowse)
 $dialog.ShowDialog()
 }
-#Run the function
+
+Function Select-File {
+Add-Type -AssemblyName System.Windows.Forms
+$f = new-object Windows.Forms.OpenFileDialog
+$f.InitialDirectory = "$PSScriptRoot"
+$f.Filter = "Text Files (*.txt)|*.txt|All Files (*.*)|*.*"
+$show = $f.ShowDialog()
+If ($show -eq "OK") {$script:SelectedList = $f.FileName}
+}
+
 $result = Custom-Form
 if ($result -ne "OK") {Exit}
 Write-Host $script:CheckTitlesAndNames
