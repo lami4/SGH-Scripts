@@ -4,6 +4,7 @@ $script:JSvariable = 0
 $script:CheckTitlesAndNames = $false
 $script:CheckMD5 = $false
 $script:SelectedList = ""
+$script:yesNoUserInput = 0
 
 #Functions
 Function Custom-Form {
@@ -172,12 +173,20 @@ Function Select-Folder ($description)
         }
 }
 
+Function Input-YesOrNo ($Question, $BoxTitle) {
+$a = New-Object -ComObject wscript.shell
+$intAnswer = $a.popup($Question,0,$BoxTitle,4)
+If ($intAnswer -ne 6) {
+Exit
+}
+}
+
 Function Compare-Strings ($SPCvalue, $valueFromDocument, $message, $positive, $negative) 
 {
     if ($valueFromDocument -eq $SPCvalue) {
     Write-Host "Hit for $message"
 #========Statistics========
-Add-Content "$PSScriptRoot\Test Report.html" "<td><font color=""green"" onclick=""my_f('div_$script:JSvariable')""><b>$positive</b></font>
+Add-Content "$PSScriptRoot\Check-References-Report.html" "<td><font color=""green"" onclick=""my_f('div_$script:JSvariable')""><b>$positive</b></font>
 <div class=""hide"" id=""div_$script:JSvariable"">
 <table>
 <tr>
@@ -196,7 +205,7 @@ $script:JSvariable += 1
     } else {
     Write-Host "No hit for $message"
 #========Statistics========
-Add-Content "$PSScriptRoot\Test Report.html" "<td><font color=""red"" onclick=""my_f('div_$script:JSvariable')""><b>$negative</b></font>
+Add-Content "$PSScriptRoot\Check-References-Report.html" "<td><font color=""red"" onclick=""my_f('div_$script:JSvariable')""><b>$negative</b></font>
 <div class=""hide"" id=""div_$script:JSvariable"">
 <table>
 <tr>
@@ -249,7 +258,7 @@ Function Get-DataFromSpecification ($selectedFolder, $currentSPCName) {
     $documentData = $documentNames, $documentTitles
     $fileData = $fileNames, $fileMd5s
 #========Statistics========
-Add-Content "$PSScriptRoot\Test Report.html" "<tr>
+Add-Content "$PSScriptRoot\Check-References-Report.html" "<tr>
 <th>Название документа/Файла</th>
 <th>Документ/Файл</th> 
 <th>Обозначение</th>
@@ -257,21 +266,21 @@ Add-Content "$PSScriptRoot\Test Report.html" "<tr>
 <th>MD5</th>
 </tr>" -Encoding UTF8
 if ($documentNames.Length -eq 0 -and $documentTitles.Length -eq 0 -and $script:CheckTitlesAndNames -eq $true -and $script:CheckMD5 -eq $false) {
-Add-Content "$PSScriptRoot\Test Report.html" "<tr>
+Add-Content "$PSScriptRoot\Check-References-Report.html" "<tr>
 <td colspan=""5"">
 Файл не содержит ссылок на документы.
 </td>
 </tr>" -Encoding UTF8
 }
 if ($fileMd5s.Length -eq 0 -and $fileNames.Length -eq 0 -and $script:CheckMD5 -eq $true -and $script:CheckTitlesAndNames -eq $false) {
-Add-Content "$PSScriptRoot\Test Report.html" "<tr>
+Add-Content "$PSScriptRoot\Check-References-Report.html" "<tr>
 <td colspan=""5"">
 Файл не содержит ссылок на файлы.
 </td>
 </tr>" -Encoding UTF8
 }
 if ($fileMd5s.Length -eq 0 -and $fileNames.Length -eq 0 -and $documentNames.Length -eq 0 -and $documentTitles.Length -eq 0 -and $script:CheckMD5 -eq $true -and $script:CheckTitlesAndNames -eq $true) {
-Add-Content "$PSScriptRoot\Test Report.html" "<tr>
+Add-Content "$PSScriptRoot\Check-References-Report.html" "<tr>
 <td colspan=""5"">
 Файл не содержит ссылок на файлы или документы.
 </td>
@@ -282,13 +291,13 @@ if ($script:CheckTitlesAndNames -eq $true) {
     for ($i = 0; $i -lt $documentData[0].Length; $i++) {
     $currentDocumentBaseName = $documentData[0][$i]
 #========Statistics========
-Add-Content "$PSScriptRoot\Test Report.html" "<tr>
+Add-Content "$PSScriptRoot\Check-References-Report.html" "<tr>
 <td>$currentDocumentBaseName</td>" -Encoding UTF8
 #========Statistics========
     $documentExistence = Test-Path -Path "$selectedFolder\$currentDocumentBaseName.*" -Exclude "*.pdf"
         if ($documentExistence -eq $true) {
 #========Statistics========
-Add-Content "$PSScriptRoot\Test Report.html" "<td><font color=""green""><b>Найден</b></font></td>" -Encoding UTF8
+Add-Content "$PSScriptRoot\Check-References-Report.html" "<td><font color=""green""><b>Найден</b></font></td>" -Encoding UTF8
 #========Statistics========
             if ($currentDocumentBaseName -match 'SPC') {
             #FOR SPC
@@ -304,7 +313,7 @@ Add-Content "$PSScriptRoot\Test Report.html" "<td><font color=""green""><b>На�
             Compare-Strings -SPCvalue $documentData[1][$i] -valueFromDocument $valueForDocTitle -message "document title" -positive "Совпадает" -negative "Не совпадает"
             $document.Close([ref]0)
 #========Statistics========
-Add-Content "$PSScriptRoot\Test Report.html" "<td>---</td>
+Add-Content "$PSScriptRoot\Check-References-Report.html" "<td>---</td>
 </tr>" -Encoding UTF8
 #========Statistics========
             } else {
@@ -320,13 +329,13 @@ Add-Content "$PSScriptRoot\Test Report.html" "<td>---</td>
             Compare-Strings -SPCvalue $documentData[1][$i] -valueFromDocument $valueForDocTitle -message "document title"  -positive "Совпадает" -negative "Не совпадает"
             $document.Close([ref]0)
 #========Statistics========
-Add-Content "$PSScriptRoot\Test Report.html" "<td>---</td>
+Add-Content "$PSScriptRoot\Check-References-Report.html" "<td>---</td>
 </tr>" -Encoding UTF8
 #========Statistics========
             }
         } else {
 #========Statistics========
-Add-Content "$PSScriptRoot\Test Report.html" "
+Add-Content "$PSScriptRoot\Check-References-Report.html" "
 <td><font color=""red""><b>Не найден</b></font></td>
 <td>---</td>
 <td>---</td>
@@ -341,13 +350,13 @@ if ($script:CheckMD5 -eq $true) {
     for ($i = 0; $i -lt $fileData[0].Length; $i++) {
         $currentFileName = $fileData[0][$i]
 #========Statistics========
-Add-Content "$PSScriptRoot\Test Report.html" "<tr>
+Add-Content "$PSScriptRoot\Check-References-Report.html" "<tr>
 <td>$currentFileName</td>" -Encoding UTF8
 #========Statistics========
         $fileExistence = Test-Path -Path "$selectedFolder\$currentFileName"
         if ($fileExistence -eq $true) {
 #========Statistics========
-Add-Content "$PSScriptRoot\Test Report.html" "<td><font color=""green""><b>Найден</b></font></td>
+Add-Content "$PSScriptRoot\Check-References-Report.html" "<td><font color=""green""><b>Найден</b></font></td>
 <td>---</td>
 <td>---</td>" -Encoding UTF8
 #========Statistics========
@@ -356,7 +365,7 @@ Add-Content "$PSScriptRoot\Test Report.html" "<td><font color=""green""><b>На�
             $fileHashFromSpc = $fileData[1][$i] -split (":")
             Compare-Strings -SPCvalue $fileHashFromSpc[1].Trim(' ') -valueFromDocument $fileHash.Hash.ToLower() -message "md5" -positive "Совпадает" -negative "Не совпадает"
 #========Statistics========
-Add-Content "$PSScriptRoot\Test Report.html" "</tr>" -Encoding UTF8
+Add-Content "$PSScriptRoot\Check-References-Report.html" "</tr>" -Encoding UTF8
 #========Statistics========
            # if ($fileHashFromSpc[1].Trim(' ') -eq $fileHash.Hash.ToLower()) {
            # Write-Host "Hash sum matches"
@@ -366,7 +375,7 @@ Add-Content "$PSScriptRoot\Test Report.html" "</tr>" -Encoding UTF8
         } else {
         Write-Host "File not found"
 #========Statistics========
-Add-Content "$PSScriptRoot\Test Report.html" "
+Add-Content "$PSScriptRoot\Check-References-Report.html" "
 <td><font color=""red""><b>Не найден</b></font></td>
 <td>---</td>
 <td>---</td>
@@ -383,7 +392,7 @@ Add-Content "$PSScriptRoot\Test Report.html" "
     Write-Host $fileNames
     Write-Host $fileMd5s
 #========Statistics========
-Add-Content "$PSScriptRoot\Test Report.html" "</table>
+Add-Content "$PSScriptRoot\Check-References-Report.html" "</table>
 <br>
 <hr>" -Encoding UTF8
 #========Statistics========
@@ -395,13 +404,18 @@ $result = Custom-Form
 if ($result -ne "OK") {Exit}
 Write-Host $script:CheckTitlesAndNames
 Write-Host $script:CheckMD5
+$reportExistence = Test-Path -Path "$PSScriptRoot\Check-References-Report.html"
+if ($reportExistence) {
+$nl = [System.Environment]::NewLine
+Input-YesOrNo -Question "Отчет Check-References-Report.html уже существует. Продолжить?$nl$nl`Да - перезаписать и продолжить исполнение скрипта.$nl`Нет - не перезаписывать и остановить исполнение скрипта.$nl$nl`Если вы не хотите перезаписывать существующий отчет, но хотите продолжить исполнение скрипта - переместите отчет из папки, где расположен файл скрипта, в любое удобное для вас место и нажмите 'Да'." -BoxTitle "Отчет Check-References-Report.html уже существует"
+}
 $pathToFolder = Select-Folder -description "Выберите папку, в которой нужно проверить входимость."
 #========Statistics========
-Add-Content "$PSScriptRoot\Test Report.html" "<!DOCTYPE html>
+Add-Content "$PSScriptRoot\Check-References-Report.html" "<!DOCTYPE html>
 <html lang=""ru"">
 <head>
 <meta charset=""utf-8"">
-<title>LiveDoc Report</title>
+<title>Check-References Report Report</title>
 <style type=""text/css"">
 div {
 font-family: Verdana, Arial, Helvetica, sans-serif;
@@ -460,7 +474,7 @@ Measure-Command {
 Get-ChildItem "$pathToFolder\*.*" -File -Exclude "*.pdf" | Where-Object {$_.Name -match "SPC"} | % {
 #========Statistics========
 $curSpc = $_.Name
-Add-Content "$PSScriptRoot\Test Report.html" "
+Add-Content "$PSScriptRoot\Check-References-Report.html" "
 <table style=""width:80%"">
 <tr>
 <td colspan=""5"" id=""tableHeader""><h2>$curSpc</h2></td>
@@ -470,9 +484,9 @@ Get-DataFromSpecification -selectedFolder $pathToFolder -currentSPCName $_.Name
 }
 }
 #========Statistics========
-Add-Content "$PSScriptRoot\Test Report.html" "
+Add-Content "$PSScriptRoot\Check-References-Report.html" "
 </div>
 </body>
 </html>" -Encoding UTF8
 #========Statistics========
-Invoke-Item "$PSScriptRoot\Test Report.html"
+Invoke-Item "$PSScriptRoot\Check-References-Report.html"
