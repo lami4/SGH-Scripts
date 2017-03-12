@@ -167,7 +167,7 @@ Add-Content -Path "$PSScriptRoot\Test Report.html" "<td>
 </td>" -Encoding UTF8
 #========Statistics========
             }
-        $document.Close()
+        $document.Close([ref]0)
         $word.Quit()
 #========Statistics========
 Add-Content -Path "$PSScriptRoot\Test Report.html" "<td>
@@ -233,7 +233,7 @@ Add-Content -Path "$PSScriptRoot\Test Report.html" "<tr>
 </tr>" -Encoding UTF8
 #========Statistics========
             }
-    $document.Close()
+    $document.Close([ref]0)
     $word.Quit()
     Write-Host "-------End of document-------"
     }
