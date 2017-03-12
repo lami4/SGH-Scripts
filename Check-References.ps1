@@ -176,15 +176,15 @@ Function Select-Folder ($description)
 Function Input-YesOrNo ($Question, $BoxTitle) {
 $a = New-Object -ComObject wscript.shell
 $intAnswer = $a.popup($Question,0,$BoxTitle,4)
-If ($intAnswer -ne 6) {
-Exit
-}
+If ($intAnswer -eq 6) {
+$script:yesNoUserInput = 1
+} else {Exit}
 }
 
 Function Compare-Strings ($SPCvalue, $valueFromDocument, $message, $positive, $negative) 
 {
     if ($valueFromDocument -eq $SPCvalue) {
-    Write-Host "Hit for $message"
+    Write-Host "$message совпадает" -ForegroundColor Green
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-References-Report.html" "<td><font color=""green"" onclick=""my_f('div_$script:JSvariable')""><b>$positive</b></font>
 <div class=""hide"" id=""div_$script:JSvariable"">
@@ -203,7 +203,7 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "<td><font color=""gree
 $script:JSvariable += 1
 #========Statistics========
     } else {
-    Write-Host "No hit for $message"
+    Write-Host "$message не совпадает" -ForegroundColor Red
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-References-Report.html" "<td><font color=""red"" onclick=""my_f('div_$script:JSvariable')""><b>$negative</b></font>
 <div class=""hide"" id=""div_$script:JSvariable"">
@@ -229,6 +229,8 @@ Function Get-DataFromSpecification ($selectedFolder, $currentSPCName) {
     $documentTitles = @()
     $fileNames = @()
     $fileMd5s = @()
+    Write-Host "--------------------------------------------------------"
+    Write-Host "Собираю ссылки на файлы и документы в $currentSPCName..."
     $word = New-Object -ComObject Word.Application
     $word.Visible = $false
     $document = $word.Documents.Open("$selectedFolder\$currentSPCName")
@@ -288,6 +290,7 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "<tr>
 }
 #========Statistics========
 if ($script:CheckTitlesAndNames -eq $true) {
+Write-Host "Сравниваю наименования и обозначения указанные в спецификации..."
     for ($i = 0; $i -lt $documentData[0].Length; $i++) {
     $currentDocumentBaseName = $documentData[0][$i]
 #========Statistics========
@@ -301,37 +304,48 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "<td><font color=""gree
 #========Statistics========
             if ($currentDocumentBaseName -match 'SPC') {
             #FOR SPC
-            Write-Host "***** PROCESSING SPECIFICAGTION ******"
             $currentDocumentFullName = Get-ChildItem -Path "$selectedFolder\$currentDocumentBaseName.*" -Exclude "*.pdf"
-            Write-Host "$currentDocumentFullName найден."
-            $document = $word.Documents.Open("$currentDocumentFullName")
-            [string]$valueForDocTitle = (((($document.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(4, 5).Range.Text).Trim([char]0x0007)) -replace '\.', ' ' -replace '\s+', ' ' -replace 'ё', 'е').Trim(' ')).ToLower()
-            [string]$valueForDocName = ((($document.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(1, 6).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')
-            Write-Host $valueForDocTitle
-            Write-Host $valueForDocName
-            Compare-Strings -SPCvalue $documentData[0][$i] -valueFromDocument $valueForDocName -message "document name" -positive "Совпадает" -negative "Не совпадает"
-            Compare-Strings -SPCvalue $documentData[1][$i] -valueFromDocument $valueForDocTitle -message "document title" -positive "Совпадает" -negative "Не совпадает"
-            $document.Close([ref]0)
+            if ($currentDocumentFullName.Extension -eq ".xls" -or $currentDocumentFullName.Extension -eq ".xlsx") {
+            Write-Host "$currentDocumentFullName найден (спецификация). Файл имеет расширение *.xls/*.xlsx. Требуется ручная проверка."
 #========Statistics========
-Add-Content "$PSScriptRoot\Check-References-Report.html" "<td>---</td>
+Add-Content "$PSScriptRoot\Check-References-Report.html" "<td colspan=""3"">Файл имеет расширение *.xls/*.xlsx. Требуется ручная проверка.</td>
 </tr>" -Encoding UTF8
 #========Statistics========
             } else {
-            #FOR REST
-            $currentDocumentFullName = Get-ChildItem -Path "$selectedFolder\$currentDocumentBaseName.*" -Exclude "*.pdf"
-            Write-Host "$currentDocumentFullName найден."
+            Write-Host "$currentDocumentFullName найден (спецификация). Результаты сравнения:"
             $document = $word.Documents.Open("$currentDocumentFullName")
-            [string]$valueForDocTitle = (((($document.Tables.Item(1).Cell(9, 7).Range.Text).Trim([char]0x0007)) -replace '\.', ' ' -replace '\s+', ' ' -replace 'ё', 'е').Trim(' ')).ToLower()
-            [string]$valueForDocName = ((($document.Tables.Item(1).Cell(6, 8).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')
-            Write-Host $valueForDocTitle
-            Write-Host $valueForDocName
-            Compare-Strings -SPCvalue $documentData[0][$i] -valueFromDocument $valueForDocName -message "document name"  -positive "Совпадает" -negative "Не совпадает"
-            Compare-Strings -SPCvalue $documentData[1][$i] -valueFromDocument $valueForDocTitle -message "document title"  -positive "Совпадает" -negative "Не совпадает"
+            [string]$valueForDocTitle = (((($document.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(4, 5).Range.Text).Trim([char]0x0007)) -replace '\.', ' ' -replace '\s+', ' ' -replace 'ё', 'е').Trim(' ')).ToLower()
+            [string]$valueForDocName = ((($document.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(1, 6).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')
+            Compare-Strings -SPCvalue $documentData[0][$i] -valueFromDocument $valueForDocName -message "Обозначение" -positive "Совпадает" -negative "Не совпадает"
+            Compare-Strings -SPCvalue $documentData[1][$i] -valueFromDocument $valueForDocTitle -message "Наименование" -positive "Совпадает" -negative "Не совпадает"
             $document.Close([ref]0)
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-References-Report.html" "<td>---</td>
 </tr>" -Encoding UTF8
 #========Statistics========
+            }
+            } else {
+            #FOR REST
+            $currentDocumentFullName = Get-ChildItem -Path "$selectedFolder\$currentDocumentBaseName.*" -Exclude "*.pdf"
+            if ($currentDocumentFullName.Extension -eq ".xls" -or $currentDocumentFullName.Extension -eq ".xlsx") {
+            Write-Host "$currentDocumentFullName найден. Файл имеет расширение *.xls/*.xlsx. Требуется ручная проверка."
+#========Statistics========
+Add-Content "$PSScriptRoot\Check-References-Report.html" "<td colspan=""3"">Файл имеет расширение *.xls/*.xlsx. Требуется ручная проверка.</td>
+</tr>" -Encoding UTF8
+#========Statistics========
+            } else {
+            Write-Host "$currentDocumentFullName найден. Результаты сравнения:"
+            $document = $word.Documents.Open("$currentDocumentFullName")
+            [string]$valueForDocTitle = (((($document.Tables.Item(1).Cell(9, 7).Range.Text).Trim([char]0x0007)) -replace '\.', ' ' -replace '\s+', ' ' -replace 'ё', 'е').Trim(' ')).ToLower()
+            [string]$valueForDocName = ((($document.Tables.Item(1).Cell(6, 8).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')
+            Compare-Strings -SPCvalue $documentData[0][$i] -valueFromDocument $valueForDocName -message "Обозначение"  -positive "Совпадает" -negative "Не совпадает"
+            Compare-Strings -SPCvalue $documentData[1][$i] -valueFromDocument $valueForDocTitle -message "Наименование"  -positive "Совпадает" -negative "Не совпадает"
+            $document.Close([ref]0)
+#========Statistics========
+Add-Content "$PSScriptRoot\Check-References-Report.html" "<td>---</td>
+</tr>" -Encoding UTF8
+#========Statistics========
+            }
             }
         } else {
 #========Statistics========
@@ -360,10 +374,10 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "<td><font color=""gree
 <td>---</td>
 <td>---</td>" -Encoding UTF8
 #========Statistics========
-            Write-Host "File found"
+            Write-Host "$currentFileName найден. Результаты сравнения:"
             $fileHash = Get-FileHash -Path "$selectedFolder\$currentFileName" -Algorithm MD5
             $fileHashFromSpc = $fileData[1][$i] -split (":")
-            Compare-Strings -SPCvalue $fileHashFromSpc[1].Trim(' ') -valueFromDocument $fileHash.Hash.ToLower() -message "md5" -positive "Совпадает" -negative "Не совпадает"
+            Compare-Strings -SPCvalue $fileHashFromSpc[1].Trim(' ') -valueFromDocument $fileHash.Hash.ToLower() -message "Контрольная сумма MD5" -positive "Совпадает" -negative "Не совпадает"
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-References-Report.html" "</tr>" -Encoding UTF8
 #========Statistics========
@@ -373,7 +387,7 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "</tr>" -Encoding UTF8
             #Write-Host "Hash sum does not match"
            #}
         } else {
-        Write-Host "File not found"
+        Write-Host "$currentFileName не найден."
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-References-Report.html" "
 <td><font color=""red""><b>Не найден</b></font></td>
@@ -385,12 +399,12 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "
         }
     }
 }
-    Write-Host "-------------------------------"
+    #Write-Host "-------------------------------"
     $word.Quit()
-    Write-Host $documentNames
-    Write-Host $documentTitles
-    Write-Host $fileNames
-    Write-Host $fileMd5s
+    #Write-Host $documentNames
+   # Write-Host $documentTitles
+   # Write-Host $fileNames
+   # Write-Host $fileMd5s
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-References-Report.html" "</table>
 <br>
@@ -408,6 +422,8 @@ $reportExistence = Test-Path -Path "$PSScriptRoot\Check-References-Report.html"
 if ($reportExistence) {
 $nl = [System.Environment]::NewLine
 Input-YesOrNo -Question "Отчет Check-References-Report.html уже существует. Продолжить?$nl$nl`Да - перезаписать и продолжить исполнение скрипта.$nl`Нет - не перезаписывать и остановить исполнение скрипта.$nl$nl`Если вы не хотите перезаписывать существующий отчет, но хотите продолжить исполнение скрипта - переместите отчет из папки, где расположен файл скрипта, в любое удобное для вас место и нажмите 'Да'." -BoxTitle "Отчет Check-References-Report.html уже существует"
+if ($script:yesNoUserInput -eq 1) {Remove-Item -Path "$PSScriptRoot\Check-References-Report.html"}
+$script:yesNoUserInput = 0
 }
 $pathToFolder = Select-Folder -description "Выберите папку, в которой нужно проверить входимость."
 #========Statistics========
@@ -472,8 +488,23 @@ object.style.display == 'block' ? object.style.display = 'none' : object.style.d
 #========Statistics========
 Measure-Command {
 Get-ChildItem "$pathToFolder\*.*" -File -Exclude "*.pdf" | Where-Object {$_.Name -match "SPC"} | % {
-#========Statistics========
 $curSpc = $_.Name
+if ($_.Extension -eq ".xls" -or $_.Extension -eq ".xlsx") {
+Add-Content "$PSScriptRoot\Check-References-Report.html" "
+<table style=""width:80%"">
+<tr>
+<td colspan=""5"" id=""tableHeader""><h2>$curSpc</h2></td>
+</tr>
+<tr>
+<td colspan=""5"">Спецификация с расширением *.xls/*.xlsx. Требуется ручная проверка.</td>
+</tr>
+</table>
+<br>
+<hr>" -Encoding UTF8
+Write-Host "--------------------------------------------------------
+Спецификация с расширеникм *.xls/*.xlsx. Требуется ручная проверка."
+} else {
+#========Statistics========
 Add-Content "$PSScriptRoot\Check-References-Report.html" "
 <table style=""width:80%"">
 <tr>
@@ -483,6 +514,8 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "
 Get-DataFromSpecification -selectedFolder $pathToFolder -currentSPCName $_.Name
 }
 }
+}
+Write-Host $executionTime.
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-References-Report.html" "
 </div>
