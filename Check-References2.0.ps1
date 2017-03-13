@@ -159,7 +159,8 @@ $radioCalculateMD5.Location = $SystemDrawingPoint
 $radioCalculateMD5.Text = "Подсчитывать MD5 для каждого неизмененного файла перед сравнением"
 $radioCalculateMD5.Width = 435
 $radioCalculateMD5.Add_CLick({
-                            if ($radioCalculateMD5.Checked) {$buttonBrowse.Enabled = $false; $labelBrowse.Enabled = $false}
+                            if ($radioCalculateMD5.Checked -and $script:SelectedCurrentVersionFolder -ne "") {$buttonBrowse.Enabled = $false; $labelBrowse.Enabled = $false; $buttonRunScript.Enabled = $true}
+                            if ($radioCalculateMD5.Checked -and $script:SelectedCurrentVersionFolder -eq "") {$buttonBrowse.Enabled = $false; $labelBrowse.Enabled = $false; $buttonRunScript.Enabled = $false}
                             })
 #$radioCalculateMD5.Enabled = $false
 $radioUsePrecalculatedMD5 = New-Object System.Windows.Forms.RadioButton
@@ -173,7 +174,6 @@ $radioUsePrecalculatedMD5.Add_Click({
                                     if ($radioUsePrecalculatedMD5.Checked) {$buttonBrowse.Enabled = $true; $labelBrowse.Enabled = $true};
                                     if ($script:SelectedList -eq "" -or $script:SelectedCurrentVersionFolder -eq "") {$buttonRunScript.Enabled = $false} else {$buttonRunScript.Enabled = $true}
                                     })
-#$radioUsePrecalculatedMD5.Enabled = $false
 #Add UI elements to the form
 $dialog.Controls.Add($checkboxCheckTitlesAndNames)
 $dialog.Controls.Add($checkboxCheckMD5)
@@ -278,6 +278,8 @@ Function Get-DataFromSpecification ($selectedFolder, $currentSPCName) {
     $documentTitles = @()
     $fileNames = @()
     $fileMd5s = @()
+    $FileNameFromList = @()
+    $MD5FromList = @()
     Write-Host "--------------------------------------------------------"
     Write-Host "Собираю ссылки на файлы и документы в $currentSPCName..."
     $word = New-Object -ComObject Word.Application
@@ -431,14 +433,14 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "</tr>" -Encoding UTF8
         } else {
             #Check existence in the folder with current release
             if ((Test-Path -Path "$script:SelectedCurrentVersionFolder\$($fileData[0][$i])") -eq $true) {
-                #if user selects to calculate each MD5 before comparing
-                if ($script:CalculateMD5 -eq $true) {
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-References-Report.html" "<td><font color=""green""><b>Найден</b></font></td>
 <td>---</td>
 <td>---</td>" -Encoding UTF8
 #========Statistics========
-            Write-Host "$($fileData[0][$i]) найден. Результаты сравнения:"
+                #if user selects to calculate each MD5 before comparing
+                if ($script:CalculateMD5 -eq $true) {
+                Write-Host "$($fileData[0][$i]) найден. Результаты сравнения:"
                     #Get file hash and compare it by using function Compare-String
                     Compare-Strings -SPCvalue (($fileData[1][$i] -split (":"))[1].Trim(' ')).ToLower() -valueFromDocument (Get-FileHash -Path "$script:SelectedCurrentVersionFolder\$($fileData[0][$i])" -Algorithm MD5).Hash.ToLower() -message "Контрольная сумма MD5" -positive "Совпадает" -negative "Не совпадает"
 #========Statistics========
@@ -448,20 +450,24 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "</tr>" -Encoding UTF8
                 #if user selects to use the list
                 if ($script:UseList -eq $true) {
                     #1) Put values from the list to an array
-                    $FileNameFromList = @()
-                    $MD5FromList = @()
                     Get-Content -Path "$script:SelectedList" | % {
                         $FileNameFromList += ($_ -split (":"))[0]
                         $MD5FromList += (($_ -split (":"))[1].ToLower()).Trim(" ")
                     }
                     $FileProperties = $FileNameFromList, $MD5FromList
                     #2) Find the file name in an array
-                    if ($FileProperties -contains "$($fileData[0][$i])") {
-                        #if the array contains the file name {
-                        #3) Get the MD5 of the found file and compare it
+                    if ($FileProperties[0] -contains "$($fileData[0][$i])") {
+                        #if the array contains the file name, 3) Get the MD5 of the found file and compare it
+                        $index = [array]::IndexOf($FileProperties[0], $fileData[0][$i])
+                        Compare-Strings -SPCvalue (($fileData[1][$i] -split (":"))[1].Trim(' ')).ToLower() -valueFromDocument $FileProperties[1][$index].ToLower() -message "Контрольная сумма MD5" -positive "Совпадает" -negative "Не совпадает"
                         } else {
-                        #Add 'file not found on the list" to the report
+#========Statistics========
+Add-Content "$PSScriptRoot\Check-References-Report.html" "<td><font color=""red""><b>Не найден в списке</b></font></td>" -Encoding UTF8
+#========Statistics======== 
                     }
+#========Statistics========
+Add-Content "$PSScriptRoot\Check-References-Report.html" "</tr>" -Encoding UTF8
+#========Statistics========               
                 }
             } else {
             #file does not exist in any folders -> record in report
@@ -478,12 +484,7 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "
         }
     }
 }
-    #Write-Host "-------------------------------"
     $word.Quit()
-    #Write-Host $documentNames
-   # Write-Host $documentTitles
-   # Write-Host $fileNames
-   # Write-Host $fileMd5s
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-References-Report.html" "</table>
 <br>
