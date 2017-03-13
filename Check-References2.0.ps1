@@ -122,9 +122,11 @@ $SystemDrawingPoint.X = 25
 $SystemDrawingPoint.Y = 25
 $checkboxCheckTitlesAndNames.Location = $SystemDrawingPoint
 $checkboxCheckTitlesAndNames.Add_CheckStateChanged({
-                                                  if ($checkboxCheckTitlesAndNames.Checked -and $checkboxCheckMD5.Checked -eq $false) {
-                                                  $buttonRunScript.Enabled = $true
-                                                  } else {$buttonRunScript.Enabled = $false}
+                                                  if ($checkboxCheckTitlesAndNames.Checked -eq $true -and $checkboxCheckMD5.Checked -eq $false -and $script:SelectedCurrentVersionFolder -eq "") {$buttonRunScript.Enabled = $true};
+                                                  if ($checkboxCheckTitlesAndNames.Checked -eq $false -and $checkboxCheckMD5.Checked -eq $false -and $script:SelectedCurrentVersionFolder -eq "") {$buttonRunScript.Enabled = $false};
+                                                  if ($checkboxCheckTitlesAndNames.Checked -eq $false -and $checkboxCheckMD5.Checked -eq $true -and $script:SelectedCurrentVersionFolder -ne "") {$buttonRunScript.Enabled = $true};
+                                                  if ($checkboxCheckTitlesAndNames.Checked -eq $false -and $checkboxCheckMD5.Checked -eq $false -and $script:SelectedCurrentVersionFolder -ne "") {$buttonRunScript.Enabled = $false};
+                                                  if ($checkboxCheckTitlesAndNames.Checked -eq $true -and $checkboxCheckMD5.Checked -eq $false -and $script:SelectedCurrentVersionFolder -ne "") {$buttonRunScript.Enabled = $true};
                                                   })
 #Check MD5
 $checkboxCheckMD5 = New-Object System.Windows.Forms.CheckBox
@@ -438,9 +440,9 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "<td><font color=""gree
 <td>---</td>
 <td>---</td>" -Encoding UTF8
 #========Statistics========
+                Write-Host "$($fileData[0][$i]) найден. Результаты сравнения:"
                 #if user selects to calculate each MD5 before comparing
                 if ($script:CalculateMD5 -eq $true) {
-                Write-Host "$($fileData[0][$i]) найден. Результаты сравнения:"
                     #Get file hash and compare it by using function Compare-String
                     Compare-Strings -SPCvalue (($fileData[1][$i] -split (":"))[1].Trim(' ')).ToLower() -valueFromDocument (Get-FileHash -Path "$script:SelectedCurrentVersionFolder\$($fileData[0][$i])" -Algorithm MD5).Hash.ToLower() -message "Контрольная сумма MD5" -positive "Совпадает" -negative "Не совпадает"
 #========Statistics========
@@ -463,6 +465,7 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "</tr>" -Encoding UTF8
                         } else {
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-References-Report.html" "<td><font color=""red""><b>Не найден в списке</b></font></td>" -Encoding UTF8
+Write-Host "Файл найден в указанной директории, но не найден в списке с MD5 суммами. Сравнить контрольные суммы невозможно."
 #========Statistics======== 
                     }
 #========Statistics========
