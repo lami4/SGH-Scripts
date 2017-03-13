@@ -173,8 +173,36 @@ $dialog.Controls.Add($MaskedTextBox)
 $dialog.Controls.Add($labelBrowseInput)
 $dialog.ShowDialog()
 }
+
+
+
+Function Get-DataFromDocument 
+{
+$xlfiles = @()
+$basenames = @()
+$notifications = @()
+$changenumbers = @()
+Get-ChildItem -Path "$script:PathToFolder\*.*" -Include "*.doc*", "*.xls*" | % {
+    #If file has *.xls or *.xlsx extensions, adds file to the special array to append it to the table in the report
+    if ($_.Extension -eq ".xls" -or $_.Extension -eq ".xlsx") {
+        $xlfiles += $_.BaseName
+        return
+    }
+    #If file is a specification, gets data using coordinates required for a specification
+    if ($_.BaseName -match "SPC") {
+    Write-Host "Specification found"
+    } else {
+    #if file is a any other file, gets data using coordinate requiret for the table title
+    Write-Host "Not Specification"
+    }
+}
+Write-Host $xlfiles
+}
+
+
 $result = Custom-Form
 if ($result -ne "OK") {Exit}
-Write-Host $script:PathToFolder
-Write-Host $script:PathToFile
-Write-Host $script:UserInputNotification
+#Write-Host $script:PathToFolder
+#Write-Host $script:PathToFile
+#Write-Host $script:UserInputNotification
+Get-DataFromDocument
