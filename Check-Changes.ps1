@@ -23,6 +23,7 @@ if ($target -eq $null) {
     Write-Host $greatestValue.Maximum
 }
 
+clear
 #Global arrays and variables
 $script:PathToFolder = ""
 $script:PathToFile = ""
@@ -155,10 +156,10 @@ $labelBrowseInput.Width = 350
 $labelBrowseInput.Height = 30
 #TextBox
 $MaskedTextBox = New-Object System.Windows.Forms.MaskedTextBox
-$MaskedTextBox.Location = New-Object System.Drawing.Size(222,135) 
+$MaskedTextBox.Location = New-Object System.Drawing.Size(222,133) 
 $MaskedTextBox.Mask = "00-00-0000"
-$MaskedTextBox.Width = 55
-$MaskedTextBox.BorderStyle = 0
+$MaskedTextBox.Width = 60
+$MaskedTextBox.BorderStyle = 2
 $MaskedTextBox.Add_TextChanged({
                             if ($MaskedTextBox.Text -match '\d\d-\d\d-\d\d\d\d') {$buttonRunScript.Enabled = $true} else {$buttonRunScript.Enabled = $false}
                            })
@@ -182,21 +183,33 @@ $xlfiles = @()
 $basenames = @()
 $notifications = @()
 $changenumbers = @()
+$word = New-Object -ComObject Word.Application
+$word.Visible = $false
 Get-ChildItem -Path "$script:PathToFolder\*.*" -Include "*.doc*", "*.xls*" | % {
     #If file has *.xls or *.xlsx extensions, adds file to the special array to append it to the table in the report
     if ($_.Extension -eq ".xls" -or $_.Extension -eq ".xlsx") {
+        Write-Host "$($_.BaseName): файл с расширением *.xls/*.xlsx, требуется ручная проверка."
         $xlfiles += $_.BaseName
         return
     }
+    Write-Host "$($_.BaseName): забираю значения номера изменения и номера извещения..."
+    $document = $word.Documents.Open($_.FullName)
     #If file is a specification, gets data using coordinates required for a specification
     if ($_.BaseName -match "SPC") {
-    Write-Host "Specification found"
+        $basenames += $_.BaseName
+        $notifications += ((($document.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(1, 3).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')
+        $changenumbers += ((($document.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(1, 1).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')
     } else {
     #if file is a any other file, gets data using coordinate requiret for the table title
-    Write-Host "Not Specification"
+        $basenames += $_.BaseName
+        $notifications += ((($document.Tables.Item(1).Cell(7, 5).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')
+        $changenumbers += ((($document.Tables.Item(1).Cell(7, 3).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')
     }
+    $document.Close([ref]0)
 }
-Write-Host $xlfiles
+$word.Quit()
+$CollectedData = $basenames, $notifications, $changenumbers, $xlfiles
+return $CollectedData
 }
 
 
@@ -205,4 +218,9 @@ if ($result -ne "OK") {Exit}
 #Write-Host $script:PathToFolder
 #Write-Host $script:PathToFile
 #Write-Host $script:UserInputNotification
-Get-DataFromDocument
+$DataFromDocuments = Get-DataFromDocument
+<#for ($i = 0; $i -lt $DataFromDocuments[0].Length; $i++) {
+Write-Host "Обозначение:"$DataFromDocuments[0][$i] "Количество символов:"$DataFromDocuments[0][$i].Length 
+Write-Host "Номер извещения:"$DataFromDocuments[1][$i] "Количество символов:"$DataFromDocuments[1][$i].Length
+Write-Host "Номер изменения:"$DataFromDocuments[2][$i] "Количество символов:"$DataFromDocuments[2][$i].Length
+}#>
