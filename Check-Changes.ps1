@@ -74,7 +74,8 @@ $buttonBrowseFolder.Location = $SystemDrawingPoint
 $buttonBrowseFolder.Add_Click({
                            Select-Folder -Description "Укажите путь к папке, содержащей файлы, данные которых необходимо сравнить с данными файла учета ПД."
                            if ($script:PathToFolder -ne "") {
-                           $labelBrowseFolder.Text = "Указан путь: $script:PathToFolder"
+                                $labelBrowseFolder.Text = "Указан путь: $script:PathToFolder"
+                                if ($script:PathToFolder -ne "" -and $script:PathToFile -ne "" -and $MaskedTextBox.Text -match '\d\d-\d\d-\d\d\d\d') {$buttonRunScript.Enabled = $true} else {$buttonRunScript.Enabled = $false}
                            }
 })
 #Browse file
@@ -88,8 +89,9 @@ $SystemDrawingPoint.Y = 80
 $buttonBrowseFile.Location = $SystemDrawingPoint
 $buttonBrowseFile.Add_Click({
                         Select-File
-                        if ($script:PathToFile-ne "") {
+                        if ($script:PathToFile -ne "") {
                             $labelBrowseFile.Text = "Выбран файл: $([System.IO.Path]::GetFileName($script:PathToFile))"
+                            if ($MaskedTextBox.Text -match '\d\d-\d\d-\d\d\d\d' -and $script:PathToFolder -ne "" -and $script:PathToFile -ne "") {$buttonRunScript.Enabled = $true} else {$buttonRunScript.Enabled = $false}
                         }
 })
 #Run Script
@@ -158,10 +160,10 @@ $labelBrowseInput.Height = 30
 $MaskedTextBox = New-Object System.Windows.Forms.MaskedTextBox
 $MaskedTextBox.Location = New-Object System.Drawing.Size(222,133) 
 $MaskedTextBox.Mask = "00-00-0000"
-$MaskedTextBox.Width = 60
+$MaskedTextBox.Width = 61
 $MaskedTextBox.BorderStyle = 2
 $MaskedTextBox.Add_TextChanged({
-                            if ($MaskedTextBox.Text -match '\d\d-\d\d-\d\d\d\d') {$buttonRunScript.Enabled = $true} else {$buttonRunScript.Enabled = $false}
+                            if ($MaskedTextBox.Text -match '\d\d-\d\d-\d\d\d\d' -and $script:PathToFolder -ne "" -and $script:PathToFile -ne "") {$buttonRunScript.Enabled = $true} else {$buttonRunScript.Enabled = $false}
                            })
 #Add UI elements to the form
 $dialog.Controls.Add($buttonRunScript)
@@ -175,9 +177,7 @@ $dialog.Controls.Add($labelBrowseInput)
 $dialog.ShowDialog()
 }
 
-
-
-Function Get-DataFromDocument 
+Function Get-DataFromDocuments 
 {
 $xlfiles = @()
 $basenames = @()
@@ -200,7 +200,7 @@ Get-ChildItem -Path "$script:PathToFolder\*.*" -Include "*.doc*", "*.xls*" | % {
         $notifications += ((($document.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(1, 3).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')
         $changenumbers += ((($document.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(1, 1).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')
     } else {
-    #if file is a any other file, gets data using coordinate requiret for the table title
+        #if file is a any other file, gets data using coordinate requiret for the table title
         $basenames += $_.BaseName
         $notifications += ((($document.Tables.Item(1).Cell(7, 5).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')
         $changenumbers += ((($document.Tables.Item(1).Cell(7, 3).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')
@@ -212,15 +212,69 @@ $CollectedData = $basenames, $notifications, $changenumbers, $xlfiles
 return $CollectedData
 }
 
+Function Get-DataFromDocumentRegister ($ExcelActiveSheet, $LookFor)
+{
+$CollectedData = @()
+$Changes = @()
+$NotificationCoordinatesRow = @()
+$Range = $ExcelActiveSheet.Range("E:E")
+$Target = $Range.Find("$LookFor")
+if ($Target -eq $null) {
+    return $null
+    } else {
+    $FirstHit = $Target
+    Do
+    {
+        $ChangeAddress = $Target.AddressLocal($false, $false) -replace "E", ""
+        [int]$ValueInCellChange = $ExcelActiveSheet.Cells.Item($ChangeAddress, "J").Value()
+        if ($ValueInCellChange.Length -eq 0) {$Changes += 0} else {$Changes += $ValueInCellChange}
+        $NotificationCoordinatesRow += $ChangeAddress
+        $Target = $Range.FindNext($Target)
+    }
+    While ($Target -ne $NULL -and $Target.AddressLocal() -ne $FirstHit.AddressLocal())
+    $GreatestValue = $Changes | Measure-Object -Maximum
+    $Index = [array]::IndexOf($NotificationCoordinatesRow, $GreatestValue.Maximum)
+    [string]$NotificationNumber = $ExcelActiveSheet.Cells.Item($NotificationCoordinatesRow[$Index], "K").Value()
+    #Write-Host $LookFor "GreatestValue:"$GreatestValue.Maximum
+    #Write-Host $LookFor "Notification:"$NotificationNumber
+    #Write-Host "---------------------------"
+    $CollectedData += [int]$GreatestValue.Maximum
+    $CollectedData += [string]$NotificationNumber
+    return $CollectedData
+}
+}
 
 $result = Custom-Form
 if ($result -ne "OK") {Exit}
 #Write-Host $script:PathToFolder
 #Write-Host $script:PathToFile
 #Write-Host $script:UserInputNotification
-$DataFromDocuments = Get-DataFromDocument
+$DataFromDocuments = Get-DataFromDocuments
 <#for ($i = 0; $i -lt $DataFromDocuments[0].Length; $i++) {
 Write-Host "Обозначение:"$DataFromDocuments[0][$i] "Количество символов:"$DataFromDocuments[0][$i].Length 
 Write-Host "Номер извещения:"$DataFromDocuments[1][$i] "Количество символов:"$DataFromDocuments[1][$i].Length
 Write-Host "Номер изменения:"$DataFromDocuments[2][$i] "Количество символов:"$DataFromDocuments[2][$i].Length
+if ($DataFromDocuments[1][$i] -eq "") {Write-Host "Ячейка для номера извещения пуста" -ForegroundColor Red}
+if ($DataFromDocuments[2][$i] -eq "") {Write-Host "Ячейка для номера изменения пуста" -ForegroundColor Red}
 }#>
+$excel = New-Object -ComObject Excel.Application
+$excel.Visible = $false
+$workbook = $excel.WorkBooks.Open("$script:PathToFile")
+$worksheet = $workbook.Worksheets.Item(1)
+if ($worksheet.AutoFilterMode -eq $true) {$worksheet.ShowAllData()}
+for ($i = 0; $i -lt $DataFromDocuments[0].Length; $i++) {
+    $DataFromRegister = Get-DataFromDocumentRegister -ExcelActiveSheet $worksheet -LookFor $DataFromDocuments[0][$i]
+#Write-Host $DataFromRegister[0]
+#Write-Host "----------------------"
+#notification - 1, change - 2
+    if ($DataFromDocuments[1][$i] -eq "" -and $DataFromDocuments[2][$i] -eq "" -and $DataFromRegister -eq $null) {
+        Write-Host $DataFromDocuments[0][$i] "is a new file."
+        } else {
+        if ($DataFromDocuments[1][$i] -eq "" -and $DataFromDocuments[2][$i] -eq "" -and $DataFromRegister[0] -eq 0 -and $DataFromRegister[1] -eq "") {Write-Host $DataFromDocuments[0][$i] "has not changed, but has empty cells for Change No. and Notification No."}
+        if ($DataFromDocuments[1][$i] -ne "" -and $DataFromDocuments[2][$i] -ne "" -and $DataFromDocuments[2][$i] -ne $DataFromRegister[0] -and $DataFromDocuments[1][$i] -eq $script:UserInputNotification) {Write-Host $DataFromDocuments[0][$i] "has changed."}
+        if ($DataFromDocuments[1][$i] -ne "" -and $DataFromDocuments[2][$i] -ne "" -and $DataFromDocuments[2][$i] -eq $DataFromRegister[0] -and $DataFromDocuments[1][$i] -ne $script:UserInputNotification) {Write-Host $DataFromDocuments[0][$i] "has not changed at all."}
+        }
+        #APPEND INFORMATION ABOUT THE EXCELL FILES TO THE END OF THE FILE!
+}
+$workbook.Close($false)
+$excel.Quit()
