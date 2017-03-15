@@ -28,6 +28,87 @@ clear
 $script:PathToFolder = ""
 $script:PathToFile = ""
 $script:UserInputNotification = ""
+$script:JSvariable = 0
+Function Add-HtmlData 
+{
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "<!DOCTYPE html>
+<html lang=""ru"">
+<head>
+<meta charset=""utf-8"">
+<title>Check-Changes Report</title>
+<style type=""text/css"">
+div {
+font-family: Verdana, Arial, Helvetica, sans-serif;
+}
+table {
+    border-collapse: collapse;
+}
+th {
+padding: 3px;
+	border: 1px solid black;
+    text-align:center;
+    background-color: #bfbfbf;
+}
+td {
+	padding: 3px;
+	border: 1px solid black;
+    text-align:center;
+    background-color: #FFC;
+}
+#tableHeader {
+background-color: white;
+text-align: left;
+border: none;
+padding: 0px;
+}
+hr {
+	border-top: 1px solid #8c8b8b;
+	border-bottom: 1px solid #fff;
+    width: 80%;
+}
+.hide {
+    display: none;
+	position: absolute;
+	background-color: white;
+	text-align: left;
+	border: solid 1px black;
+}
+#indication {
+text-align: left;
+border: 0px;
+background-color: #bfbfbf;
+}
+#changegr {
+background-color: #FFC;
+}
+#notificationgr {
+background-color: #FFC;
+}
+#changered {
+background-color: #FFC;
+}
+#notificationred {
+background-color: #FFC;
+}
+</style>
+<script>
+function my_f(objName) {
+var object = document.getElementById(objName);
+object.style.display == 'block' ? object.style.display = 'none' : object.style.display = 'block'
+}
+</script>
+</head>
+<body>
+<div>
+<h3>Анализ</h3>
+<table style=""width:60%"">
+<tr>
+<th>Обозначение</th>
+<th>Статус<br>изменений</th> 
+<th>Номер<br>изменения</th>
+<th>Номер<br>извещения</th>
+</tr>" -Encoding UTF8
+}
 
 Function Select-File {
 Add-Type -AssemblyName System.Windows.Forms
@@ -262,19 +343,279 @@ $excel.Visible = $false
 $workbook = $excel.WorkBooks.Open("$script:PathToFile")
 $worksheet = $workbook.Worksheets.Item(1)
 if ($worksheet.AutoFilterMode -eq $true) {$worksheet.ShowAllData()}
+#========Statistics========
+Add-HtmlData
+#========Statistics========
 for ($i = 0; $i -lt $DataFromDocuments[0].Length; $i++) {
     $DataFromRegister = Get-DataFromDocumentRegister -ExcelActiveSheet $worksheet -LookFor $DataFromDocuments[0][$i]
 #Write-Host $DataFromRegister[0]
 #Write-Host "----------------------"
 #notification - 1, change - 2
     if ($DataFromDocuments[1][$i] -eq "" -and $DataFromDocuments[2][$i] -eq "" -and $DataFromRegister -eq $null) {
+        #new file
         Write-Host $DataFromDocuments[0][$i] "is a new file."
+#========Statistics========
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>
+<td>
+    $($DataFromDocuments[0][$i])
+</td>
+<td>
+    <font onclick=""my_f('div_$script:JSvariable')"">Новый документ</font>
+    <div class=""hide"" id=""div_$script:JSvariable"">
+        <table>
+            <tr>
+            <td id=""indication"">Документ:</td>
+            <td id=""indication"">в документе отсутствует номер изменения и номер извещения</td>
+            </tr>
+            <tr>
+            <td id=""indication"">Файл учета:</td>
+            <td id=""indication"">в файле учета отсутсвуют записи о документе (обозначении)</td>
+            </tr>
+        </table>
+    </div>
+</td>
+" -Encoding UTF8
+$script:JSvariable += 1
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "<td id=""changegr"">
+    <font color=""green"" onclick=""my_f('div_$script:JSvariable')""><b>?</b></font>
+    <div class=""hide"" id=""div_$script:JSvariable"">
+        <table>
+            <tr>
+            <td id=""indication"">Документ:</td>
+            <td id=""indication"">в документе номер изменения не указан</td>
+            </tr>
+            <tr>
+            <td id=""indication"">Файл учета:</td>
+            <td id=""indication"">в файле учета отсутсвуют записи о данном документе (обозначении)</td>
+            </tr>
+        </table>
+    </div>
+</td>" -Encoding UTF8
+$script:JSvariable += 1
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "<td id=""notificationgr"">
+    <font color=""green"" onclick=""my_f('div_$script:JSvariable')""><b>?</b></font>
+    <div class=""hide"" id=""div_$script:JSvariable"">
+        <table>
+            <tr>
+            <td id=""indication"">Документ:</td>
+            <td id=""indication"">в документе номер извещения не указан</td>
+            </tr>
+            <tr>
+            <td id=""indication"">Файл учета:</td>
+            <td id=""indication"">в файле учета отсутсвуют записи о данном документе (обозначении)</td>
+            </tr>
+        </table>
+    </div>
+</td>
+</tr>" -Encoding UTF8
+#========Statistics========
+$script:JSvariable += 1
         } else {
-        if ($DataFromDocuments[1][$i] -eq "" -and $DataFromDocuments[2][$i] -eq "" -and $DataFromRegister[0] -eq 0 -and $DataFromRegister[1] -eq "") {Write-Host $DataFromDocuments[0][$i] "has not changed, but has empty cells for Change No. and Notification No."}
-        if ($DataFromDocuments[1][$i] -ne "" -and $DataFromDocuments[2][$i] -ne "" -and $DataFromDocuments[2][$i] -ne $DataFromRegister[0] -and $DataFromDocuments[1][$i] -eq $script:UserInputNotification) {Write-Host $DataFromDocuments[0][$i] "has changed."}
-        if ($DataFromDocuments[1][$i] -ne "" -and $DataFromDocuments[2][$i] -ne "" -and $DataFromDocuments[2][$i] -eq $DataFromRegister[0] -and $DataFromDocuments[1][$i] -ne $script:UserInputNotification) {Write-Host $DataFromDocuments[0][$i] "has not changed at all."}
+        if ($DataFromDocuments[1][$i] -eq "" -and $DataFromDocuments[2][$i] -eq "" -and $DataFromRegister[0] -eq 0 -and $DataFromRegister[1] -eq "") {
+            #file with empty cells has not changed
+            Write-Host $DataFromDocuments[0][$i] "has not changed, but has empty cells for Change No. and Notification No."
+        }
+        if ($DataFromDocuments[1][$i] -ne "" -and $DataFromDocuments[2][$i] -ne "" <#-and $DataFromDocuments[2][$i] -ne $DataFromRegister[0]#> -and $DataFromDocuments[1][$i] -eq $script:UserInputNotification) {
+            #file changed
+            Write-Host $DataFromDocuments[0][$i] "has changed."
+#========Statistics========
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>
+<td>
+    $($DataFromDocuments[0][$i])
+</td>
+<td>
+    <font onclick=""my_f('div_$script:JSvariable')"">Изменен</font>
+    <div class=""hide"" id=""div_$script:JSvariable"">
+        <table>
+            <tr>
+            <td id=""indication"">Номер извещения, указанный в документе, и номер извещения, введеный пользователем, совпадают.</td>
+            </tr>
+        </table>
+    </div>
+</td>
+" -Encoding UTF8
+#========Statistics========
+$script:JSvariable += 1
+            if ([string]$DataFromDocuments[2][$i] -ne [string]($DataFromRegister[0] + 1)) {
+            #if document change number does not match (register change number +1)
+#========Statistics========  
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "<td id=""changered"">
+    <font color=""red"" onclick=""my_f('div_$script:JSvariable')""><b>-</b></font>
+    <div class=""hide"" id=""div_$script:JSvariable"">
+        <table>
+            <tr>
+            <td id=""indication"">Документ:</td>
+            <td id=""indication"">$($DataFromDocuments[2][$i])</td>
+            </tr>
+            <tr>
+            <td id=""indication"">Файл учета:</td>
+            <td id=""indication"">$([string]($DataFromRegister[0] + 1)) ($($DataFromRegister[0])+1)</td>
+            </tr>
+        </table>
+    </div>
+</td>
+" -Encoding UTF8
+#========Statistics========
+$script:JSvariable += 1  
+            } else {
+            #if document change number matches (register change number +1)
+#========Statistics========  
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "<td id=""changegr"">
+    <font color=""green"" onclick=""my_f('div_$script:JSvariable')""><b>+</b></font>
+    <div class=""hide"" id=""div_$script:JSvariable"">
+        <table>
+            <tr>
+            <td id=""indication"">Документ:</td>
+            <td id=""indication"">$($DataFromDocuments[2][$i])</td>
+            </tr>
+            <tr>
+            <td id=""indication"">Файл учета:</td>
+            <td id=""indication"">$([string]($DataFromRegister[0] + 1)) ($($DataFromRegister[0])+1)</td>
+            </tr>
+        </table>
+    </div>
+</td>
+" -Encoding UTF8
+#========Statistics========
+$script:JSvariable += 1 
+            }
+            #Add notification number info ?
+#========Statistics========
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "<td id=""notificationgr"">
+    <font color=""green"" onclick=""my_f('div_$script:JSvariable')""><b>?</b></font>
+    <div class=""hide"" id=""div_$script:JSvariable"">
+        <table>
+            <tr>
+            <td id=""indication"">Номер извещения указанный в документе:</td>
+            <td id=""indication"">$($DataFromDocuments[1][$i])</td>
+            </tr>
+            <tr>
+            <td id=""indication"">Номер извещения введенный пользователем:</td>
+            <td id=""indication"">$script:UserInputNotification</td>
+            </tr>
+        </table>
+    </div>
+</td>
+</tr>
+" -Encoding UTF8
+#========Statistics========
+$script:JSvariable += 1
+        }
+        if ($DataFromDocuments[1][$i] -ne "" -and $DataFromDocuments[2][$i] -ne "" <#-and $DataFromDocuments[2][$i] -eq $DataFromRegister[0]#> -and $DataFromDocuments[1][$i] -ne $script:UserInputNotification) {
+            #file has not changed at all
+            Write-Host $DataFromDocuments[0][$i] "has not changed at all."
+#========Statistics========
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>
+<td>
+    $($DataFromDocuments[0][$i])
+</td>
+<td>
+    <font onclick=""my_f('div_$script:JSvariable')"">Без изменений</font>
+    <div class=""hide"" id=""div_$script:JSvariable"">
+        <table>
+            <tr>
+            <td id=""indication"">Номер извещения, указанный в документе, и номер извещения, введеный пользователем, не совпадают.</td>
+            </tr>
+        </table>
+    </div>
+</td>
+" -Encoding UTF8
+#========Statistics========
+$script:JSvariable += 1   
+            #if document change number does not match register change number
+            if ($DataFromDocuments[2][$i] -ne $DataFromRegister[0]) {
+#========Statistics========  
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "<td id=""changered"">
+    <font color=""red"" onclick=""my_f('div_$script:JSvariable')""><b>-</b></font>
+    <div class=""hide"" id=""div_$script:JSvariable"">
+        <table>
+            <tr>
+            <td id=""indication"">Документ:</td>
+            <td id=""indication"">$($DataFromDocuments[2][$i])</td>
+            </tr>
+            <tr>
+            <td id=""indication"">Файл учета:</td>
+            <td id=""indication"">$($DataFromRegister[0])</td>
+            </tr>
+        </table>
+    </div>
+</td>
+" -Encoding UTF8
+#========Statistics========
+$script:JSvariable += 1             
+            } else {
+            #if document change number matches register change number
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "<td id=""changegr"">
+    <font color=""green"" onclick=""my_f('div_$script:JSvariable')""><b>+</b></font>
+    <div class=""hide"" id=""div_$script:JSvariable"">
+        <table>
+            <tr>
+            <td id=""indication"">Документ:</td>
+            <td id=""indication"">$($DataFromDocuments[2][$i])</td>
+            </tr>
+            <tr>
+            <td id=""indication"">Файл учета:</td>
+            <td id=""indication"">$($DataFromRegister[0])</td>
+            </tr>
+        </table>
+    </div>
+</td>
+" -Encoding UTF8
+#========Statistics========
+$script:JSvariable += 1           
+            }
+            if ($DataFromDocuments[1][$i] -ne $DataFromRegister[1]) {
+            #if document notification number does not match register notification number
+#========Statistics========  
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "<td id=""notificationred"">
+    <font color=""red"" onclick=""my_f('div_$script:JSvariable')""><b>-</b></font>
+    <div class=""hide"" id=""div_$script:JSvariable"">
+        <table>
+            <tr>
+            <td id=""indication"">Документ:</td>
+            <td id=""indication"">$($DataFromDocuments[1][$i])</td>
+            </tr>
+            <tr>
+            <td id=""indication"">Файл учета:</td>
+            <td id=""indication"">$($DataFromRegister[1])</td>
+            </tr>
+        </table>
+    </div>
+</td>
+</tr>
+" -Encoding UTF8
+#========Statistics========
+$script:JSvariable += 1  
+            } else {
+            #if document notification number matches register notification number
+#========Statistics========
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "<td id=""notificationgr"">
+    <font color=""green"" onclick=""my_f('div_$script:JSvariable')""><b>+</b></font>
+    <div class=""hide"" id=""div_$script:JSvariable"">
+        <table>
+            <tr>
+            <td id=""indication"">Документ:</td>
+            <td id=""indication"">$($DataFromDocuments[1][$i])</td>
+            </tr>
+            <tr>
+            <td id=""indication"">Файл учета:</td>
+            <td id=""indication"">$($DataFromRegister[1])</td>
+            </tr>
+        </table>
+    </div>
+</td>
+</tr>
+" -Encoding UTF8
+#========Statistics========
+$script:JSvariable += 1   
+            }
+        }
         }
         #APPEND INFORMATION ABOUT THE EXCELL FILES TO THE END OF THE FILE!
 }
 $workbook.Close($false)
 $excel.Quit()
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "
+</table>
+</body>
+</html>" -Encoding UTF8
