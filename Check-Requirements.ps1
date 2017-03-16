@@ -1,5 +1,7 @@
+clear
 #Global variables
 $script:JSvariable = 0
+$script:BlackList = @("BTLJ", "KYUP", "MTCH", "BAXXJ", "BTKZ", "SLTJ", "TL6J", "SPL", "RBCT")
 #Functions
 Function Select-Folder ($description)
 {
@@ -17,7 +19,7 @@ Function Select-Folder ($description)
 
 Function Check-Specification ($selectedFolder, $currentSpecification) {
 #========Statistics========
-Add-Content -Path "$PSScriptRoot\Test Report.html" "
+Add-Content -Path "$PSScriptRoot\Check Requirements.html" "
 <tr>
 <td class=""filename"">$currentSpecification</td>" -Encoding UTF8
 #========Statistics========
@@ -30,7 +32,7 @@ Add-Content -Path "$PSScriptRoot\Test Report.html" "
     if ($fileExtension -eq ".xlsx" -or $fileExtension -eq ".xls") {
     Write-Host "Excel файл. Требуется ручная проверка."
 #========Statistics========
-Add-Content -Path "$PSScriptRoot\Test Report.html" "<td colspan=""4"">
+Add-Content -Path "$PSScriptRoot\Check Requirements.html" "<td colspan=""4"">
 Excel файл. Требуется ручная проверка.
 </td>" -Encoding UTF8
 $script:JSvariable += 1
@@ -45,8 +47,8 @@ $script:JSvariable += 1
         if ($tableCount -eq 0) {
         Write-Host "$currentSpecification не содержит таблиц."
 #========Statistics========
-Add-Content -Path "$PSScriptRoot\Test Report.html" "<td>
-<font color=""red"" onclick=""my_f('div_$script:JSvariable')""><b>-</b></font>
+Add-Content -Path "$PSScriptRoot\Check Requirements.html" "<td>
+<font color=""red"" onclick=""my_f('div_$script:JSvariable')""><b>Ошибка</b></font>
 <div class=""hide"" id=""div_$script:JSvariable"">Файл не содержит таблиц: отсутствуют данные для считывания.</div>
 </td>" -Encoding UTF8
 $script:JSvariable += 1
@@ -54,8 +56,8 @@ $script:JSvariable += 1
         } elseif ($tableCount -gt 1) {
         Write-Host "$currentSpecification содержит несколько таблиц."
 #========Statistics========
-Add-Content -Path "$PSScriptRoot\Test Report.html" "<td>
-<font color=""red"" onclick=""my_f('div_$script:JSvariable')""><b>-</b></font>
+Add-Content -Path "$PSScriptRoot\Check Requirements.html" "<td>
+<font color=""red"" onclick=""my_f('div_$script:JSvariable')""><b>Ошибка</b></font>
 <div class=""hide"" id=""div_$script:JSvariable"">Файл содержит несколько таблиц: невозможно корректно считать данные.</div>
 </td>" -Encoding UTF8
 $script:JSvariable += 1
@@ -63,9 +65,10 @@ $script:JSvariable += 1
         } else {
         [int]$rowCount = try {$document.Tables.Item(1).Rows.Count + 1} catch {""}
         Write-Host "$currentSpecification : $rowCount"
-Add-Content -Path "$PSScriptRoot\Test Report.html" "<td>" -Encoding UTF8
-            for ($i = 1; $i -lt $rowCount; $i++) {
+Add-Content -Path "$PSScriptRoot\Check Requirements.html" "<td>" -Encoding UTF8
+            for ($i = 1; $i -le $rowCount; $i++) {
             [string]$valueInDocumentNameCell = ((($document.Tables.Item(1).Cell($i,4).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')
+                $script:BlackList | % {if ($valueInDocumentNameCell -match $_) {break}}
                 #добавить подсчет совпадений и вывод полученного значения в статистику (Ссылается на <количество документов>)
                 if ($valueInDocumentNameCell -match '\b(.{13})\d\d\.\d\d\.\d\d\.(.{4})\.\d\d\.\d\d([^\s]*)' -or $valueInDocumentNameCell -match '[Rr][Ff]([^a-zA-Zа-яА-я\d])[Gg][Ll]' -or $valueInDocumentNameCell -match '\d\d[^a-zA-Zа-яА-я\d\s:\-_[\]]\d\d[^a-zA-Zа-яА-я\d\s:\-_[\]]\d\d[^a-zA-Zа-яА-я\d\s:\-_[\]]') {
                     $referenceToDocs += 1
@@ -73,13 +76,13 @@ Add-Content -Path "$PSScriptRoot\Test Report.html" "<td>" -Encoding UTF8
                     Write-Host "Обозначение содержит русские буквы или недопустимые символы."
 #========Statistics========
 if ($no_match_count -eq 0) {
-Add-Content -Path "$PSScriptRoot\Test Report.html" "<font color=""red"" onclick=""my_f('div_$script:JSvariable')""><b>-</b></font>
+Add-Content -Path "$PSScriptRoot\Check Requirements.html" "<font color=""red"" onclick=""my_f('div_$script:JSvariable')""><b>Ошибка</b></font>
 <div class=""hide"" id=""div_$script:JSvariable"">
 Обозначение ""$valueInDocumentNameCell"" содержит русские буквы/недопустимые символы или не соответствует маске." -Encoding UTF8
 $script:JSvariable += 1
 $no_match_count =+ 1
 } else {
-Add-Content -Path "$PSScriptRoot\Test Report.html" "<br>
+Add-Content -Path "$PSScriptRoot\Check Requirements.html" "<br>
 Обозначение ""$valueInDocumentNameCell"" содержит русские буквы/недопустимые символы или не соответствует маске." -Encoding UTF8
 $no_match_count =+ 1
 }
@@ -96,13 +99,13 @@ $no_match_count =+ 1
                         Write-Host "Ячейка с MD5 оформлена некорректно. Отсутствует разделитель."
 #========Statistics========
 if ($no_match_count -eq 0) {
-Add-Content -Path "$PSScriptRoot\Test Report.html" "<font color=""red"" onclick=""my_f('div_$script:JSvariable')""><b>-</b></font>
+Add-Content -Path "$PSScriptRoot\Check Requirements.html" "<font color=""red"" onclick=""my_f('div_$script:JSvariable')""><b>Ошибка</b></font>
 <div class=""hide"" id=""div_$script:JSvariable"">
 Ячейка с MD5 для файла $valueIFileNameCell оформлена некорректно: отсутствует разделитель "":""." -Encoding UTF8
 $script:JSvariable += 1
 $no_match_count =+ 1
 } else {
-Add-Content -Path "$PSScriptRoot\Test Report.html" "<br>
+Add-Content -Path "$PSScriptRoot\Check Requirements.html" "<br>
 Ячейка с MD5 для файла $valueIFileNameCell оформлена некорректно: отсутствует разделитель "":""." -Encoding UTF8
 $no_match_count =+ 1
 }
@@ -118,13 +121,13 @@ $no_match_count =+ 1
                         Write-Host "Ячейка с MD5 для файла $valueIFileNameCell оформлена некорректно: не соответствует маске."
 #========Statistics========
 if ($no_match_count -eq 0) {
-Add-Content -Path "$PSScriptRoot\Test Report.html" "<font color=""red"" onclick=""my_f('div_$script:JSvariable')""><b>-</b></font>
+Add-Content -Path "$PSScriptRoot\Check Requirements.html" "<font color=""red"" onclick=""my_f('div_$script:JSvariable')""><b>Ошибка</b></font>
 <div class=""hide"" id=""div_$script:JSvariable"">
 Ячейка с MD5 для файла $valueIFileNameCell оформлена некорректно: не соответствует маске." -Encoding UTF8
 $script:JSvariable += 1
 $no_match_count =+ 1
 } else {
-Add-Content -Path "$PSScriptRoot\Test Report.html" "<br>
+Add-Content -Path "$PSScriptRoot\Check Requirements.html" "<br>
 Ячейка с MD5 для файла $valueIFileNameCell оформлена некорректно: не соответствует маске." -Encoding UTF8
 $no_match_count =+ 1
 }
@@ -135,10 +138,10 @@ $no_match_count =+ 1
             }
 #========Statistics========
 if ($no_match_count -eq 0) {
-Add-Content -Path "$PSScriptRoot\Test Report.html" "<font color=""green""><b>+</b></font>
+Add-Content -Path "$PSScriptRoot\Check Requirements.html" "<font color=""green""><b>+</b></font>
 </td>" -Encoding UTF8
 } else {
-Add-Content -Path "$PSScriptRoot\Test Report.html" "</div>
+Add-Content -Path "$PSScriptRoot\Check Requirements.html" "</div>
 </td>" -Encoding UTF8
 }
 #========Statistics========
@@ -151,8 +154,8 @@ Add-Content -Path "$PSScriptRoot\Test Report.html" "</div>
             if ($valueInDocVersionCell.Length -eq 0 -or $valueInNotificationNoCell.Length -eq 0 -or $valueInDocNameCell.Length -eq 0 -or $valueInDocTitleCell.Length -eq 0) {
             Write-Host "Невозможно получить значения из штампа. Штамп либо отсутствует, либо неверно заверстан."
 #========Statistics========
-Add-Content -Path "$PSScriptRoot\Test Report.html" "<td>
-<font color=""red"" onclick=""my_f('div_$script:JSvariable')""><b>-</b></font>
+Add-Content -Path "$PSScriptRoot\Check Requirements.html" "<td>
+<font color=""red"" onclick=""my_f('div_$script:JSvariable')""><b>Ошибка</b></font>
 <div class=""hide"" id=""div_$script:JSvariable"">
 Невозможно получить значения из штампа. Штамп либо отсутствует, либо неверно заверстан.
 </div>
@@ -162,15 +165,15 @@ $script:JSvariable += 1
             } else {
             Write-Host "Значения из штампа получены."
 #========Statistics========
-Add-Content -Path "$PSScriptRoot\Test Report.html" "<td>
+Add-Content -Path "$PSScriptRoot\Check Requirements.html" "<td>
 <font color=""green""><b>+</b></font>
 </td>" -Encoding UTF8
 #========Statistics========
             }
-        $document.Close([ref]0)
+        $document.Close()
         $word.Quit()
 #========Statistics========
-Add-Content -Path "$PSScriptRoot\Test Report.html" "<td>
+Add-Content -Path "$PSScriptRoot\Check Requirements.html" "<td>
 <b>$referenceToDocs</b>
 </td>
 <td>
@@ -188,7 +191,7 @@ Function Check-Rest ($selectedFolder, $currentDocument) {
     if ($fileExtension -eq ".xlsx" -or $fileExtension -eq ".xls") {
     Write-Host "Excel файл. Требуется ручная проверка."
 #========Statistics========
-Add-Content -Path "$PSScriptRoot\Test Report.html" "<tr>
+Add-Content -Path "$PSScriptRoot\Check Requirements.html" "<tr>
 <td class=""filename"">$currentDocument
 </td>
 <td>
@@ -209,11 +212,11 @@ Excel файл. Требуется ручная проверка.
             if ($valueInDocVersionCell.Length -eq 0 -or $valueInNotificationNoCell.Length -eq 0 -or $valueInDocNameCell.Length -eq 0 -or $valueInDocTitleCell.Length -eq 0) {
             Write-Host "Невозможно получить значения из штампа. Штамп либо отсутствует, либо неверно заверстан."
 #========Statistics========
-Add-Content -Path "$PSScriptRoot\Test Report.html" "<tr>
+Add-Content -Path "$PSScriptRoot\Check Requirements.html" "<tr>
 <td class=""filename"">$currentDocument
 </td>
 <td>
-<font color=""red"" onclick=""my_f('div_$script:JSvariable')""><b>-</b></font>
+<font color=""red"" onclick=""my_f('div_$script:JSvariable')""><b>Ошибка</b></font>
 <div class=""hide"" id=""div_$script:JSvariable"">
 Невозможно получить значения из штампа. Штамп либо отсутствует, либо неверно заверстан.
 </div>
@@ -224,7 +227,7 @@ $script:JSvariable += 1
             } else {
             Write-Host "Значения из штампа получены."
 #========Statistics========
-Add-Content -Path "$PSScriptRoot\Test Report.html" "<tr>
+Add-Content -Path "$PSScriptRoot\Check Requirements.html" "<tr>
 <td class=""filename"">$currentDocument
 </td>
 <td>
@@ -233,20 +236,20 @@ Add-Content -Path "$PSScriptRoot\Test Report.html" "<tr>
 </tr>" -Encoding UTF8
 #========Statistics========
             }
-    $document.Close([ref]0)
+    $document.Close()
     $word.Quit()
     Write-Host "-------End of document-------"
     }
 }
 
 $pathToFolder = Select-Folder -description "Выберите папку, в которой нужно соответствие требованиям."
-Measure-Command {
+$ExecutionTime = Measure-Command {
 #========Statistics========
-Add-Content "$PSScriptRoot\Test Report.html" "<!DOCTYPE html>
+Add-Content "$PSScriptRoot\Check Requirements.html" "<!DOCTYPE html>
 <html lang=""ru"">
 <head>
 <meta charset=""utf-8"">
-<title>LiveDoc Report</title>
+<title>Check Requirements Report</title>
 <style type=""text/css"">
 div {
 font-family: Verdana, Arial, Helvetica, sans-serif;
@@ -286,7 +289,7 @@ object.style.display == 'block' ? object.style.display = 'none' : object.style.d
 </head>
 <body>
 <div>
-<h3>Проверка оформления</h3>
+<h3>Проверка оформления и содержимого</h3>
 <ul>
 <li>Файл спецификации должен содержать только одну таблицу, строки которой при необходимости переносятся на следующую страницу;</li>
 <li>При указании обозначения и наименования документа, обозначение размещается в четвертом столбце таблицы, а наименование в пятом;</li>
@@ -305,7 +308,7 @@ object.style.display == 'block' ? object.style.display = 'none' : object.style.d
     <li><контрольная сумма> — контрольная сумма файла, рассчитанная по алгоритму MD5. Например, 988C393310E97032890DB2BD6BD74135;</li>
 </ul>
 </li>
-<li>При указании названия файла, оно должно полностью совпадать с названием файла и обязательно иметь расширение. Например, meteo-server-6.3.0.11.<b>war</b>;</li>
+<li>При указании названия файла, оно должно обязательно иметь расширение. Например, meteo-server-6.3.0.11.<b>war</b>;</li>
 <li>Во всех документах должен использоваться штамп, который позволяет считывать указанные в нем значения.</li>
 </ul>
 <h3>Спецификации</h3>
@@ -322,7 +325,7 @@ object.style.display == 'block' ? object.style.display = 'none' : object.style.d
 $spcCount = Get-ChildItem -Path "$pathToFolder\*" -Include "*.doc*", "*.xls*" | Where-Object  {$_.BaseName -match 'SPC'}
     if ($spcCount.Count -eq 0) {
 #========Statistics========
-Add-Content -Path "$PSScriptRoot\Test Report.html" "<tr>
+Add-Content -Path "$PSScriptRoot\Check Requirements.html" "<tr>
 <td colspan=""5"">
 Спецификации не найдены
 </td>
@@ -333,7 +336,7 @@ Add-Content -Path "$PSScriptRoot\Test Report.html" "<tr>
     Check-Specification -selectedFolder $pathToFolder -currentSpecification $_.Name
     }
     }
-Add-Content "$PSScriptRoot\Test Report.html" "</table>
+Add-Content "$PSScriptRoot\Check Requirements.html" "</table>
 <h3>Остальные документы</h3>
 <table style=""width:60%"">
 <tr>
@@ -344,8 +347,14 @@ Get-ChildItem -Path "$pathToFolder\*" -Include "*.doc*", "*.xls*" | Where-Object
 Check-Rest -selectedFolder $pathToFolder -currentDocument $_.Name
 }
 #========Statistics========
-Add-Content "$PSScriptRoot\Test Report.html" "</table>
+Add-Content "$PSScriptRoot\Check Requirements.html" "</table>
 </div>
 </body>" -Encoding UTF8
 #========Statistics========
 }
+$StringForHTML = "<font color=""black"" size=""1"">Для создания данного отчета мне потребовалось всего лишь:`r`n<br>"
+$StringForHTML += "$($ExecutionTime.Days) дней "
+$StringForHTML += "$($ExecutionTime.Hours) часов "
+$StringForHTML += "$($ExecutionTime.Minutes) минут "
+$StringForHTML += "$($ExecutionTime.Seconds) секунд`r`n<br>`r`n</font>`r`n<h3>Проверка оформления и содержимого</h3>"
+(Get-Content -Path "$PSScriptRoot\Check Requirements.html").Replace("<h3>Проверка оформления и содержимого</h3>", $StringForHTML) | Set-Content("$PSScriptRoot\Check Requirements.html") -Encoding UTF8
