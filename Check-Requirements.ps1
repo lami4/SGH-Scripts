@@ -1,4 +1,3 @@
-clear
 #Global variables
 $script:JSvariable = 0
 $script:BlackList = @("BTLJ", "KYUP", "MTCH", "BAXXJ", "BTKZ", "SLTJ", "TL6J", "SPL", "RBCT")
@@ -66,7 +65,7 @@ $script:JSvariable += 1
         [int]$rowCount = try {$document.Tables.Item(1).Rows.Count + 1} catch {""}
         Write-Host "$currentSpecification : $rowCount"
 Add-Content -Path "$PSScriptRoot\Check Requirements.html" "<td>" -Encoding UTF8
-            for ($i = 1; $i -le $rowCount; $i++) {
+            for ($i = 1; $i -lt $rowCount; $i++) {
             [string]$valueInDocumentNameCell = ((($document.Tables.Item(1).Cell($i,4).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')
                 $script:BlackList | % {if ($valueInDocumentNameCell -match $_) {break}}
                 #добавить подсчет совпадений и вывод полученного значения в статистику (Ссылается на <количество документов>)
