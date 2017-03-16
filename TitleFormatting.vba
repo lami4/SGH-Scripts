@@ -295,13 +295,13 @@ For Each Shape In ActiveDocument.Sections(1).Headers(wdHeaderFooterPrimary).Shap
 Confidential = Shape.TextFrame.TextRange.Text
 Confidential = Mid(Confidential, 1, Len(Confidential) - 1)
 LowerConfidential = LCase(Confidential)
-If Shape.Width = 240.9 And LowerConfidential = "êîíôèäåíöèàëüíî" Then
+If Shape.Width = 240.9 And LowerConfidential = "конфиденциально" Then
 Shape.RelativeHorizontalPosition = wdRelativeHorizontalPositionRightMarginArea
 Shape.Left = CentimetersToPoints(-8.2)
 Shape.RelativeVerticalPosition = wdRelativeVerticalPositionTopMarginArea
 Shape.Top = CentimetersToPoints(0.4)
 End If
-If Shape.Width = 240.9 And LowerConfidential = "êîììåð÷åñêàÿ òàéíà" Then
+If Shape.Width = 240.9 And LowerConfidential = "коммерческая тайна" Then
 Shape.RelativeHorizontalPosition = wdRelativeHorizontalPositionRightMarginArea
 Shape.Left = CentimetersToPoints(-8.2)
 Shape.RelativeVerticalPosition = wdRelativeVerticalPositionBottomMarginArea
