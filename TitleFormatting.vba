@@ -631,7 +631,7 @@ TextInCell = Replace(TextInCell, ChrW(13), "")
 TextInCell = Replace(TextInCell, ".", "")
 TextInCell = Trim(TextInCell)
 LowerCaseText = LCase(TextInCell)
-If LowerCaseText = "ñáîðî÷íûå åäèíèöû" Or LowerCaseText = "äîêóìåíòàöèÿ" Or LowerCaseText = "ñîñòàâ îáîðóäîâàíèÿ òåðìèíàëà" Or LowerCaseText = "ñòàíäàðòíûå èçäåëèÿ" _
+If LowerCaseText = "сборочные единицы" Or LowerCaseText = "документация" Or LowerCaseText = "состав оборудования терминала" Or LowerCaseText = "стандартные изделия" _
 Or LowerCaseText = "ïðîãðàììíûå êîìïîíåíòû" Or LowerCaseText = "ïåðåìåííûå êîìïëåêòóþùèå" Or LowerCaseText = "ïåðåìåííûå äàííûå äëÿ èñïîëíåíèé" Or LowerCaseText = "âàðèàíòû èñïîëíåíèÿ ïàáê" _
 Or LowerCaseText = "assembly units" Or LowerCaseText = "documentation" Or LowerCaseText = "terminal hardware specifications" Or LowerCaseText = "standard items" _
 Or LowerCaseText = "software components" Or LowerCaseText = "variable items" Or LowerCaseText = "variable data for various assemblies" Or LowerCaseText = "list of bhss assemblies" Then
