@@ -1,4 +1,4 @@
-Sub ApplySpecificationFormatting()
+Sub ApplyFormattingInSpecification()
 'Table in header
 ActiveDocument.Sections(1).Headers(wdHeaderFooterFirstPage).Range.Tables(1).Range.Cells.VerticalAlignment = wdCellAlignVerticalCenter
 With ActiveDocument.Sections(1).Headers(wdHeaderFooterFirstPage).Range.Tables(1).Range.Font
@@ -146,6 +146,17 @@ Next Row
 ActiveDocument.Tables(1).Rows.Height = CentimetersToPoints(1)
 ActiveDocument.Tables(1).Range.Cells.VerticalAlignment = wdCellAlignVerticalCenter
 For Each Row In ActiveDocument.Tables(1).Rows
+    'if row contains more or less than 7 cells
+    If Row.Cells.Count <> 7 Then
+    For Each Cell In Row.Cells
+        With Cell.Range.Font
+            .Name = "Arial"
+            .Size = 8
+        End With
+        Cell.Range.ParagraphFormat.Alignment = wdAlignParagraphLeft
+    Next Cell
+    Else
+    'if row contains 7 cells
     For Each Cell In Row.Cells
 'Main table. Columns 1, 2, 3, 4 and 6.
     If Cell.ColumnIndex <= 4 Or Cell.ColumnIndex = 6 Or Cell.ColumnIndex = 7 Then
@@ -188,6 +199,22 @@ For Each Row In ActiveDocument.Tables(1).Rows
     End If
 'Main Table. Apply special formatting for cells in column 5
     If Cell.ColumnIndex = 5 Then
+    'Make text left aligned if text in 4th column of the same row contains 'pabk'
+        ColumnIndex = Cell.ColumnIndex
+        ColumnIndex = ColumnIndex - 1
+        TextInCell = Row.Cells(ColumnIndex)
+        LowerCaseText = LCase(TextInCell)
+        If LowerCaseText Like "*pabk*gl*" Then
+        Cell.Range.ParagraphFormat.Alignment = wdAlignParagraphLeft
+        With Cell.Range.Font
+            .Name = "Arial"
+            .Size = 8
+            .Bold = False
+            .Italic = False
+            .Underline = False
+        End With
+    'Make text left aligned if text in 4th column of the same row contains 'pabk' (above)
+        End If
         With Cell.Range.Font
             .Name = "Arial"
             .Size = 8
@@ -299,5 +326,6 @@ For Each Row In ActiveDocument.Tables(1).Rows
         End If
     Next i
     Next Cell
+    End If
 Next Row
 End Sub
