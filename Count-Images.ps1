@@ -45,7 +45,7 @@ Get-ChildItem -Path "$path\*.*" -Include "*.doc*" | % {
             $counter += 1
             }
         }
-    $document.Close()
+    $document.Close([ref]0)
     $counter -= 1
         if ($counter -ge 1) {
         $worksheet.Cells.Item($row, 1) = $_.Name
