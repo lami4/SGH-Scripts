@@ -388,7 +388,7 @@ if ($Target -eq $null) {
 }
 }
 
-Function Compare-Strings ($FontColor, $DataInDocument, $DataInRegister, $ComparisonResult) 
+Function Compare-Strings ($FontColor, $DataInDocument, $DataInRegister, $ComparisonResult, $Title) 
 {
 Add-Content "$PSScriptRoot\Check-Changes Report.html" "<td>
     <font color=""$FontColor"" onclick=""my_f('div_$script:JSvariable')""><b>$ComparisonResult</b></font>
@@ -399,7 +399,7 @@ Add-Content "$PSScriptRoot\Check-Changes Report.html" "<td>
             <td id=""indication"">$DataInDocument</td>
             </tr>
             <tr>
-            <td id=""indication"">Файл учета:</td>
+            <td id=""indication"">$($Title):</td>
             <td id=""indication"">$DataInRegister</td>
             </tr>
         </table>
@@ -429,7 +429,7 @@ $script:JSvariable += 1
 Function Add-Status ($Status, $MessageInDiv) 
 {
 Add-Content "$PSScriptRoot\Check-Changes Report.html" "<td>
-    <b>$Status</b>
+    <font color=""black"" onclick=""my_f('div_$script:JSvariable')""><b>$Status</b></font>
     <div class=""hide"" id=""div_$script:JSvariable"">
     $MessageInDiv
     </div>
@@ -495,16 +495,16 @@ Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>" -Encoding UTF8
     } else {
     #if document versions match
     if ($DocumentData.Version -eq $DocumentDataInRegister.Version) {
-    Compare-Strings -FontColor "Green" -DataInDocument $DocumentData.Version -DataInRegister $DocumentDataInRegister.Version -ComparisonResult "Совпадает"
+    Compare-Strings -FontColor "Green" -DataInDocument $DocumentData.Version -DataInRegister $DocumentDataInRegister.Version -ComparisonResult "Совпадает" -Title "Файл учета"
     } else {
     #if if document versions do not match
-    Compare-Strings -FontColor "Red" -DataInDocument $DocumentData.Version -DataInRegister $DocumentDataInRegister.Version -ComparisonResult "Не совпадает"
+    Compare-Strings -FontColor "Red" -DataInDocument $DocumentData.Version -DataInRegister $DocumentDataInRegister.Version -ComparisonResult "Не совпадает" -Title "Файл учета"
     }
     #if notification numbers match
     if ($DocumentData.Notification -eq $DocumentDataInRegister.Notification) {
-    Compare-Strings -FontColor "Green" -DataInDocument $DocumentData.Notification -DataInRegister $DocumentDataInRegister.Notification -ComparisonResult "Совпадает"
+    Compare-Strings -FontColor "Green" -DataInDocument $DocumentData.Notification -DataInRegister $DocumentDataInRegister.Notification -ComparisonResult "Совпадает" -Title "Файл учета"
     } else {
-    Compare-Strings -FontColor "Red" -DataInDocument $DocumentData.Notification -DataInRegister $DocumentDataInRegister.Notification -ComparisonResult "Не совпадает"
+    Compare-Strings -FontColor "Red" -DataInDocument $DocumentData.Notification -DataInRegister $DocumentDataInRegister.Notification -ComparisonResult "Не совпадает" -Title "Файл учета"
     }
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>"
@@ -529,16 +529,16 @@ Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>"
         #if cells in the document title are empty and there is no record about this document in the register
         } elseif ($DocumentData.Notification -eq "" -and $DocumentData.Version -eq "" -and $DataFromRegister -eq $null) {
             Add-Status -Status "Новый документ" -MessageInDiv "В документе не указаны номер изменения и номер извещения (пустые ячейки), а в<br> в файле учета ПД отсутсвуют записи о данном документе."
-            Compare-Strings -FontColor "Green" -DataInDocument "Номер изменения не указан (пустая ячейка)." -DataInRegister "В файле учета ПД отсутсвуют записи о данном документе." -ComparisonResult "?"
-            Compare-Strings -FontColor "Green" -DataInDocument "Номер извещения не указан (пустая ячейка)." -DataInRegister "В файле учета ПД отсутсвуют записи о данном документе." -ComparisonResult "?"
+            Compare-Strings -FontColor "Green" -DataInDocument "Номер изменения не указан (пустая ячейка)." -DataInRegister "В файле учета ПД отсутсвуют записи о данном документе." -ComparisonResult "?" -Title "Файл учета"
+            Compare-Strings -FontColor "Green" -DataInDocument "Номер извещения не указан (пустая ячейка)." -DataInRegister "В файле учета ПД отсутсвуют записи о данном документе." -ComparisonResult "?" -Title "Файл учета"
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>"
 #========Statistics========
         #if cells in the document title are empty and there is a record about this document in the register where the required cells are also empty
         } elseif ($DocumentData.Notification -eq "" -and $DocumentData.Version -eq "" -and $DocumentDataInRegister.Version -eq "" -and $DocumentDataInRegister.Notification -eq "") {
             Add-Status -Status "Старая версия***" -MessageInDiv "В документе не указаны номер изменения и номер извещения (пустые ячейки), а в<br> в файле учета ПД присутсвует запись о данном документе, но в ней не указаны<br>номер изменения и номер извещения (пустые ячейки)."
-            Compare-Strings -FontColor "Green" -DataInDocument "Номер изменения не указан (пустая ячейка)." -DataInRegister "Номер изменения не указан (пустая ячейка)." -ComparisonResult "Совпадает"
-            Compare-Strings -FontColor "Green" -DataInDocument "Номер извещения не указан (пустая ячейка)." -DataInRegister "Номер извещения не указан (пустая ячейка)." -ComparisonResult "Совпадает"
+            Compare-Strings -FontColor "Green" -DataInDocument "Номер изменения не указан (пустая ячейка)." -DataInRegister "Номер изменения не указан (пустая ячейка)." -ComparisonResult "Совпадает" -Title "Файл учета"
+            Compare-Strings -FontColor "Green" -DataInDocument "Номер извещения не указан (пустая ячейка)." -DataInRegister "Номер извещения не указан (пустая ячейка)." -ComparisonResult "Совпадает" -Title "Файл учета"
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>"
 #========Statistics========
@@ -546,20 +546,19 @@ Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>"
         } elseif ($DocumentData.Notification -eq $script:UserInputNotification) {
             Add-Status -Status "Новая версия" -MessageInDiv "Номер извещения, указанный в документе, и номер текущего извещения, введеный пользователем, совпадают."
             #if the document version from document equals the document version from register
-            if ($DocumentData.Notification -eq $DocumentDataInRegister.Notification) {
-            #Add statistics
-            #if they do not match
-            } else {
-            #Add statistics
-            }
-
+            if ($DocumentData.Version -eq ([int]$DocumentDataInRegister.Version + 1)) {
+                Compare-Strings -FontColor "Green" -DataInDocument $DocumentData.Version -DataInRegister "$(([int]$DocumentDataInRegister.Version + 1)) ($([int]$DocumentDataInRegister.Version)+1)" -ComparisonResult "Совпадает" -Title "Файл учета + 1"
+                #if they do not match
+                } else {
+                Compare-Strings -FontColor "Red" -DataInDocument $DocumentData.Version -DataInRegister "$(([int]$DocumentDataInRegister.Version + 1)) ($([int]$DocumentDataInRegister.Version)+1)" -ComparisonResult "Не совпадает" -Title "Файл учета + 1"
+                }
             #if the notification number from document equals the notification number from register
-            if ($DocumentData.Notification -eq $DocumentDataInRegister.Notification) {
-            #Add statistics
-            #if they do not match
-            } else {
-            #Add statistics
-            }
+            if ($DocumentData.Notification -eq $script:UserInputNotification) {
+                Compare-Strings -FontColor "Green" -DataInDocument $DocumentData.Notification -DataInRegister $script:UserInputNotification -ComparisonResult "Совпадает" -Title "Значение, введенное пользователем"
+                #if they do not match
+                } else {
+                Compare-Strings -FontColor "Red" -DataInDocument $DocumentData.Notification -DataInRegister $script:UserInputNotification -ComparisonResult "Не совпадает" -Title "Значение, введенное пользователем"
+                }
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>"
 #========Statistics========
@@ -567,69 +566,23 @@ Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>"
         } elseif ($DocumentData.Notification -ne $script:UserInputNotification) {
             Add-Status -Status "Текущая версия" -MessageInDiv "Номер извещения, указанный в документе, и номер текущего извещения, введеный пользователем, НЕ совпадают."
             #if the document version from document equals the document version from register
-            if ($DocumentData.Notification -eq $DocumentDataInRegister.Notification) {
-            #Add statistics
+            if ($DocumentData.Version -eq $DocumentDataInRegister.Version) {
+            Compare-Strings -FontColor "Green" -DataInDocument $DocumentData.Version -DataInRegister $DocumentDataInRegister.Version -ComparisonResult "Совпадает" -Title "Файл учета"
             #if they do not match
             } else {
-            #Add statistics
+            Compare-Strings -FontColor "Red" -DataInDocument $DocumentData.Version -DataInRegister $DocumentDataInRegister.Version -ComparisonResult "Не совпадает" -Title "Файл учета"
             }
-
             #if the notification number from document equals the notification number from register
             if ($DocumentData.Notification -eq $DocumentDataInRegister.Notification) {
-            #Add statistics
+            Compare-Strings -FontColor "Green" -DataInDocument $DocumentData.Notification -DataInRegister $DocumentDataInRegister.Notification -ComparisonResult "Совпадает" -Title "Файл учета"
             #if they do not match
             } else {
-            #Add statistics
+            Compare-Strings -FontColor "Red" -DataInDocument $DocumentData.Version -DataInRegister $DocumentDataInRegister.Version -ComparisonResult "Не совпадает" -Title "Файл учета"
             }
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>"
 #========Statistics========
         }
-    }
-
-
-
-
-
-
-
-
-
-    if ($script:CheckDocumentsToBePublished -eq $true) {
-    if ($DocumentData.Notification -eq "" -and $DocumentData.Version -eq "" -and $DataFromRegister -eq $null) {
-        #new file
-        Write-Host $DataFromDocuments[0][$i] "is a new file."
-        } else {
-        if ($DocumentData.Notification -eq "" -and $DocumentData.Version -eq "" -and $DocumentDataInRegister.Version -eq 0 -and $DocumentDataInRegister.Notification -eq "" -and $DocumentData.Notification -ne $script:UserInputNotification) {
-            #file with empty cells has not changed
-            Write-Host $DocumentData.BaseName "has not changed, but has empty cells for Change No. and Notification No."  
-        }
-        if ($DocumentData.Notification -ne "" -and $DocumentData.Version -ne "" <#-and $DataFromDocuments[2][$i] -ne $DataFromRegister[0]#> -and $DocumentData.Notification -eq $script:UserInputNotification) {
-            #file changed
-            Write-Host $DocumentData.BaseName "has changed."
-            if ($DocumentData.Version -ne [string]($DocumentDataInRegister.Version + 1)) {
-            #if document change number does not match (register change number +1)
-            } else {
-            #if document change number matches (register change number +1)
-            }
-            #Add notification number info ?
-        }
-        if ($DocumentData.Notification -ne "" -and $DocumentData.Version -ne "" <#-and $DataFromDocuments[2][$i] -eq $DataFromRegister[0]#> -and $DocumentData.Notification -ne $script:UserInputNotification) {
-            #file has not changed at all
-            Write-Host $DocumentData.BaseName "has not changed at all."  
-            #if document change number does not match register change number
-            if ($DocumentData.Version -ne  $DocumentDataInRegister.Version) {           
-            } else {
-            #if document change number matches register change number        
-            }
-            if ($DocumentData.Notification -ne $DocumentDataInRegister.Notification) {
-            #if document notification number does not match register notification number
-            } else {
-            #if document notification number matches register notification number
-            }
-        }
-        }
-        #APPEND INFORMATION ABOUT THE EXCELL FILES TO THE END OF THE FILE!
     }
 }
 $workbook.Close($false)
