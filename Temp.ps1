@@ -333,15 +333,11 @@ Get-ChildItem -Path "$script:PathToFolder\*.*" -Include "*.doc*", "*.xls*" | % {
     $document = $word.Documents.Open($_.FullName)
     #If file is a specification, gets data using coordinates required for a specification
     if ($_.BaseName -match "SPC") {
-        #try catch???
-        
         $basenames += $_.BaseName
         $notifications += try {((($document.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(1, 3).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')} catch {"error"}
         $changenumbers += try {((($document.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(1, 1).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')} catch {"error"}
+    #if file is any other file than SPC, gets data using coordinates required for the table title
     } else {
-        #if file is a any other file, gets data using coordinate requiret for the table title
-        #try catch???
-        
         $basenames += $_.BaseName
         $notifications += try {((($document.Tables.Item(1).Cell(7, 5).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')} catch {"error"}
         $changenumbers += try {((($document.Tables.Item(1).Cell(7, 3).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')} catch {"error"}
@@ -379,9 +375,6 @@ if ($Target -eq $null) {
     $GreatestValue = $Changes | Measure-Object -Maximum
     $Index = [array]::IndexOf($NotificationCoordinatesRow, $GreatestValue.Maximum)
     [string]$NotificationNumber = $ExcelActiveSheet.Cells.Item($NotificationCoordinatesRow[$Index], "K").Value()
-    #Write-Host $LookFor "GreatestValue:"$GreatestValue.Maximum
-    #Write-Host $LookFor "Notification:"$NotificationNumber
-    #Write-Host "---------------------------"
     if ($GreatestValue.Maximum -eq 0) {$CollectedData += [string]""} else {$CollectedData += [string]$GreatestValue.Maximum}
     $CollectedData += [string]$NotificationNumber
     return $CollectedData
@@ -440,13 +433,6 @@ $script:JSvariable += 1
 $result = Custom-Form
 if ($result -ne "OK") {Exit}
 $DataFromDocuments = Get-DataFromDocuments
-<#for ($i = 0; $i -lt $DataFromDocuments[0].Length; $i++) {
-Write-Host "Обозначение:"$DataFromDocuments[0][$i] "Количество символов:"$DataFromDocuments[0][$i].Length 
-Write-Host "Номер извещения:"$DataFromDocuments[1][$i] "Количество символов:"$DataFromDocuments[1][$i].Length
-Write-Host "Номер изменения:"$DataFromDocuments[2][$i] "Количество символов:"$DataFromDocuments[2][$i].Length
-if ($DataFromDocuments[1][$i] -eq "") {Write-Host "Ячейка для номера извещения пуста" -ForegroundColor Red}
-if ($DataFromDocuments[2][$i] -eq "") {Write-Host "Ячейка для номера изменения пуста" -ForegroundColor Red}
-}#>
 $excel = New-Object -ComObject Excel.Application
 $excel.Visible = $false
 $workbook = $excel.WorkBooks.Open("$script:PathToFile")
@@ -519,8 +505,36 @@ Add-Content "$PSScriptRoot\Check-Changes Report.html" "<tr>
     $($DocumentData.BaseName)
 </td>"
 #========Statistics========
+        #if the Version field is filled out, but the Notification number field is not in the register
+        if ($DocumentDataInRegister.Notification -eq "" -and $DocumentDataInRegister.Version -ne "") {
+        Add-Status -Status "Ошибка" -MessageInDiv "Ошибка: В файле учета ПД заполнено поле 'Номер изменения', но не заполнено поле 'Номер извещение'."
+        Add-Error -MessageInDiv "Ошибка: В файле учета ПД заполнено поле 'Номер изменения', но не заполнено поле 'Номер извещение'."
+#========Statistics========
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>"
+#========Statistics======== 
+        #if the Notification number field is filled out, but the Version field is not in the register
+        } elseif ($DocumentDataInRegister.Notification -ne "" -and $DocumentDataInRegister.Version -eq "") {
+        Add-Status -Status "Ошибка" -MessageInDiv "Ошибка: В файле учета ПД заполнено поле 'Номер извещение', но не заполнено поле 'Номер изменения'."
+        Add-Error -MessageInDiv "Ошибка: В файле учета ПД заполнено поле 'Номер извещение', но не заполнено поле 'Номер изменения'."
+#========Statistics========
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>"
+#========Statistics========        
+        #if the Version filed is filled out, but the Notification number field is not in the document
+        } elseif ($DocumentData.Notification -eq "" -and $DocumentData.Version -ne "") {
+            Add-Status -Status "Ошибка" -MessageInDiv "Ошибка: В документе заполнено поле 'Номер изменения', но не заполнено поле 'Номер извещение'."
+            Add-Error -MessageInDiv "Ошибка: В документе заполнено поле 'Номер изменения', но не заполнено поле 'Номер извещение'."
+#========Statistics========
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>"
+#========Statistics========
+        #if the Notification number field is filled out, but the Version field is not in the document
+        } elseif ($DocumentData.Notification -ne "" -and $DocumentData.Version -eq "") {
+            Add-Status -Status "Ошибка" -MessageInDiv "Ошибка: В документе заполнено поле 'Номер извещение', но не заполнено поле 'Номер изменения'."
+            Add-Error -MessageInDiv "Ошибка: В документе заполнено поле 'Номер извещение', но не заполнено поле 'Номер изменения'."
+#========Statistics========
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>"
+#========Statistics========
         #if script cannot get value from the document title
-        if ($DocumentData.Notification -eq "error" -or $DocumentData.Version -eq "error") {
+        } elseif ($DocumentData.Notification -eq "error" -or $DocumentData.Version -eq "error") {
             Add-Status -Status "Ошибка" -MessageInDiv "Ошибка: Невозможно получить данные титульного листа."
             Add-Error -MessageInDiv "Ошибка: Невозможно получить данные титульного листа."
 #========Statistics========
@@ -564,20 +578,26 @@ Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>"
 #========Statistics========
         #if notification number from the document do not equal the notification number entered by the user (old version)
         } elseif ($DocumentData.Notification -ne $script:UserInputNotification) {
-            Add-Status -Status "Текущая версия" -MessageInDiv "Номер извещения, указанный в документе, и номер текущего извещения, введеный пользователем, НЕ совпадают."
-            #if the document version from document equals the document version from register
-            if ($DocumentData.Version -eq $DocumentDataInRegister.Version) {
-            Compare-Strings -FontColor "Green" -DataInDocument $DocumentData.Version -DataInRegister $DocumentDataInRegister.Version -ComparisonResult "Совпадает" -Title "Файл учета"
-            #if they do not match
+            #if the register does not contain any records about the document
+            if ($DataFromRegister -eq $null) {
+                Add-Status -Status "Ошибка" -MessageInDiv "Ошибка: В файле учета ПД не существует записи о данном документе."
+                Add-Error -MessageInDiv "Ошибка: В файле учета ПД не существует записи о данном документе."
             } else {
-            Compare-Strings -FontColor "Red" -DataInDocument $DocumentData.Version -DataInRegister $DocumentDataInRegister.Version -ComparisonResult "Не совпадает" -Title "Файл учета"
-            }
-            #if the notification number from document equals the notification number from register
-            if ($DocumentData.Notification -eq $DocumentDataInRegister.Notification) {
-            Compare-Strings -FontColor "Green" -DataInDocument $DocumentData.Notification -DataInRegister $DocumentDataInRegister.Notification -ComparisonResult "Совпадает" -Title "Файл учета"
-            #if they do not match
-            } else {
-            Compare-Strings -FontColor "Red" -DataInDocument $DocumentData.Version -DataInRegister $DocumentDataInRegister.Version -ComparisonResult "Не совпадает" -Title "Файл учета"
+                Add-Status -Status "Текущая версия" -MessageInDiv "Номер извещения, указанный в документе, и номер текущего извещения, введеный пользователем, НЕ совпадают."
+                #if the document version from document equals the document version from register
+                if ($DocumentData.Version -eq $DocumentDataInRegister.Version) {
+                Compare-Strings -FontColor "Green" -DataInDocument $DocumentData.Version -DataInRegister $DocumentDataInRegister.Version -ComparisonResult "Совпадает" -Title "Файл учета"
+                #if they do not match
+                } else {
+                Compare-Strings -FontColor "Red" -DataInDocument $DocumentData.Version -DataInRegister $DocumentDataInRegister.Version -ComparisonResult "Не совпадает" -Title "Файл учета"
+                }
+                #if the notification number from document equals the notification number from register
+                if ($DocumentData.Notification -eq $DocumentDataInRegister.Notification) {
+                Compare-Strings -FontColor "Green" -DataInDocument $DocumentData.Notification -DataInRegister $DocumentDataInRegister.Notification -ComparisonResult "Совпадает" -Title "Файл учета"
+                #if they do not match
+                } else {
+                Compare-Strings -FontColor "Red" -DataInDocument $DocumentData.Version -DataInRegister $DocumentDataInRegister.Version -ComparisonResult "Не совпадает" -Title "Файл учета"
+                }
             }
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>"
