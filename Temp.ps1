@@ -430,8 +430,18 @@ Add-Content "$PSScriptRoot\Check-Changes Report.html" "<td>
 $script:JSvariable += 1
 }
 
+Function Add-ExecutionTimeToReport ($Time, $ReportName, $StringToReplace) {
+$StringForHTML = "<font color=""black"" size=""1"">Для создания данного отчета мне потребовалось всего лишь:`r`n<br>"
+$StringForHTML += "$($Time.Days) дней "
+$StringForHTML += "$($Time.Hours) часов "
+$StringForHTML += "$($Time.Minutes) минут "
+$StringForHTML += "$($Time.Seconds) секунд`r`n<br>`r`n</font>`r`n$StringToReplace"
+(Get-Content -Path "$PSScriptRoot\$ReportName.html").Replace($StringToReplace, $StringForHTML) | Set-Content("$PSScriptRoot\$ReportName.html") -Encoding UTF8
+}
+
 $result = Custom-Form
 if ($result -ne "OK") {Exit}
+$ExecutionTime = Measure-Command {
 $DataFromDocuments = Get-DataFromDocuments
 $excel = New-Object -ComObject Excel.Application
 $excel.Visible = $false
@@ -461,42 +471,66 @@ Add-Content "$PSScriptRoot\Check-Changes Report.html" "<tr>
     $($DocumentData.BaseName)
 </td>"
 #========Statistics========
-    #if file does not exist in the register
-    if ($DataFromRegister -eq $null) {
-    Add-Error -MessageInDiv "Ошибка: В файле учета ПД не существует записи о данном документе."
+        #if the Version field is filled out, but the Notification number field is not in the register
+        if ($DocumentDataInRegister.Notification -eq "" -and $DocumentDataInRegister.Version -ne "") {
+        Add-Error -MessageInDiv "Ошибка: В файле учета ПД заполнено поле 'Номер изменения', но не заполнено поле 'Номер извещение'."
+#========Statistics========
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>" -Encoding UTF8
+#========Statistics======== 
+        #if the Notification number field is filled out, but the Version field is not in the register
+        } elseif ($DocumentDataInRegister.Notification -ne "" -and $DocumentDataInRegister.Version -eq "") {
+        Add-Error -MessageInDiv "Ошибка: В файле учета ПД заполнено поле 'Номер извещение', но не заполнено поле 'Номер изменения'."
+#========Statistics========
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>" -Encoding UTF8
+#========Statistics========        
+        #if the Version filed is filled out, but the Notification number field is not in the document
+        } elseif ($DocumentData.Notification -eq "" -and $DocumentData.Version -ne "") {
+            Add-Error -MessageInDiv "Ошибка: В документе заполнено поле 'Номер изменения', но не заполнено поле 'Номер извещение'."
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>" -Encoding UTF8
 #========Statistics========
-    #if script cannot get any data from the document title
-    } elseif ($DocumentData.Notification -eq "error" -or $DocumentData.Version -eq "error") {
-    Add-Error -MessageInDiv "Ошибка: Невозможно получить данные титульного листа."
+        #if the Notification number field is filled out, but the Version field is not in the document
+        } elseif ($DocumentData.Notification -ne "" -and $DocumentData.Version -eq "") {
+            Add-Error -MessageInDiv "Ошибка: В документе заполнено поле 'Номер извещение', но не заполнено поле 'Номер изменения'."
+#========Statistics========
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>" -Encoding UTF8
+#========Statistics========
+        #if file does not exist in the register
+        } elseif ($DataFromRegister -eq $null) {
+            Add-Error -MessageInDiv "Ошибка: В файле учета ПД не существует записи о данном документе."
+#========Statistics========
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>" -Encoding UTF8
+#========Statistics========
+        #if script cannot get any data from the document title
+        } elseif ($DocumentData.Notification -eq "error" -or $DocumentData.Version -eq "error") {
+            Add-Error -MessageInDiv "Ошибка: Невозможно получить данные титульного листа."
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>" -Encoding UTF8   
 #========Statistics========  
-    } elseif ($DataFromRegister -eq $null -and $DocumentData.Notification -eq "error" -or $DocumentData.Version -eq "error") {
-    Add-Error -MessageInDiv "Ошибка: Невозможно получить данные титульного листа.<br>Ошибка: В файле учета ПД не существует записи о данном документе."
+        } elseif ($DataFromRegister -eq $null -and $DocumentData.Notification -eq "error" -or $DocumentData.Version -eq "error") {
+            Add-Error -MessageInDiv "Ошибка: Невозможно получить данные титульного листа.<br>Ошибка: В файле учета ПД не существует записи о данном документе."
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>" -Encoding UTF8   
 #========Statistics========
-    } else {
-    #if document versions match
-    if ($DocumentData.Version -eq $DocumentDataInRegister.Version) {
-    Compare-Strings -FontColor "Green" -DataInDocument $DocumentData.Version -DataInRegister $DocumentDataInRegister.Version -ComparisonResult "Совпадает" -Title "Файл учета"
-    } else {
-    #if if document versions do not match
-    Compare-Strings -FontColor "Red" -DataInDocument $DocumentData.Version -DataInRegister $DocumentDataInRegister.Version -ComparisonResult "Не совпадает" -Title "Файл учета"
-    }
-    #if notification numbers match
-    if ($DocumentData.Notification -eq $DocumentDataInRegister.Notification) {
-    Compare-Strings -FontColor "Green" -DataInDocument $DocumentData.Notification -DataInRegister $DocumentDataInRegister.Notification -ComparisonResult "Совпадает" -Title "Файл учета"
-    } else {
-    Compare-Strings -FontColor "Red" -DataInDocument $DocumentData.Notification -DataInRegister $DocumentDataInRegister.Notification -ComparisonResult "Не совпадает" -Title "Файл учета"
-    }
+        } else {
+        #if document versions match
+            if ($DocumentData.Version -eq $DocumentDataInRegister.Version) {
+                Compare-Strings -FontColor "Green" -DataInDocument $DocumentData.Version -DataInRegister $DocumentDataInRegister.Version -ComparisonResult "Совпадает" -Title "Файл учета"
+            } else {
+                #if if document versions do not match
+                Compare-Strings -FontColor "Red" -DataInDocument $DocumentData.Version -DataInRegister $DocumentDataInRegister.Version -ComparisonResult "Не совпадает" -Title "Файл учета"
+            }
+            #if notification numbers match
+            if ($DocumentData.Notification -eq $DocumentDataInRegister.Notification) {
+                Compare-Strings -FontColor "Green" -DataInDocument $DocumentData.Notification -DataInRegister $DocumentDataInRegister.Notification -ComparisonResult "Совпадает" -Title "Файл учета"
+            } else {
+                Compare-Strings -FontColor "Red" -DataInDocument $DocumentData.Notification -DataInRegister $DocumentDataInRegister.Notification -ComparisonResult "Не совпадает" -Title "Файл учета"
+            }
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>"
 #========Statistics========
-    }
-    }
+        }
+        }
 
     if ($script:CheckDocumentsToBePublished -eq $true) {
 #========Statistics========
@@ -510,35 +544,35 @@ Add-Content "$PSScriptRoot\Check-Changes Report.html" "<tr>
         Add-Status -Status "Ошибка" -MessageInDiv "Ошибка: В файле учета ПД заполнено поле 'Номер изменения', но не заполнено поле 'Номер извещение'."
         Add-Error -MessageInDiv "Ошибка: В файле учета ПД заполнено поле 'Номер изменения', но не заполнено поле 'Номер извещение'."
 #========Statistics========
-Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>"
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>" -Encoding UTF8
 #========Statistics======== 
         #if the Notification number field is filled out, but the Version field is not in the register
         } elseif ($DocumentDataInRegister.Notification -ne "" -and $DocumentDataInRegister.Version -eq "") {
         Add-Status -Status "Ошибка" -MessageInDiv "Ошибка: В файле учета ПД заполнено поле 'Номер извещение', но не заполнено поле 'Номер изменения'."
         Add-Error -MessageInDiv "Ошибка: В файле учета ПД заполнено поле 'Номер извещение', но не заполнено поле 'Номер изменения'."
 #========Statistics========
-Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>"
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>" -Encoding UTF8
 #========Statistics========        
         #if the Version filed is filled out, but the Notification number field is not in the document
         } elseif ($DocumentData.Notification -eq "" -and $DocumentData.Version -ne "") {
             Add-Status -Status "Ошибка" -MessageInDiv "Ошибка: В документе заполнено поле 'Номер изменения', но не заполнено поле 'Номер извещение'."
             Add-Error -MessageInDiv "Ошибка: В документе заполнено поле 'Номер изменения', но не заполнено поле 'Номер извещение'."
 #========Statistics========
-Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>"
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>" -Encoding UTF8
 #========Statistics========
         #if the Notification number field is filled out, but the Version field is not in the document
         } elseif ($DocumentData.Notification -ne "" -and $DocumentData.Version -eq "") {
             Add-Status -Status "Ошибка" -MessageInDiv "Ошибка: В документе заполнено поле 'Номер извещение', но не заполнено поле 'Номер изменения'."
             Add-Error -MessageInDiv "Ошибка: В документе заполнено поле 'Номер извещение', но не заполнено поле 'Номер изменения'."
 #========Statistics========
-Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>"
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>" -Encoding UTF8
 #========Statistics========
         #if script cannot get value from the document title
         } elseif ($DocumentData.Notification -eq "error" -or $DocumentData.Version -eq "error") {
             Add-Status -Status "Ошибка" -MessageInDiv "Ошибка: Невозможно получить данные титульного листа."
             Add-Error -MessageInDiv "Ошибка: Невозможно получить данные титульного листа."
 #========Statistics========
-Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>"
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>" -Encoding UTF8
 #========Statistics========
         #if cells in the document title are empty and there is no record about this document in the register
         } elseif ($DocumentData.Notification -eq "" -and $DocumentData.Version -eq "" -and $DataFromRegister -eq $null) {
@@ -546,7 +580,7 @@ Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>"
             Compare-Strings -FontColor "Green" -DataInDocument "Номер изменения не указан (пустая ячейка)." -DataInRegister "В файле учета ПД отсутсвуют записи о данном документе." -ComparisonResult "?" -Title "Файл учета"
             Compare-Strings -FontColor "Green" -DataInDocument "Номер извещения не указан (пустая ячейка)." -DataInRegister "В файле учета ПД отсутсвуют записи о данном документе." -ComparisonResult "?" -Title "Файл учета"
 #========Statistics========
-Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>"
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>" -Encoding UTF8
 #========Statistics========
         #if cells in the document title are empty and there is a record about this document in the register where the required cells are also empty
         } elseif ($DocumentData.Notification -eq "" -and $DocumentData.Version -eq "" -and $DocumentDataInRegister.Version -eq "" -and $DocumentDataInRegister.Notification -eq "") {
@@ -554,7 +588,7 @@ Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>"
             Compare-Strings -FontColor "Green" -DataInDocument "Номер изменения не указан (пустая ячейка)." -DataInRegister "Номер изменения не указан (пустая ячейка)." -ComparisonResult "Совпадает" -Title "Файл учета"
             Compare-Strings -FontColor "Green" -DataInDocument "Номер извещения не указан (пустая ячейка)." -DataInRegister "Номер извещения не указан (пустая ячейка)." -ComparisonResult "Совпадает" -Title "Файл учета"
 #========Statistics========
-Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>"
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>" -Encoding UTF8
 #========Statistics========
         #if notification number from the document equals the notification number entered by the user (new version)
         } elseif ($DocumentData.Notification -eq $script:UserInputNotification) {
@@ -574,7 +608,7 @@ Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>"
                 Compare-Strings -FontColor "Red" -DataInDocument $DocumentData.Notification -DataInRegister $script:UserInputNotification -ComparisonResult "Не совпадает" -Title "Значение, введенное пользователем"
                 }
 #========Statistics========
-Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>"
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>" -Encoding UTF8
 #========Statistics========
         #if notification number from the document do not equal the notification number entered by the user (old version)
         } elseif ($DocumentData.Notification -ne $script:UserInputNotification) {
@@ -600,10 +634,24 @@ Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>"
                 }
             }
 #========Statistics========
-Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>"
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>" -Encoding UTF8
 #========Statistics========
         }
     }
 }
 $workbook.Close($false)
 $excel.Quit()
+}
+Add-ExecutionTimeToReport -Time $ExecutionTime -ReportName "Check-Changes Report" -StringToReplace "<h3>Анализ</h3>"
+#========Statistics========
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "</table>
+</div>
+</body>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>" -Encoding UTF8
+#========Statistics========
