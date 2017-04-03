@@ -67,7 +67,6 @@ $script:JSvariable += 1
 Add-Content -Path "$PSScriptRoot\Check Requirements.html" "<td>" -Encoding UTF8
             for ($i = 1; $i -le $rowCount; $i++) {
             [string]$valueInDocumentNameCell = ((($document.Tables.Item(1).Cell($i,4).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')
-                Write-Host $valueInDocumentNameCell
                 $script:BlackList | % {if ($valueInDocumentNameCell -match $_) {continue}}
                 #добавить подсчет совпадений и вывод полученного значения в статистику (Ссылается на <количество документов>)
                 if ($valueInDocumentNameCell -match '\b(.{13})\d\d\.\d\d\.\d\d\.(.{4})\.\d\d\.\d\d([^\s]*)' -or $valueInDocumentNameCell -match '[Rr][Ff]([^a-zA-Zа-яА-я\d])[Gg][Ll]' -or $valueInDocumentNameCell -match '\d\d[^a-zA-Zа-яА-я\d\s:\-_[\]]\d\d[^a-zA-Zа-яА-я\d\s:\-_[\]]\d\d[^a-zA-Zа-яА-я\d\s:\-_[\]]') {
