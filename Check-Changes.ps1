@@ -443,11 +443,16 @@ $result = Custom-Form
 if ($result -ne "OK") {Exit}
 $ExecutionTime = Measure-Command {
 $DataFromDocuments = Get-DataFromDocuments
+Start-Sleep -Seconds 1
 $excel = New-Object -ComObject Excel.Application
 $excel.Visible = $false
+Start-Sleep -Seconds 5
 $workbook = $excel.WorkBooks.Open("$script:PathToFile")
+Start-Sleep -Seconds 1
 $worksheet = $workbook.Worksheets.Item(1)
+Start-Sleep -Seconds 1
 if ($worksheet.AutoFilterMode -eq $true) {$worksheet.ShowAllData()}
+Start-Sleep -Seconds 1
 if ($script:CheckPublishedDocuments -eq $true) {
 #========Statistics========
 Add-HtmlData -DocumentsCount ($DataFromDocuments[0].Length + $DataFromDocuments[3].Length) -ExtraColumn "" 
@@ -460,7 +465,9 @@ Add-HtmlData -DocumentsCount ($DataFromDocuments[0].Length + $DataFromDocuments[
 for ($i = 0; $i -lt $DataFromDocuments[0].Length; $i++) {
     $DocumentData = @{BaseName = [string]$DataFromDocuments[0][$i]; Notification = [string]$DataFromDocuments[1][$i]; Version = [string]$DataFromDocuments[2][$i]}
     Write-Host "Working on $($DocumentData.BaseName)..."
+    Start-Sleep -Seconds 0.5
     $DataFromRegister = Get-DataFromDocumentRegister -ExcelActiveSheet $worksheet -LookFor $DocumentData.BaseName
+    Start-Sleep -Seconds 1
     if ($DataFromRegister -ne $null) {
     $DocumentDataInRegister = @{Notification = [string]$DataFromRegister[1]; Version = [string]$DataFromRegister[0]}
     }
@@ -630,7 +637,7 @@ Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>" -Encoding UTF8
                 Compare-Strings -FontColor "Green" -DataInDocument $DocumentData.Notification -DataInRegister $DocumentDataInRegister.Notification -ComparisonResult "Совпадает" -Title "Файл учета"
                 #if they do not match
                 } else {
-                Compare-Strings -FontColor "Red" -DataInDocument $DocumentData.Version -DataInRegister $DocumentDataInRegister.Version -ComparisonResult "Не совпадает" -Title "Файл учета"
+                Compare-Strings -FontColor "Red" -DataInDocument $DocumentData.Notification -DataInRegister $DocumentDataInRegister.Notification -ComparisonResult "Не совпадает" -Title "Файл учета"
                 }
             }
 #========Statistics========
