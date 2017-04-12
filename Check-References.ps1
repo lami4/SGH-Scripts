@@ -275,6 +275,15 @@ $script:JSvariable += 1
     }
 }
 
+Function Add-ExecutionTimeToReport ($Time, $ReportName, $StringToReplace) {
+$StringForHTML = "<font color=""black"" size=""1"">Для создания данного отчета мне потребовалось всего лишь:`r`n<br>"
+$StringForHTML += "$($Time.Days) дней "
+$StringForHTML += "$($Time.Hours) часов "
+$StringForHTML += "$($Time.Minutes) минут "
+$StringForHTML += "$($Time.Seconds) секунд`r`n<br>`r`n</font>`r`n$StringToReplace"
+(Get-Content -Path "$PSScriptRoot\$ReportName.html").Replace($StringToReplace, $StringForHTML) | Set-Content("$PSScriptRoot\$ReportName.html") -Encoding UTF8
+}
+
 Function Get-DataFromSpecification ($selectedFolder, $currentSPCName) {
     $documentNames = @()
     $documentTitles = @()
@@ -293,7 +302,7 @@ Function Get-DataFromSpecification ($selectedFolder, $currentSPCName) {
         if ($valueInDocumentNameCell.length -ne 0) {
         if ($valueInDocumentNameCell -match '\b([A-Z]{6})-([A-Z]{2})-([A-Z]{2})-\d\d\.\d\d\.\d\d\.([a-z]{1})([A-Z]{3})\.\d\d\.\d\d([^\s]*)') {
             if ($script:CheckTitlesAndNames -eq $true) {
-                [string]$valueInDocumentTitleCell = (((($document.Tables.Item(1).Cell($i,5).Range.Text).Trim([char]0x0007)) -replace '\.', ' ' -replace ',', ' ' -replace 'ё', 'е' -replace ',' -replace '\s+', ' ').Trim(' ')).ToLower()
+                [string]$valueInDocumentTitleCell = (((($document.Tables.Item(1).Cell($i,5).Range.Text).Trim([char]0x0007)) -replace '\.', ' ' -replace ',', ' ' -replace 'ё', 'е' -replace [char]0x2010, '-' -replace '-', ' ' -replace '\s+', ' ').Trim(' ')).ToLower()
                 $documentNames += $valueInDocumentNameCell
                 $documentTitles += $valueInDocumentTitleCell
                 }
@@ -367,7 +376,7 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "<td colspan=""3"">Фа
             } else {
             Write-Host "$currentDocumentFullName найден (спецификация). Результаты сравнения:"
             $document = $word.Documents.Open("$currentDocumentFullName")
-            [string]$valueForDocTitle = (((($document.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(4, 5).Range.Text).Trim([char]0x0007)) -replace '\.', ' ' -replace ',', ' ' -replace 'ё', 'е' -replace '\s+', ' ').Trim(' ')).ToLower()
+            [string]$valueForDocTitle = (((($document.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(4, 5).Range.Text).Trim([char]0x0007)) -replace '\.', ' ' -replace ',', ' ' -replace 'ё', 'е' -replace [char]0x2010, '-' -replace '-', ' ' -replace '\s+', ' ').Trim(' ')).ToLower()
             [string]$valueForDocName = ((($document.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(1, 6).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ' -replace [char]0x2010, '-').Trim(' ')
             Compare-Strings -SPCvalue $documentData[0][$i] -valueFromDocument $valueForDocName -message "Обозначение" -positive "Совпадает" -negative "Не совпадает"
             Compare-Strings -SPCvalue $documentData[1][$i] -valueFromDocument $valueForDocTitle -message "Наименование" -positive "Совпадает" -negative "Не совпадает"
@@ -389,7 +398,7 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "<td colspan=""3"">Фа
             } else {
             Write-Host "$currentDocumentFullName найден. Результаты сравнения:"
             $document = $word.Documents.Open("$currentDocumentFullName")
-            [string]$valueForDocTitle = (((($document.Tables.Item(1).Cell(9, 7).Range.Text).Trim([char]0x0007)) -replace '\.', ' ' -replace ',', ' ' -replace 'ё', 'е' -replace '\s+', ' ').Trim(' ')).ToLower()
+            [string]$valueForDocTitle = (((($document.Tables.Item(1).Cell(9, 7).Range.Text).Trim([char]0x0007)) -replace '\.', ' ' -replace ',', ' ' -replace 'ё', 'е' -replace [char]0x2010, '-' -replace '-', ' ' -replace '\s+', ' ').Trim(' ')).ToLower()
             [string]$valueForDocName = ((($document.Tables.Item(1).Cell(6, 8).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ' -replace [char]0x2010, '-').Trim(' ')
             Compare-Strings -SPCvalue $documentData[0][$i] -valueFromDocument $valueForDocName -message "Обозначение"  -positive "Совпадает" -negative "Не совпадает"
             Compare-Strings -SPCvalue $documentData[1][$i] -valueFromDocument $valueForDocTitle -message "Наименование"  -positive "Совпадает" -negative "Не совпадает"
@@ -499,10 +508,11 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "</table>
 #script code
 $result = Custom-Form
 if ($result -ne "OK") {Exit}
-Write-Host $script:CheckTitlesAndNames
+#<Write-Host $script:CheckTitlesAndNames
 Write-Host $script:CheckMD5
 Write-Host "Считать суммы" $script:CalculateMD5
 Write-Host "Использовать список" $script:UseList
+#>
 $reportExistence = Test-Path -Path "$PSScriptRoot\Check-References-Report.html"
 if ($reportExistence) {
 $nl = [System.Environment]::NewLine
@@ -511,6 +521,7 @@ if ($script:yesNoUserInput -eq 1) {Remove-Item -Path "$PSScriptRoot\Check-Refere
 $script:yesNoUserInput = 0
 }
 $pathToFolder = Select-Folder -description "Выберите папку, в которой нужно проверить входимость."
+$ExecutionTime = Measure-Command {
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-References-Report.html" "<!DOCTYPE html>
 <html lang=""ru"">
@@ -608,3 +619,5 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "
 </html>" -Encoding UTF8
 #========Statistics========
 Invoke-Item "$PSScriptRoot\Check-References-Report.html"
+}
+Add-ExecutionTimeToReport -Time $ExecutionTime -ReportName "Check-References-Report" -StringToReplace "<h3>Результаты сравнения</h3>"
