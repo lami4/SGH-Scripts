@@ -618,6 +618,6 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "
 </body>
 </html>" -Encoding UTF8
 #========Statistics========
-Invoke-Item "$PSScriptRoot\Check-References-Report.html"
 }
 Add-ExecutionTimeToReport -Time $ExecutionTime -ReportName "Check-References-Report" -StringToReplace "<h3>Результаты сравнения</h3>"
+Invoke-Item "$PSScriptRoot\Check-References-Report.html"
