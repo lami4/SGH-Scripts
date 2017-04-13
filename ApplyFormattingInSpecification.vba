@@ -254,9 +254,9 @@ For Each Row In ActiveDocument.Tables(1).Rows
             TextInCell = Replace(TextInCell, ".", "")
             TextInCell = Trim(TextInCell)
             LowerCaseText = LCase(TextInCell)
-            If LowerCaseText = "ñáîðî÷íûå åäèíèöû" Or LowerCaseText = "äîêóìåíòàöèÿ" Or LowerCaseText = "ñîñòàâ îáîðóäîâàíèÿ òåðìèíàëà" Or LowerCaseText = "ñòàíäàðòíûå èçäåëèÿ" _
-            Or LowerCaseText = "ïðîãðàììíûå êîìïîíåíòû" Or LowerCaseText = "ïåðåìåííûå êîìïëåêòóþùèå" Or LowerCaseText = "ïåðåìåííûå äàííûå äëÿ èñïîëíåíèé" Or LowerCaseText = "âàðèàíòû èñïîëíåíèÿ ïàáê" _
-            Or LowerCaseText = "äîêóìåíòàöèÿ èñòî÷íèêîâ ñîáûòèé" _
+            If LowerCaseText = "сборочные единицы" Or LowerCaseText = "документация" Or LowerCaseText = "состав оборудования терминала" Or LowerCaseText = "стандартные изделия" _
+            Or LowerCaseText = "программные компоненты" Or LowerCaseText = "переменные комплектующие" Or LowerCaseText = "переменные данные для исполнений" Or LowerCaseText = "варианты исполнения пабк" _
+            Or LowerCaseText = "документация источников событий" _
             Or LowerCaseText = "assembly units" Or LowerCaseText = "documentation" Or LowerCaseText = "terminal hardware specifications" Or LowerCaseText = "standard items" _
             Or LowerCaseText = "software components" Or LowerCaseText = "variable items" Or LowerCaseText = "variable data for various assemblies" Or LowerCaseText = "list of bhss assemblies" _
             Or LowerCaseText = "event source documentation" Then
