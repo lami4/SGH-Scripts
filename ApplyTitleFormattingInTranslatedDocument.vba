@@ -295,4 +295,19 @@ Shape.RelativeVerticalPosition = wdRelativeVerticalPositionBottomMarginArea
 Shape.Top = CentimetersToPoints(0)
 End If
 Next
+'Fix size of the cell with title
+TextInCell = ActiveDocument.Tables(1).Cell(9, 7).Range.Text
+Length = Len(TextInCell)
+If Length <= 140 Then
+ActiveDocument.Tables(1).Cell(9, 7).Range.Font.Size = 10
+End If
+If Length > 140 Then
+ActiveDocument.Tables(1).Cell(9, 7).Range.Font.Size = 9
+End If
+If Length > 190 Then
+ActiveDocument.Tables(1).Cell(9, 7).Range.Font.Size = 8
+End If
+If Length > 215 Then
+ActiveDocument.Tables(1).Cell(9, 7).Range.Font.Size = 7.5
+End If
 End Sub
