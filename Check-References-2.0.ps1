@@ -627,7 +627,7 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "<td><font color=""gree
 #========Statistics========
             #if user selects to use precalculated md5 for files being published
             if ($script:UseMd5ListForFilesBeingPublished -eq $true) {
-                if ($FilesBeingPublishedData[0] -contains $FileDataFromSpecification.Name) {
+                if ($FilesBeingPublishedData[0] -ccontains $FileDataFromSpecification.Name) {
                     $index = [array]::IndexOf($FilesBeingPublishedData[0], $FileDataFromSpecification.Name)
                     Start-Sleep -Seconds 0.2
                     Compare-Strings -SPCvalue ([string](($FileDataFromSpecification.Checksum -split (":"))[1].Trim(' ')).ToLower()) -valueFromDocument ([string]$FilesBeingPublishedData[1][$index]) -message "Контрольная сумма MD5" -positive "Совпадает" -negative "Не совпадает"
@@ -652,7 +652,7 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "<td><font color=""gree
 #========Statistics========
             #if user selects to use precalculated md5 for published files
             if ($script:UseMd5ListForPublishedFiles -eq $true) {
-                if ($PublishedFilesData[0] -contains $FileDataFromSpecification.Name) {
+                if ($PublishedFilesData[0] -ccontains $FileDataFromSpecification.Name) {
                     $index = [array]::IndexOf($PublishedFilesData[0], $FileDataFromSpecification.Name)
                     Start-Sleep -Seconds 0.2
                     Compare-Strings -SPCvalue ([string](($FileDataFromSpecification.Checksum -split (":"))[1].Trim(' ')).ToLower()) -valueFromDocument ([string]$PublishedFilesData[1][$index]) -message "Контрольная сумма MD5" -positive "Совпадает" -negative "Не совпадает"
