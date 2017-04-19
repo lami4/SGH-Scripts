@@ -394,7 +394,7 @@ $script:yesNoUserInput = 1
 } else {Exit}
 }
 
-Function Compare-Strings ($SPCvalue, $valueFromDocument, $message, $positive, $negative) 
+Function Compare-Strings ($SPCvalue, $valueFromDocument, $message, $positive, $negative, $FileOrDocument) 
 {
     if ($valueFromDocument -eq $SPCvalue) {
     Write-Host "$message совпадает" -ForegroundColor Green
@@ -407,7 +407,7 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "<td><font color=""gree
 <td id=""indication"">$SPCvalue</td>
 </tr>
 <tr>
-<td id=""indication"">Документ:</td>
+<td id=""indication"">$($FileOrDocument):</td>
 <td id=""indication"">$valueFromDocument</td>
 </tr>
 </table>
@@ -426,7 +426,7 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "<td><font color=""red"
 <td id=""indication"">$SPCvalue</td>
 </tr>
 <tr>
-<td id=""indication"">Документ:</td>
+<td id=""indication"">$($FileOrDocument):</td>
 <td id=""indication"">$valueFromDocument</td>
 </tr>
 </table>
@@ -515,7 +515,7 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "<tr>
 Start-Sleep -Seconds 0.5
 #========Statistics========
 if ($script:CheckTitlesAndNames -eq $true) {
-Write-Host "Сравниваю наименования и обозначения указанные в спецификации..."
+Write-Host "Проверяю наименования и обозначения указанные в спецификации..."
     for ($i = 0; $i -lt $documentData[0].Length; $i++) {
 Start-Sleep -Seconds 0.3
     $currentDocumentBaseName = $documentData[0][$i]
@@ -525,6 +525,7 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "<tr>
 #========Statistics========
     $documentExistence = Test-Path -Path "$selectedFolder\$currentDocumentBaseName.*" -Exclude "*.pdf"
         if ($documentExistence -eq $true) {
+Start-Sleep -Seconds 0.2
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-References-Report.html" "<td><font color=""green""><b>Найден</b></font></td>" -Encoding UTF8
 #========Statistics========
@@ -538,13 +539,13 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "<td colspan=""3"">Фа
 </tr>" -Encoding UTF8
 #========Statistics========
             } else {
-            Write-Host "$currentDocumentFullName найден (спецификация). Результаты сравнения:"
+            Write-Host "$($currentDocumentFullName.BaseName) найден (спецификация). Результаты сравнения:"
             $document = $word.Documents.Open("$currentDocumentFullName")
             [string]$valueForDocTitle = (((($document.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(4, 5).Range.Text).Trim([char]0x0007)) -replace '\.', ' ' -replace ',', ' ' -replace 'ё', 'е' -replace [char]0x2010, '-' -replace '-', ' ' -replace '\s+', ' ').Trim(' ')).ToLower()
             [string]$valueForDocName = ((($document.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(1, 6).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ' -replace [char]0x2010, '-').Trim(' ')
-            Compare-Strings -SPCvalue $documentData[0][$i] -valueFromDocument $valueForDocName -message "Обозначение" -positive "Совпадает" -negative "Не совпадает"
+            Compare-Strings -SPCvalue $documentData[0][$i] -valueFromDocument $valueForDocName -message "Обозначение" -positive "Совпадает" -negative "Не совпадает" -FileOrDocument "Документ"
             Start-Sleep -Seconds 0.1
-            Compare-Strings -SPCvalue $documentData[1][$i] -valueFromDocument $valueForDocTitle -message "Наименование" -positive "Совпадает" -negative "Не совпадает"
+            Compare-Strings -SPCvalue $documentData[1][$i] -valueFromDocument $valueForDocTitle -message "Наименование" -positive "Совпадает" -negative "Не совпадает" -FileOrDocument "Документ"
             $document.Close([ref]0)
             Start-Sleep -Seconds 0.2
 #========Statistics========
@@ -562,13 +563,13 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "<td colspan=""3"">Фа
 </tr>" -Encoding UTF8
 #========Statistics========
             } else {
-            Write-Host "$currentDocumentFullName найден. Результаты сравнения:"
+            Write-Host "$($currentDocumentFullName.BaseName) найден. Результаты сравнения:"
             $document = $word.Documents.Open("$currentDocumentFullName")
             [string]$valueForDocTitle = (((($document.Tables.Item(1).Cell(9, 7).Range.Text).Trim([char]0x0007)) -replace '\.', ' ' -replace ',', ' ' -replace 'ё', 'е' -replace [char]0x2010, '-' -replace '-', ' ' -replace '\s+', ' ').Trim(' ')).ToLower()
             [string]$valueForDocName = ((($document.Tables.Item(1).Cell(6, 8).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ' -replace [char]0x2010, '-').Trim(' ')
-            Compare-Strings -SPCvalue $documentData[0][$i] -valueFromDocument $valueForDocName -message "Обозначение"  -positive "Совпадает" -negative "Не совпадает"
+            Compare-Strings -SPCvalue $documentData[0][$i] -valueFromDocument $valueForDocName -message "Обозначение"  -positive "Совпадает" -negative "Не совпадает" -FileOrDocument "Документ"
             Start-Sleep -Seconds 0.1
-            Compare-Strings -SPCvalue $documentData[1][$i] -valueFromDocument $valueForDocTitle -message "Наименование"  -positive "Совпадает" -negative "Не совпадает"
+            Compare-Strings -SPCvalue $documentData[1][$i] -valueFromDocument $valueForDocTitle -message "Наименование"  -positive "Совпадает" -negative "Не совпадает" -FileOrDocument "Документ"
             $document.Close([ref]0)
             Start-Sleep -Seconds 0.2
 #========Statistics========
@@ -597,7 +598,7 @@ if ($script:CheckMD5 -eq $true) {
         $FilesBeingPublishedData = @(), @()
         Get-Content -Path "$script:SelectedMd5ListForFilesBeingPublished" | % {
             if ($_ -match ":") {
-                $FilesBeingPublishedData[0] += ($_ -split (":"))[0]; $FilesBeingPublishedData[1] += (($_ -split (":"))[1].ToLower()).Trim(" ")
+                $FilesBeingPublishedData[0] += (($_ -split (":"))[0]).ToLower(); $FilesBeingPublishedData[1] += (($_ -split (":"))[1].ToLower()).Trim(" ")
             }
         }
     }
@@ -606,7 +607,7 @@ if ($script:CheckMD5 -eq $true) {
         $PublishedFilesData = @(), @()
         Get-Content -Path "$script:SelectedMd5ListForPublishedFiles" | % {
             if ($_ -match ":") {
-                $PublishedFilesData[0] += ($_ -split (":"))[0]; $PublishedFilesData[1] += (($_ -split (":"))[1].ToLower()).Trim(" ")
+                $PublishedFilesData[0] += (($_ -split (":"))[0]).ToLower(); $PublishedFilesData[1] += (($_ -split (":"))[1].ToLower()).Trim(" ")
             }
         }
     }
@@ -616,7 +617,7 @@ if ($script:CheckMD5 -eq $true) {
 Add-Content "$PSScriptRoot\Check-References-Report.html" "<tr>
 <td>$($fileData[0][$i])</td>" -Encoding UTF8
 #========Statistics========
-        $FileDataFromSpecification = @{Name = [string]$fileData[0][$i]; Checksum = [string]$fileData[1][$i]}
+        $FileDataFromSpecification = @{Name = ([string]$fileData[0][$i]).ToLower(); Checksum = [string]$fileData[1][$i]}
         #if the file found in the folder with files being published
         if ((Test-Path -Path "$selectedFolder\$($FileDataFromSpecification.Name)") -eq $true) {
         Write-Host "$($FileDataFromSpecification.Name) найден. Результаты сравнения:"
@@ -627,19 +628,19 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "<td><font color=""gree
 #========Statistics========
             #if user selects to use precalculated md5 for files being published
             if ($script:UseMd5ListForFilesBeingPublished -eq $true) {
-                if ($FilesBeingPublishedData[0] -ccontains $FileDataFromSpecification.Name) {
+                if ($FilesBeingPublishedData[0] -contains $FileDataFromSpecification.Name) {
                     $index = [array]::IndexOf($FilesBeingPublishedData[0], $FileDataFromSpecification.Name)
-                    Start-Sleep -Seconds 0.2
-                    Compare-Strings -SPCvalue ([string](($FileDataFromSpecification.Checksum -split (":"))[1].Trim(' ')).ToLower()) -valueFromDocument ([string]$FilesBeingPublishedData[1][$index]) -message "Контрольная сумма MD5" -positive "Совпадает" -negative "Не совпадает"
+                    Start-Sleep -Seconds 1
+                    Compare-Strings -SPCvalue ([string](($FileDataFromSpecification.Checksum -split (":"))[1].Trim(' ')).ToLower()) -valueFromDocument ([string]$FilesBeingPublishedData[1][$index]) -message "Контрольная сумма MD5" -positive "Совпадает" -negative "Не совпадает" -FileOrDocument "MD5 файла"
                     #Write-Host "File found in the list."
                 } else {
-                    Start-Sleep -Seconds 0.2
-                    Compare-Strings -SPCvalue (($FileDataFromSpecification.Checksum -split (":"))[1].Trim(' ')).ToLower() -valueFromDocument (Get-FileHash -Path "$selectedFolder\$($FileDataFromSpecification.Name)" -Algorithm MD5).Hash.ToLower() -message "Контрольная сумма MD5" -positive "Совпадает" -negative "Не совпадает"
+                    Start-Sleep -Seconds 1
+                    Compare-Strings -SPCvalue (($FileDataFromSpecification.Checksum -split (":"))[1].Trim(' ')).ToLower() -valueFromDocument (Get-FileHash -Path "$selectedFolder\$($FileDataFromSpecification.Name)" -Algorithm MD5).Hash.ToLower() -message "Контрольная сумма MD5" -positive "Совпадает" -negative "Не совпадает" -FileOrDocument "MD5 файла"
                     #Write-Host "File not found in the list. Calculating checksum."
                 }
             } else {
-            Start-Sleep -Seconds 0.2
-            Compare-Strings -SPCvalue (($FileDataFromSpecification.Checksum -split (":"))[1].Trim(' ')).ToLower() -valueFromDocument (Get-FileHash -Path "$selectedFolder\$($FileDataFromSpecification.Name)" -Algorithm MD5).Hash.ToLower() -message "Контрольная сумма MD5" -positive "Совпадает" -negative "Не совпадает"
+            Start-Sleep -Seconds 1
+            Compare-Strings -SPCvalue (($FileDataFromSpecification.Checksum -split (":"))[1].Trim(' ')).ToLower() -valueFromDocument (Get-FileHash -Path "$selectedFolder\$($FileDataFromSpecification.Name)" -Algorithm MD5).Hash.ToLower() -message "Контрольная сумма MD5" -positive "Совпадает" -negative "Не совпадает" -FileOrDocument "MD5 файла"
             #Write-Host "Calcuating all MD5s"
             }
          #if the file is not found in the folder with files being published, the script goes to the folder that contains files of the current release
@@ -652,24 +653,24 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "<td><font color=""gree
 #========Statistics========
             #if user selects to use precalculated md5 for published files
             if ($script:UseMd5ListForPublishedFiles -eq $true) {
-                if ($PublishedFilesData[0] -ccontains $FileDataFromSpecification.Name) {
+                if ($PublishedFilesData[0] -contains $FileDataFromSpecification.Name) {
                     $index = [array]::IndexOf($PublishedFilesData[0], $FileDataFromSpecification.Name)
-                    Start-Sleep -Seconds 0.2
-                    Compare-Strings -SPCvalue ([string](($FileDataFromSpecification.Checksum -split (":"))[1].Trim(' ')).ToLower()) -valueFromDocument ([string]$PublishedFilesData[1][$index]) -message "Контрольная сумма MD5" -positive "Совпадает" -negative "Не совпадает"
+                    Start-Sleep -Seconds 1
+                    Compare-Strings -SPCvalue ([string](($FileDataFromSpecification.Checksum -split (":"))[1].Trim(' ')).ToLower()) -valueFromDocument ([string]$PublishedFilesData[1][$index]) -message "Контрольная сумма MD5" -positive "Совпадает" -negative "Не совпадает" -FileOrDocument "MD5 файла"
                     #Write-Host "File found in the list. (published)"
                 } else {
-                    Start-Sleep -Seconds 0.2
-                    Compare-Strings -SPCvalue (($FileDataFromSpecification.Checksum -split (":"))[1].Trim(' ')).ToLower() -valueFromDocument (Get-FileHash -Path "$script:PathToPublishedFiles\$($FileDataFromSpecification.Name)" -Algorithm MD5).Hash.ToLower() -message "Контрольная сумма MD5" -positive "Совпадает" -negative "Не совпадает"
+                    Start-Sleep -Seconds 1
+                    Compare-Strings -SPCvalue (($FileDataFromSpecification.Checksum -split (":"))[1].Trim(' ')).ToLower() -valueFromDocument (Get-FileHash -Path "$script:PathToPublishedFiles\$($FileDataFromSpecification.Name)" -Algorithm MD5).Hash.ToLower() -message "Контрольная сумма MD5" -positive "Совпадает" -negative "Не совпадает" -FileOrDocument "MD5 файла"
                     #Write-Host "File not found in the list. Calculating checksum. (published)"
                 }
             } else {
-                Start-Sleep -Seconds 0.2
-                Compare-Strings -SPCvalue (($FileDataFromSpecification.Checksum -split (":"))[1].Trim(' ')).ToLower() -valueFromDocument (Get-FileHash -Path "$script:PathToPublishedFiles\$($FileDataFromSpecification.Name)" -Algorithm MD5).Hash.ToLower() -message "Контрольная сумма MD5" -positive "Совпадает" -negative "Не совпадает"
+                Start-Sleep -Seconds 1
+                Compare-Strings -SPCvalue (($FileDataFromSpecification.Checksum -split (":"))[1].Trim(' ')).ToLower() -valueFromDocument (Get-FileHash -Path "$script:PathToPublishedFiles\$($FileDataFromSpecification.Name)" -Algorithm MD5).Hash.ToLower() -message "Контрольная сумма MD5" -positive "Совпадает" -negative "Не совпадает" -FileOrDocument "MD5 файла"
                 #Write-Host "Calcuating all MD5s (published)"
             }
         #if file not found anywhere
         } else {
-        Start-Sleep -Seconds 0.2
+        Start-Sleep -Seconds 1
         Write-Host "$($FileDataFromSpecification.Name) не найден."
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-References-Report.html" "<td><font color=""red""><b>Не найден</b></font></td>
@@ -678,7 +679,7 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "<td><font color=""red"
 <td>---</td>" -Encoding UTF8
 #========Statistics========        
         }
-        Start-Sleep -Seconds 0.2
+        Start-Sleep -Seconds 1
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-References-Report.html" "</tr>" -Encoding UTF8
 #========Statistics========
