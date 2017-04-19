@@ -360,7 +360,7 @@ Write-Host "Processing" $_.Name
 $document = $application.documents.open($_.FullName)
 #updates fields in the document body
 if ($script:UpdateFieldsInDocumentBody -eq $true) {
-$document.Fields.Update() | Out-Null
+$document.Fields.Update()
 }
 #updates fields in footers and headers
 if ($script:UpdateFieldsInFootersAndHeaders -eq $true) {
@@ -384,8 +384,8 @@ $document.TablesOfContents.Item(1).UpdatePageNumbers()
 if ($script:UnhideHiddenText -eq $true) { 
 $wholestory = $document.Range()
 $wholestory.Font.Hidden = $false
-$document.Close()
 }
+$document.Close()
 }
 Start-Sleep -Seconds 3
 $application.Quit()
