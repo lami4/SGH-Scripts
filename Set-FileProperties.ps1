@@ -358,32 +358,40 @@ $application.Visible = $false
 Get-ChildItem -Path "$script:SelectedFolder\*.*" -Include "*.doc*", "*.dot*" | % {
 Write-Host "Processing" $_.Name
 $document = $application.documents.open($_.FullName)
-#updates fields in the document body
-if ($script:UpdateFieldsInDocumentBody -eq $true) {
-$document.Fields.Update()
-}
+Start-Sleep -Seconds 5
 #updates fields in footers and headers
 if ($script:UpdateFieldsInFootersAndHeaders -eq $true) {
-$sectionCount = $document.Sections.Count
-for ($t = 1; $t -le $sectionCount; $t++) {
-$rangeHeader = $document.Sections.Item($t).Headers.Item(1).Range
-$rangeHeader.Fields.Update() | Out-Null
-$rangeFooter = $document.Sections.Item($t).Footers.Item(1).Range
-$rangeFooter.Fields.Update() | Out-Null
+    $sectionCount = $document.Sections.Count
+    for ($t = 1; $t -le $sectionCount; $t++) {
+        $rangeHeader = $document.Sections.Item($t).Headers.Item(1).Range
+        $rangeHeader.Fields.Update() | Out-Null
+        $rangeFooter = $document.Sections.Item($t).Footers.Item(1).Range
+        $rangeFooter.Fields.Update() | Out-Null
 }
 }
 #updates TOC
 if ($script:UpdateTOC -eq $true) {
-$tocCount = $document.TablesOfContents.Count
-if ($tocCount -ge 1) {
-$document.TablesOfContents.Item(1).Update()
-$document.TablesOfContents.Item(1).UpdatePageNumbers()
-}
+    $tocCount = $document.TablesOfContents.Count
+    if ($tocCount -ge 1) {
+    $document.TablesOfContents.Item(1).Update()
+    $document.TablesOfContents.Item(1).UpdatePageNumbers()
+    }
 }
 #unhides hidden text
 if ($script:UnhideHiddenText -eq $true) { 
-$wholestory = $document.Range()
-$wholestory.Font.Hidden = $false
+    $wholestory = $document.Range()
+    $wholestory.Font.Hidden = $false
+}
+#updates fields in the document body
+if ($script:UpdateFieldsInDocumentBody -eq $true) {
+    $wholestory = $document.Range()
+    $page = $wholestory.Information(4)  
+    if ($_.BaseName -match "SPC") {
+    $document.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(5, 10).Range.Text = $page
+    } else {
+    $document.Tables.Item(1).Cell(10, 12).Range.Text = $page
+    }
+    $document.Fields.Update()
 }
 $document.Close()
 }
