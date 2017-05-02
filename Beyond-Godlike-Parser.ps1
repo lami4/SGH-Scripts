@@ -2,7 +2,7 @@ clear
 #opens Excel application and goes to Sheet 1
 $excel = New-Object -ComObject Excel.Application
 $excel.Visible = $false
-$workbook = $excel.WorkBooks.Open("Z:\OTD.Translate\Переводчики\PABKRF\sandbox\test2\1.xlsx")
+$workbook = $excel.WorkBooks.Open("")
 $worksheet = $workbook.Worksheets.Item(1)
 #creates workbook and goes to sheet 1 to keep the parsed strings
 $WorkBookForParsedData = $excel.WorkBooks.Add()
@@ -54,7 +54,7 @@ for ($i = 2; $i -le $LastPopulatedtCellInColumn; $i++) {
 }
 }
 #closes the workbook and Excel application
-$WorkBookForParsedData.SaveAs("Z:\OTD.Translate\Переводчики\PABKRF\sandbox\test2\2.xlsx") | Out-Null
+$WorkBookForParsedData.SaveAs("") | Out-Null
 $WorkBookForParsedData.Close($false) | Out-Null
 $workbook.Close($true) | Out-Null
 $excel.Quit() | Out-Null
