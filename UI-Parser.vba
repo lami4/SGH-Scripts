@@ -6,19 +6,20 @@ Dim ParsedStrings() As String
 Dim ArrayLength As Integer
 Dim SubstringID As String
 Dim RowCounter As Integer
+RowCounter = 1
 'Adds new service worksheets
 ActiveWorkbook.Worksheets(1).Copy After:=Worksheets(Worksheets.Count)
 ActiveWorkbook.Sheets(Worksheets.Count).Name = "BrokenSource"
 ActiveWorkbook.Sheets.Add After:=Worksheets(Worksheets.Count)
 ActiveWorkbook.Sheets(Worksheets.Count).Name = "Substrings"
 'Get last populated cell
-LastPopulatedCell = ActiveWorkbook.Worksheets(2).Cells(ActiveWorkbook.Worksheets(2).Rows.Count, "B").End(xlUp).Row
+LastPopulatedCell = ActiveWorkbook.Worksheets("BrokenSource").Cells(ActiveWorkbook.Worksheets("BrokenSource").Rows.Count, "C").End(xlUp).Row
 For i = 2 To LastPopulatedCell
-    CellValue = ActiveWorkbook.Worksheets(1).Cells(i, 3).Value
+    CellValue = ActiveWorkbook.Worksheets("BrokenSource").Cells(i, 3).Value
     'Checks if cell is empty
     If CellValue <> "" Then
         'Checks if cell contains a line break
-        If CellValue(myString, Chr(10)) > 0 Then
+        If InStr(CellValue, Chr(10)) > 0 Then
             'Prepares the string from cell to be parsed
             CleanedString = Replace(CellValue, Chr(10) + Chr(10), Chr(10))
             'Parses the prepared string from cell
@@ -28,15 +29,29 @@ For i = 2 To LastPopulatedCell
             'Processes each substring in the array
             For t = 0 To ArrayLength
                 If ParsedStrings(t) <> "" Then
+                'Assigns substring ID
                 SubstringID = "!" & i & "#" & t & "!"
-                'Add data to sheet2
+                'Adds substring value to the Substrings sheet
+                ActiveWorkbook.Sheets("Substrings").Cells(RowCounter, 1) = ParsedStrings(t)
+                'Adds ID to the Substrings sheet
+                ActiveWorkbook.Sheets("Substrings").Cells(RowCounter, 2) = SubstringID
+                'Replaces the substring with its ID in the CellValue variable
+                CellValue = Replace(CellValue, ParsedStrings(t), SubstringID, 1, 1)
                 RowCounter = RowCounter + 1
                 End If
             Next t
+            'Replaces the original cell with the indexed cell
+            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 3) = CellValue
         Else
-        SubstringID = "!" & i & "#0!"
-        'Add data to sheet2
-        RowCounter = RowCounter + 1
+            'Assigns substring ID
+            SubstringID = "!" & i & "#0!"
+            'Adds substring value to the Substrings sheet
+            ActiveWorkbook.Sheets("Substrings").Cells(RowCounter, 1) = CellValue
+            'Adds ID to the Substrings sheet
+            ActiveWorkbook.Sheets("Substrings").Cells(RowCounter, 2) = SubstringID
+            'Replaces the string with its ID
+            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 3) = SubstringID
+            RowCounter = RowCounter + 1
         End If
     End If
 Next i
