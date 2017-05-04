@@ -26,7 +26,7 @@ For i = 2 To LastNonEmptyCell
             CleanedString = Replace(CellValue, Chr(10) + Chr(10), Chr(10))
             'Parses the prepared string from cell
             ParsedStrings = Split(CleanedString, Chr(10))
-            'Get the length of the array that contains substrings
+            'Gets the length of the array that contains substrings
             ArrayLength = UBound(ParsedStrings, 1) - LBound(ParsedStrings, 1)
             'Processes each substring in the array
             For t = 0 To ArrayLength
