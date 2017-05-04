@@ -13,8 +13,8 @@ ActiveWorkbook.Sheets(Worksheets.Count).Name = "BrokenSource"
 ActiveWorkbook.Sheets.Add After:=Worksheets(Worksheets.Count)
 ActiveWorkbook.Sheets(Worksheets.Count).Name = "Substrings"
     'Gets non-empty cell in column C
-LastPopulatedCell = ActiveWorkbook.Worksheets("BrokenSource").Cells(ActiveWorkbook.Worksheets("BrokenSource").Rows.Count, "C").End(xlUp).Row
-For i = 2 To LastPopulatedCell
+    LastNonEmptyCell = ActiveWorkbook.Worksheets("BrokenSource").Cells(ActiveWorkbook.Worksheets("BrokenSource").Rows.Count, "C").End(xlUp).Row
+For i = 2 To LastNonEmptyCell
     CellValue = ActiveWorkbook.Worksheets("BrokenSource").Cells(i, 3).Value
     'Checks if cell is empty
     If CellValue <> "" Then
