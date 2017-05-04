@@ -14,7 +14,7 @@ ActiveWorkbook.Sheets.Add After:=Worksheets(Worksheets.Count)
 ActiveWorkbook.Sheets(Worksheets.Count).Name = "Substrings"
     'Gets non-empty cell in column C
     LastNonEmptyCell = ActiveWorkbook.Worksheets("BrokenSource").Cells(ActiveWorkbook.Worksheets("BrokenSource").Rows.Count, "C").End(xlUp).Row
-'Loops through each non-empty cell in column C
+'Loops through each cell in the range from 2 to the value of LastNonEmptyCell
 For i = 2 To LastNonEmptyCell
     CellValue = ActiveWorkbook.Worksheets("BrokenSource").Cells(i, 3).Value
     'Checks if cell is empty
