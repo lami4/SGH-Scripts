@@ -19,7 +19,8 @@ For i = 2 To LastNonEmptyCell
     CellValue = ActiveWorkbook.Worksheets("BrokenSource").Cells(i, 3).Value
     'Checks if cell is empty
     If CellValue <> "" Then
-        'Checks if cell contains a line break
+        'Checks if cell contains a line break.
+        'If cell contains a line break:
         If InStr(CellValue, Chr(10)) > 0 Then
             'Prepares the string from cell to be parsed
             CleanedString = Replace(CellValue, Chr(10) + Chr(10), Chr(10))
@@ -43,6 +44,7 @@ For i = 2 To LastNonEmptyCell
             Next t
             'Replaces the original cell with the indexed cell
             ActiveWorkbook.Sheets("BrokenSource").Cells(i, 3) = CellValue
+        'If cell doest not contain a line break:
         Else
             'Assigns substring ID
             SubstringID = "!" & i & "#0!"
