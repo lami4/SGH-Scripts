@@ -12,7 +12,7 @@ ActiveWorkbook.Worksheets(1).Copy After:=Worksheets(Worksheets.Count)
 ActiveWorkbook.Sheets(Worksheets.Count).Name = "BrokenSource"
 ActiveWorkbook.Sheets.Add After:=Worksheets(Worksheets.Count)
 ActiveWorkbook.Sheets(Worksheets.Count).Name = "Substrings"
-'Get last populated cell
+    'Get nen-empty cell
 LastPopulatedCell = ActiveWorkbook.Worksheets("BrokenSource").Cells(ActiveWorkbook.Worksheets("BrokenSource").Rows.Count, "C").End(xlUp).Row
 For i = 2 To LastPopulatedCell
     CellValue = ActiveWorkbook.Worksheets("BrokenSource").Cells(i, 3).Value
