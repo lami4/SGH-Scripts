@@ -1,4 +1,4 @@
-Sub Test()
+Sub UIParser()
 'Declare variables
 Dim CellValue As String
 Dim CleanedString As String
