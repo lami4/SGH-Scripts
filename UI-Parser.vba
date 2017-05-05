@@ -6,12 +6,24 @@ Dim ParsedStrings() As String
 Dim ArrayLength As Integer
 Dim SubstringID As String
 Dim RowCounter As Integer
-RowCounter = 1
+RowCounter = 2
 'Adds new service worksheets
 ActiveWorkbook.Worksheets(1).Copy After:=Worksheets(Worksheets.Count)
 ActiveWorkbook.Sheets(Worksheets.Count).Name = "BrokenSource"
 ActiveWorkbook.Sheets.Add After:=Worksheets(Worksheets.Count)
 ActiveWorkbook.Sheets(Worksheets.Count).Name = "Substrings"
+'Adds headers to Substrings sheet
+ActiveWorkbook.Sheets("Substrings").Cells(1, 1) = "Service ID"
+ActiveWorkbook.Sheets("Substrings").Cells(1, 2) = "Native ID"
+ActiveWorkbook.Sheets("Substrings").Cells(1, 3) = "RU"
+ActiveWorkbook.Sheets("Substrings").Cells(1, 4) = "EN"
+ActiveWorkbook.Sheets("Substrings").Cells(1, 5) = "UK"
+ActiveWorkbook.Sheets("Substrings").Cells(1, 6) = "KK"
+ActiveWorkbook.Sheets("Substrings").Cells(1, 7) = "FR"
+ActiveWorkbook.Sheets("Substrings").Cells(1, 8) = "PT"
+ActiveWorkbook.Sheets("Substrings").Cells(1, 9) = "ES"
+ActiveWorkbook.Sheets("Substrings").Cells(1, 10) = "DE"
+ActiveWorkbook.Sheets("Substrings").Cells(1, 11) = "RO"
     'Gets non-empty cell in column C
     LastNonEmptyCell = ActiveWorkbook.Worksheets("BrokenSource").Cells(ActiveWorkbook.Worksheets("BrokenSource").Rows.Count, "C").End(xlUp).Row
 'Loops through each cell in the range from 2 to the value of LastNonEmptyCell
@@ -35,9 +47,9 @@ For i = 2 To LastNonEmptyCell
                 'Assigns substring ID
                 SubstringID = "!" & i & "#" & t & "!"
                 'Adds substring value to the Substrings sheet
-                ActiveWorkbook.Sheets("Substrings").Cells(RowCounter, 1) = ParsedStrings(t)
+                ActiveWorkbook.Sheets("Substrings").Cells(RowCounter, 3) = ParsedStrings(t)
                 'Adds substring ID to the Substrings sheet
-                ActiveWorkbook.Sheets("Substrings").Cells(RowCounter, 2) = SubstringID
+                ActiveWorkbook.Sheets("Substrings").Cells(RowCounter, 1) = SubstringID
                 'Replaces the substring with its ID in the CellValue variable
                 CellValue = Replace(CellValue, ParsedStrings(t), SubstringID, 1, 1)
                 RowCounter = RowCounter + 1
@@ -67,9 +79,9 @@ For i = 2 To LastNonEmptyCell
             'Assigns substring ID
             SubstringID = "!" & i & "#0!"
             'Adds substring value to the Substrings sheet
-            ActiveWorkbook.Sheets("Substrings").Cells(RowCounter, 1) = CellValue
+            ActiveWorkbook.Sheets("Substrings").Cells(RowCounter, 3) = CellValue
             'Adds substring ID to the Substrings sheet
-            ActiveWorkbook.Sheets("Substrings").Cells(RowCounter, 2) = SubstringID
+            ActiveWorkbook.Sheets("Substrings").Cells(RowCounter, 1) = SubstringID
             'Replaces the string with its ID on BrokenSource sheet
             'RU
             ActiveWorkbook.Sheets("BrokenSource").Cells(i, 3) = SubstringID
