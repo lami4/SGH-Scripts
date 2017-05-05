@@ -42,8 +42,25 @@ For i = 2 To LastNonEmptyCell
                 RowCounter = RowCounter + 1
                 End If
             Next t
-            'Replaces the original cell with the indexed cell
+            'Replaces the original cells with the cell consisting of IDs
+            'RU
             ActiveWorkbook.Sheets("BrokenSource").Cells(i, 3) = CellValue
+            'EN
+            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 4) = CellValue
+            'UK
+            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 5) = CellValue
+            'KK
+            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 6) = CellValue
+            'FR
+            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 7) = CellValue
+            'PT
+            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 8) = CellValue
+            'ES
+            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 9) = CellValue
+            'DE
+            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 10) = CellValue
+            'RO
+            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 11) = CellValue
         'If cell doest not contain a line break:
         Else
             'Assigns substring ID
@@ -53,7 +70,24 @@ For i = 2 To LastNonEmptyCell
             'Adds ID to the Substrings sheet
             ActiveWorkbook.Sheets("Substrings").Cells(RowCounter, 2) = SubstringID
             'Replaces the string with its ID
+            'RU
             ActiveWorkbook.Sheets("BrokenSource").Cells(i, 3) = SubstringID
+            'EN
+            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 4) = SubstringID
+            'UK
+            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 5) = SubstringID
+            'KK
+            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 6) = SubstringID
+            'FR
+            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 7) = SubstringID
+            'PT
+            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 8) = SubstringID
+            'ES
+            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 9) = SubstringID
+            'DE
+            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 10) = SubstringID
+            'RO
+            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 11) = SubstringID
             RowCounter = RowCounter + 1
         End If
     End If
