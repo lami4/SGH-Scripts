@@ -50,6 +50,8 @@ For i = 2 To LastNonEmptyCell
                 ActiveWorkbook.Sheets("Substrings").Cells(RowCounter, 3) = ParsedStrings(t)
                 'Adds substring ID to the Substrings sheet
                 ActiveWorkbook.Sheets("Substrings").Cells(RowCounter, 1) = SubstringID
+                'Adds substring native ID (File + Key + Index in array) to the Substrings sheet
+                ActiveWorkbook.Sheets("Substrings").Cells(RowCounter, 2) = ActiveWorkbook.Sheets("BrokenSource").Cells(i, 1).Value & "/" & ActiveWorkbook.Sheets("BrokenSource").Cells(i, 2).Value & "/" & t
                 'Replaces the substring with its ID in the CellValue variable
                 CellValue = Replace(CellValue, ParsedStrings(t), SubstringID, 1, 1)
                 RowCounter = RowCounter + 1
@@ -82,6 +84,8 @@ For i = 2 To LastNonEmptyCell
             ActiveWorkbook.Sheets("Substrings").Cells(RowCounter, 3) = CellValue
             'Adds substring ID to the Substrings sheet
             ActiveWorkbook.Sheets("Substrings").Cells(RowCounter, 1) = SubstringID
+            'Adds substring native ID (File + Key + ) to the Substrings sheet
+            ActiveWorkbook.Sheets("Substrings").Cells(RowCounter, 2) = ActiveWorkbook.Sheets("BrokenSource").Cells(i, 1).Value & "/" & ActiveWorkbook.Sheets("BrokenSource").Cells(i, 2).Value & "/0"
             'Replaces the string with its ID on BrokenSource sheet
             'RU
             ActiveWorkbook.Sheets("BrokenSource").Cells(i, 3) = SubstringID
