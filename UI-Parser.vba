@@ -16,13 +16,14 @@ ActiveWorkbook.Sheets(Worksheets.Count).Name = "Substrings"
     LastNonEmptyCell = ActiveWorkbook.Worksheets("BrokenSource").Cells(ActiveWorkbook.Worksheets("BrokenSource").Rows.Count, "C").End(xlUp).Row
 'Loops through each cell in the range from 2 to the value of LastNonEmptyCell
 For i = 2 To LastNonEmptyCell
+    'Gets the value of a cell and stores in in the variable called CellValue
     CellValue = ActiveWorkbook.Worksheets("BrokenSource").Cells(i, 3).Value
     'Checks if cell is empty
     If CellValue <> "" Then
         'Checks if cell contains a line break.
         'If cell contains a line break:
         If InStr(CellValue, Chr(10)) > 0 Then
-            'Prepares the string from cell to be parsed
+    'Prepares the string from cell to be parsed (deletes all doubled, tripled etc. New Line characters, so the string could be correctly splitted)
             CleanedString = Replace(CellValue, Chr(10) + Chr(10), Chr(10))
             'Parses the prepared string from cell
             ParsedStrings = Split(CleanedString, Chr(10))
@@ -35,7 +36,7 @@ For i = 2 To LastNonEmptyCell
                 SubstringID = "!" & i & "#" & t & "!"
                 'Adds substring value to the Substrings sheet
                 ActiveWorkbook.Sheets("Substrings").Cells(RowCounter, 1) = ParsedStrings(t)
-                'Adds ID to the Substrings sheet
+                'Adds substring ID to the Substrings sheet
                 ActiveWorkbook.Sheets("Substrings").Cells(RowCounter, 2) = SubstringID
                 'Replaces the substring with its ID in the CellValue variable
                 CellValue = Replace(CellValue, ParsedStrings(t), SubstringID, 1, 1)
