@@ -1,8 +1,9 @@
 Sub Gluer()
-LastPopulated = ActiveWorkbook.Worksheets("Substrings").Cells(ActiveWorkbook.Worksheets("Substrings").Rows.Count, "A").End(xlUp).Row
-MsgBox (LastPopulated)
+Dim LastPopulated As Integer
 Dim ID As String
 Dim ReplaceWith As String
+LastPopulated = ActiveWorkbook.Worksheets("Substrings").Cells(ActiveWorkbook.Worksheets("Substrings").Rows.Count, "A").End(xlUp).Row
+MsgBox (LastPopulated)
 For i = 2 To LastPopulated
     ID = ActiveWorkbook.Worksheets("Substrings").Cells(i, 1)
     ReplaceWith = ActiveWorkbook.Worksheets("Substrings").Cells(i, 3)
