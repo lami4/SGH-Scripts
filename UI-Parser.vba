@@ -24,7 +24,7 @@ ActiveWorkbook.Sheets("Substrings").Cells(1, 8) = "PT"
 ActiveWorkbook.Sheets("Substrings").Cells(1, 9) = "ES"
 ActiveWorkbook.Sheets("Substrings").Cells(1, 10) = "DE"
 ActiveWorkbook.Sheets("Substrings").Cells(1, 11) = "RO"
-    'Gets non-empty cell in column C
+    'Gets last non-empty cell in column C
     LastNonEmptyCell = ActiveWorkbook.Worksheets("BrokenSource").Cells(ActiveWorkbook.Worksheets("BrokenSource").Rows.Count, "C").End(xlUp).Row
 'Loops through each cell in the range from 2 to the value of LastNonEmptyCell
 For i = 2 To LastNonEmptyCell
