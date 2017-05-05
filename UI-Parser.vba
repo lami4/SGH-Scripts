@@ -42,7 +42,7 @@ For i = 2 To LastNonEmptyCell
                 RowCounter = RowCounter + 1
                 End If
             Next t
-            'Replaces the original cells with the cell consisting of IDs
+            'Replaces the original cell with the cell consisting of IDs on BrokenSource sheet
             'RU
             ActiveWorkbook.Sheets("BrokenSource").Cells(i, 3) = CellValue
             'EN
@@ -67,9 +67,9 @@ For i = 2 To LastNonEmptyCell
             SubstringID = "!" & i & "#0!"
             'Adds substring value to the Substrings sheet
             ActiveWorkbook.Sheets("Substrings").Cells(RowCounter, 1) = CellValue
-            'Adds ID to the Substrings sheet
+            'Adds substring ID to the Substrings sheet
             ActiveWorkbook.Sheets("Substrings").Cells(RowCounter, 2) = SubstringID
-            'Replaces the string with its ID
+            'Replaces the string with its ID on BrokenSource sheet
             'RU
             ActiveWorkbook.Sheets("BrokenSource").Cells(i, 3) = SubstringID
             'EN
