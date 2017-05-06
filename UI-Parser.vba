@@ -109,4 +109,5 @@ For i = 2 To LastNonEmptyCell
         End If
     End If
 Next i
+'ActiveWorkbook.Worksheets(1).Cells(4, 1).FormulaLocal = "=ÑÈÌÂÎË(10) & ÑÈÌÂÎË(10) & Sheet2!B2 & Sheet3!C3 & ÑÈÌÂÎË(10)"
 End Sub
