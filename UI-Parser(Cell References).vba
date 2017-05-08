@@ -8,6 +8,7 @@ Dim SubstringID As String
 Dim RowCounter As Integer
 Dim CellReference As String
 Dim FirstTwoCharacters As String
+Dim FormulaRU As String
 Dim FormulaEN As String
 Dim FormulaUK As String
 Dim FormulaKK As String
@@ -70,8 +71,8 @@ For i = 2 To LastNonEmptyCell
                 RowCounter = RowCounter + 1
                 End If
             Next t
-            'After all reference were added to the cell being processed on BrokenSource sheet, macro replaces all New Line characters with the " & СИМВОЛ(10)" string
-            CellValue = Replace(CellValue, Chr(10), " & СИМВОЛ(10)")
+            'After all reference were added to the cell being processed on BrokenSource sheet, macro replaces all New Line characters with the " & ÑÈÌÂÎË(10)" string
+            CellValue = Replace(CellValue, Chr(10), " & ÑÈÌÂÎË(10)")
             'If the first two characters in the cell being processed on BrokenSource sheet are " &", macro repalces it with "=" to create a formula
             FirstTwoCharacters = Left(CellValue, 2)
             If FirstTwoCharacters = " &" Then
@@ -116,21 +117,29 @@ For i = 2 To LastNonEmptyCell
             ActiveWorkbook.Sheets("Substrings").Cells(RowCounter, 2) = ActiveWorkbook.Sheets("BrokenSource").Cells(i, 1).Value & "/" & ActiveWorkbook.Sheets("BrokenSource").Cells(i, 2).Value & "/0"
             'Replaces the string with its ID on BrokenSource sheet
             'RU
-            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 3) = SubstringID
+            FormulaRU = "= Substrings!C" & RowCounter
+            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 3).FormulaLocal = FormulaRU
             'EN
-            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 4) = SubstringID
+            FormulaEN = "= Substrings!D" & RowCounter
+            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 4).FormulaLocal = FormulaEN
             'UK
-            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 5) = SubstringID
+            FormulaUK = "= Substrings!E" & RowCounter
+            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 5).FormulaLocal = FormulaUK
             'KK
-            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 6) = SubstringID
+            FormulaKK = "= Substrings!F" & RowCounter
+            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 6).FormulaLocal = FormulaKK
             'FR
-            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 7) = SubstringID
+            FormulaFR = "= Substrings!G" & RowCounter
+            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 7).FormulaLocal = FormulaFR
             'PT
-            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 8) = SubstringID
+            FormulaPT = "= Substrings!H" & RowCounter
+            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 8).FormulaLocal = FormulaPT
             'ES
-            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 9) = SubstringID
+            FormulaES = "= Substrings!I" & RowCounter
+            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 9).FormulaLocal = FormulaES
             'DE
-            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 10) = SubstringID
+            FormulaDE = "= Substrings!J" & RowCounter
+            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 10).FormulaLocal = FormulaDE
             'RO
             ActiveWorkbook.Sheets("BrokenSource").Cells(i, 11) = SubstringID
             RowCounter = RowCounter + 1
