@@ -71,8 +71,8 @@ For i = 2 To LastNonEmptyCell
                 RowCounter = RowCounter + 1
                 End If
             Next t
-            'After all reference were added to the cell being processed on BrokenSource sheet, macro replaces all New Line characters with the " & ÑÈÌÂÎË(10)" string
-            CellValue = Replace(CellValue, Chr(10), " & ÑÈÌÂÎË(10)")
+            'After all reference were added to the cell being processed on BrokenSource sheet, macro replaces all New Line characters with the " & СИМВОЛ(10)" string
+            CellValue = Replace(CellValue, Chr(10), " & СИМВОЛ(10)")
             'If the first two characters in the cell being processed on BrokenSource sheet are " &", macro repalces it with "=" to create a formula
             FirstTwoCharacters = Left(CellValue, 2)
             If FirstTwoCharacters = " &" Then
@@ -141,7 +141,8 @@ For i = 2 To LastNonEmptyCell
             FormulaDE = "= Substrings!J" & RowCounter
             ActiveWorkbook.Sheets("BrokenSource").Cells(i, 10).FormulaLocal = FormulaDE
             'RO
-            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 11) = SubstringID
+            FormulaRO = "= Substrings!K" & RowCounter
+            ActiveWorkbook.Sheets("BrokenSource").Cells(i, 11).FormulaLocal = FormulaRO
             RowCounter = RowCounter + 1
         End If
     End If
