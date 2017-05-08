@@ -115,7 +115,7 @@ For i = 2 To LastNonEmptyCell
             ActiveWorkbook.Sheets("Substrings").Cells(RowCounter, 1) = SubstringID
             'Adds substring native ID (File + Key + ) to the Substrings sheet
             ActiveWorkbook.Sheets("Substrings").Cells(RowCounter, 2) = ActiveWorkbook.Sheets("BrokenSource").Cells(i, 1).Value & "/" & ActiveWorkbook.Sheets("BrokenSource").Cells(i, 2).Value & "/0"
-            'Replaces the string with its ID on BrokenSource sheet
+            'Replaces the original cell on BrokenSource sheet with the formula that contains cell reference to substring
             'RU
             FormulaRU = "= Substrings!C" & RowCounter
             ActiveWorkbook.Sheets("BrokenSource").Cells(i, 3).FormulaLocal = FormulaRU
@@ -143,6 +143,7 @@ For i = 2 To LastNonEmptyCell
             'RO
             FormulaRO = "= Substrings!K" & RowCounter
             ActiveWorkbook.Sheets("BrokenSource").Cells(i, 11).FormulaLocal = FormulaRO
+            'Incriminates RowCounter variable by 1
             RowCounter = RowCounter + 1
         End If
     End If
