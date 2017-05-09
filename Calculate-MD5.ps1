@@ -1,3 +1,99 @@
+<#############################################
+#UI FOR THE SCRIPT
+Function Custom-Form {
+Add-Type -AssemblyName  System.Windows.Forms
+$dialog = New-Object System.Windows.Forms.Form
+$dialog.ShowIcon = $false
+$dialog.AutoSize = $true
+$dialog.Text = "Настройки"
+$dialog.AutoSizeMode = "GrowAndShrink"
+$dialog.WindowState = "Normal"
+$dialog.SizeGripStyle = "Hide"
+$dialog.ShowInTaskbar = $true
+$dialog.StartPosition = "CenterScreen"
+$dialog.MinimizeBox = $false
+$dialog.MaximizeBox = $false
+
+#Buttons
+#Exit
+$buttonExit = New-Object System.Windows.Forms.Button
+$buttonExit.Height = 35
+$buttonExit.Width = 100
+$buttonExit.Text = "Закрыть"
+$SystemDrawingPoint = New-Object System.Drawing.Point
+$SystemDrawingPoint.X = 130
+$SystemDrawingPoint.Y = 275
+$buttonExit.Location = $SystemDrawingPoint
+$SystemWindowsFormsMargin = New-Object System.Windows.Forms.Padding
+$SystemWindowsFormsMargin.Bottom = 25
+$SystemWindowsFormsMargin.Right = 25
+$buttonExit.Margin = $SystemWindowsFormsMargin
+$buttonExit.Add_Click({
+                        $dialog.Close();
+                        $dialog.DialogResult = "Cancel"
+                      })
+#Run Script
+$buttonRunScript = New-Object System.Windows.Forms.Button
+$buttonRunScript.Height = 35
+$buttonRunScript.Width = 100
+$buttonRunScript.Text = "Запустить скрипт"
+$SystemDrawingPoint = New-Object System.Drawing.Point
+$SystemDrawingPoint.X = 25
+$SystemDrawingPoint.Y = 275
+$buttonRunScript.Location = $SystemDrawingPoint
+$SystemWindowsFormsMargin = New-Object System.Windows.Forms.Padding
+$SystemWindowsFormsMargin.Bottom = 25
+$buttonRunScript.Margin = $SystemWindowsFormsMargin
+$buttonRunScript.Add_Click({
+                            $dialog.DialogResult = "OK";
+                            $dialog.Close()
+                           })
+$buttonRunScript.Enabled = $false
+#Browse folder
+$buttonBrowseFolder = New-Object System.Windows.Forms.Button
+$buttonBrowseFolder.Height = 35
+$buttonBrowseFolder.Width = 100
+$buttonBrowseFolder.Text = "Обзор..."
+$SystemDrawingPoint = New-Object System.Drawing.Point
+$SystemDrawingPoint.X = 25
+$SystemDrawingPoint.Y = 25
+$buttonBrowseFolder.Location = $SystemDrawingPoint
+$buttonBrowseFolder.Add_Click({
+                             #some action
+                             })
+#Labels
+#Browse folder label
+$labelBrowseFolder = New-Object System.Windows.Forms.Label
+$labelBrowseFolder.Text = "Укажите путь к папке, в которой необходимо снять MD5 файлов"
+$SystemDrawingPoint = New-Object System.Drawing.Point
+$SystemDrawingPoint.X = 130
+$SystemDrawingPoint.Y = 35
+$labelBrowseFolder.Location = $SystemDrawingPoint
+$labelBrowseFolder.Width = 360
+$labelBrowseFolder.Height = 30
+#radio buttons
+$radioNewList = New-Object System.Windows.Forms.RadioButton
+$SystemDrawingPoint = New-Object System.Drawing.Point
+$SystemDrawingPoint.X = 50
+$SystemDrawingPoint.Y = 70
+$radioNewList.Location = $SystemDrawingPoint
+$radioNewList.Text = "Создать новый *.txt файл со списком файлов и их MD5 сумм"
+$radioNewList.Width = 460
+$radioNewList.Height = 30
+$radioNewList.Checked = $true
+$radioNewList.Add_Click({
+                          #some action
+                          })
+$dialog.Controls.Add($buttonExit)
+$dialog.Controls.Add($buttonRunScript)
+$dialog.Controls.Add($buttonBrowseFolder)
+$dialog.Controls.Add($labelBrowseFolder)
+$dialog.Controls.Add($radioNewList)
+$dialog.ShowDialog()
+}
+Custom-Form
+#############################################>
+
 $script:yesNoUserInput = 0
 
 Function Select-Folder ($description)
