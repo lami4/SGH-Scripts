@@ -180,4 +180,9 @@ Next i
 'Locks CellReferenceParsing sheet
 ActiveWorkbook.Worksheets("CellReferenceParsing").Cells.Locked = True
 ActiveWorkbook.Worksheets("CellReferenceParsing").Protect Password:="1", AllowFiltering:=True, AllowSorting:=True
+'Adds filters and freezes first row on Substrings sheet
+ActiveWorkbook.Worksheets("Substrings").Activate
+ActiveWorkbook.Worksheets("Substrings").Rows("2:2").Select
+ActiveWindow.FreezePanes = True
+ActiveWorkbook.Worksheets("Substrings").Range("A1").AutoFilter
 End Sub
