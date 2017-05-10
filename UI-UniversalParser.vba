@@ -7,6 +7,7 @@ Dim Substrings() As String
 Dim ArrayLength As Integer
 Dim SubstringID As String
 Dim RowCounter As Integer
+Dim SubstringNumber As Integer
 Dim CellReference As String
 Dim FirstTwoCharacters As String
 Dim FormulaRU As String
@@ -19,6 +20,7 @@ Dim FormulaES As String
 Dim FormulaDE As String
 Dim FormulaRO As String
 RowCounter = 2
+SubstringNumber = 1
 'Adds new service worksheets
 ActiveWorkbook.Worksheets(1).Copy After:=Worksheets(Worksheets.Count)
 ActiveWorkbook.Sheets(Worksheets.Count).Name = "CellReferenceParsing"
@@ -60,13 +62,13 @@ For i = 2 To LastNonEmptyCell
             For t = 0 To ArrayLength
                 If Substrings(t) <> "" Then
                 'Assigns substring ID
-                SubstringID = "!" & i & "#" & t & "!"
+                SubstringID = "!" & i & "#" & SubstringNumber & "!"
                 'Adds substring value to the Substrings sheet
                 ActiveWorkbook.Sheets("Substrings").Cells(RowCounter, 3) = Substrings(t)
                 'Adds substring ID to the Substrings sheet
                 ActiveWorkbook.Sheets("Substrings").Cells(RowCounter, 1) = SubstringID
                 'Adds substring native ID (File + Key + Index in array) to the Substrings sheet
-                ActiveWorkbook.Sheets("Substrings").Cells(RowCounter, 2) = ActiveWorkbook.Sheets("CellReferenceParsing").Cells(i, 1).Value & "/" & ActiveWorkbook.Sheets("CellReferenceParsing").Cells(i, 2).Value & "/" & t
+                ActiveWorkbook.Sheets("Substrings").Cells(RowCounter, 2) = ActiveWorkbook.Sheets("CellReferenceParsing").Cells(i, 1).Value & "/" & ActiveWorkbook.Sheets("CellReferenceParsing").Cells(i, 2).Value & "/" & SubstringNumber
                 'Creates a cell reference to a substring on Substrings sheet
                 CellReference = " & Substrings!C" & RowCounter
                 'Adds a cell reference to a substring on Substrings sheet to the cell being processed on CellReferenceParsing sheet
@@ -75,10 +77,11 @@ For i = 2 To LastNonEmptyCell
                 IDCellValue = Replace(IDCellValue, Substrings(t), SubstringID, 1, 1)
                 'Incriminates RowCounter variable by 1
                 RowCounter = RowCounter + 1
+                SubstringNumber = SubstringNumber + 1
                 End If
             Next t
-            'After all reference were added to the cell being processed on CellReferenceParsing sheet, macro replaces all New Line characters with the " & ÑÈÌÂÎË(10)" string
-            CellValue = Replace(CellValue, Chr(10), " & ÑÈÌÂÎË(10)")
+            'After all reference were added to the cell being processed on CellReferenceParsing sheet, macro replaces all New Line characters with the " & СИМВОЛ(10)" string
+            CellValue = Replace(CellValue, Chr(10), " & СИМВОЛ(10)")
             'If the first two characters in the cell being processed on CellReferenceParsing sheet are " &", macro repalces it with "=" to create a formula
             FirstTwoCharacters = Left(CellValue, 2)
             If FirstTwoCharacters = " &" Then
@@ -120,6 +123,8 @@ For i = 2 To LastNonEmptyCell
             FormulaRO = Replace(CellValue, "Substrings!C", "Substrings!K")
             ActiveWorkbook.Sheets("CellReferenceParsing").Cells(i, 11).FormulaLocal = FormulaRO
             ActiveWorkbook.Sheets("UIDParsing").Cells(i, 11) = IDCellValue
+            'Sets SubstringNumber bac to 1
+            SubstringNumber = 1
         'If cell doest not contain a line break:
         Else
             'Assigns substring ID
