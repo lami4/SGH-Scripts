@@ -177,4 +177,7 @@ For i = 2 To LastNonEmptyCell
         End If
     End If
 Next i
+'Locks CellReferenceParsing sheet
+ActiveWorkbook.Worksheets("CellReferenceParsing").Cells.Locked = True
+ActiveWorkbook.Worksheets("CellReferenceParsing").Protect Password:="1", AllowFiltering:=True, AllowSorting:=True
 End Sub
