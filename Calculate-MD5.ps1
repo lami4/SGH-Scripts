@@ -13,7 +13,6 @@ $dialog.ShowInTaskbar = $true
 $dialog.StartPosition = "CenterScreen"
 $dialog.MinimizeBox = $false
 $dialog.MaximizeBox = $false
-
 #Buttons
 #Exit
 $buttonExit = New-Object System.Windows.Forms.Button
@@ -77,18 +76,48 @@ $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 50
 $SystemDrawingPoint.Y = 70
 $radioNewList.Location = $SystemDrawingPoint
-$radioNewList.Text = "Создать новый *.txt файл со списком файлов и их MD5 сумм"
+$radioNewList.Text = "Создать новый *.txt со списком файлов и их MD5 сумм"
 $radioNewList.Width = 460
 $radioNewList.Height = 30
 $radioNewList.Checked = $true
 $radioNewList.Add_Click({
                           #some action
                           })
+$radioExistingList = New-Object System.Windows.Forms.RadioButton
+$SystemDrawingPoint = New-Object System.Drawing.Point
+$SystemDrawingPoint.X = 50
+$SystemDrawingPoint.Y = 160
+$radioExistingList.Location = $SystemDrawingPoint
+$radioExistingList.Text = "Использовать существующий *.txt со списком файлов и их MD5 сумм"
+$radioExistingList.Width = 460
+$radioExistingList.Height = 30
+$radioExistingList.Checked = $false
+$radioExistingList.Add_Click({
+                          #some action
+                          })
+#inputbox
+$TextBox = New-Object System.Windows.Forms.TextBox 
+$TextBox.Location = New-Object System.Drawing.Size(120,110) 
+$TextBox.Size = New-Object System.Drawing.Size(260,30)
+$TextBox.Text = "MD5 файлов.txt"
+#labels
+$labelTextBox = New-Object System.Windows.Forms.Label
+$labelTextBox.Text = "Имя файла:"
+$SystemDrawingPoint = New-Object System.Drawing.Point
+$SystemDrawingPoint.X = 50
+$SystemDrawingPoint.Y = 110
+$labelTextBox.Location = $SystemDrawingPoint
+$labelTextBox.Width = 350
+$labelTextBox.Height = 30
+
 $dialog.Controls.Add($buttonExit)
 $dialog.Controls.Add($buttonRunScript)
 $dialog.Controls.Add($buttonBrowseFolder)
 $dialog.Controls.Add($labelBrowseFolder)
 $dialog.Controls.Add($radioNewList)
+$dialog.Controls.Add($radioExistingList)
+$dialog.Controls.Add($TextBox)
+$dialog.Controls.Add($labelTextBox)
 $dialog.ShowDialog()
 }
 Custom-Form
