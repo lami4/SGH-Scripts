@@ -48,7 +48,7 @@ $script:JSvariable += 1
 #========Statistics========
 Add-Content -Path "$PSScriptRoot\Check Requirements.html" "<td>
 <font color=""red"" onclick=""my_f('div_$script:JSvariable')""><b>Ошибка</b></font>
-<div class=""hide"" id=""div_$script:JSvariable"">Файл не содержит таблиц: отсутствуют данные для считывания.</div>
+<div class=""hide"" id=""div_$script:JSvariable"">Файл не содержит таблиц: отсутствуют данные для считывания.<br>Создайте таблицу с данными и повторите проверку.</div>
 </td>" -Encoding UTF8
 $script:JSvariable += 1
 #========Statistics========
@@ -57,7 +57,16 @@ $script:JSvariable += 1
 #========Statistics========
 Add-Content -Path "$PSScriptRoot\Check Requirements.html" "<td>
 <font color=""red"" onclick=""my_f('div_$script:JSvariable')""><b>Ошибка</b></font>
-<div class=""hide"" id=""div_$script:JSvariable"">Файл содержит несколько таблиц: невозможно корректно считать данные.</div>
+<div class=""hide"" id=""div_$script:JSvariable"">Файл содержит несколько таблиц: невозможно корректно считать данные.<br>Убедитесь, что в спецификации используется только одна таблица и повторите проверку.</div>
+</td>" -Encoding UTF8
+$script:JSvariable += 1
+#========Statistics========
+        } elseif ($document.Tables.Item(1).Range.Fields.Count -ne 0) {
+        Write-Host "$currentSpecification содержит текстовое поле."
+#========Statistics========
+Add-Content -Path "$PSScriptRoot\Check Requirements.html" "<td>
+<font color=""red"" onclick=""my_f('div_$script:JSvariable')""><b>Ошибка</b></font>
+<div class=""hide"" id=""div_$script:JSvariable"">Таблица спецификации содержит текст в виде поля (текстовое поле): невозможно корректно считать данные.<br>Убедитесь, что в таблице спецификации не используются текстовые поля и повторите проверку.</div>
 </td>" -Encoding UTF8
 $script:JSvariable += 1
 #========Statistics========
@@ -66,6 +75,7 @@ $script:JSvariable += 1
         Write-Host "$currentSpecification : $rowCount"
 Add-Content -Path "$PSScriptRoot\Check Requirements.html" "<td>" -Encoding UTF8
             for ($i = 1; $i -le $rowCount; $i++) {
+            if ($document.Tables.Item(1).Rows.Item($i).Cells.Count -ne 7) {continue}
             [string]$valueInDocumentNameCell = ((($document.Tables.Item(1).Cell($i,4).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')
                 $script:BlackList | % {if ($valueInDocumentNameCell -match $_) {continue}}
                 #добавить подсчет совпадений и вывод полученного значения в статистику (Ссылается на <количество документов>)
@@ -288,13 +298,14 @@ object.style.display == 'block' ? object.style.display = 'none' : object.style.d
 </head>
 <body>
 <div>
-<h3>Проверка оформления и содержимого</h3>
+<h3>Проверка оформления</h3>
 <ul>
 <li>Файл спецификации должен содержать только одну таблицу, строки которой при необходимости переносятся на следующую страницу;</li>
 <li>При указании обозначения и наименования документа, обозначение размещается в четвертом столбце таблицы, а наименование в пятом;</li>
 <li>Обозначение документов в спецификации должно состоять только из заглавных/строчных латинских букв, точки ('.'), знака минус ('-') и цифр;</li>
-<li>Обозначение документов в спецификации должно соответствовать маске <b>ББББББ-ББ-ББ-ЦЦ.ЦЦ.ЦЦ.бБББ.ЦЦ.ЦЦ</b>, где
+<li>Обозначение документов в спецификации должно соответствовать маске <b>АААААА-ББ-ББ-ЦЦ.ЦЦ.ЦЦ.бБББ.ЦЦ.ЦЦ</b>, где
 <ul>
+    <li>А — заглавная латинская буква или цифра;</li>
     <li>Б — заглавная латинская буква;</li>
     <li>Ц — цифра;</li>
     <li>б — строчная латинская буква.</li>
@@ -308,6 +319,8 @@ object.style.display == 'block' ? object.style.display = 'none' : object.style.d
 </ul>
 </li>
 <li>При указании названия файла, оно должно обязательно иметь расширение. Например, meteo-server-6.3.0.11.<b>war</b>;</li>
+<li>Скрипт игнорирует/не проверяет строку, если она содержит объединенные ячейки (т.е. строка содержит меньше семи ячеек). В связи с этим нужно избегать объединения ячеек или добавлять в них только ту информацию, которая не подлежит проверке;</li>
+<li>Таблица спецификации не должна содержать текстовые поля (ссылки на свойства документа и т.п.);</li>
 <li>Во всех документах должен использоваться штамп, который позволяет считывать указанные в нем значения.</li>
 </ul>
 <h3>Спецификации</h3>
