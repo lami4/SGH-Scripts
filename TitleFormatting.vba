@@ -7,7 +7,7 @@ izm = Mid(izm, 1, Len(izm) - 1)
 izveshenie = Mid(izveshenie, 1, Len(izveshenie) - 1)
 oboznachenie = Mid(oboznachenie, 1, Len(oboznachenie) - 1)
 nazvanie = Mid(nazvanie, 1, Len(nazvanie) - 1)
-MsgBox ("Изм.: " & izm & vbNewLine & "Номер извещения: " & izveshenie & vbNewLine & "Обозначение: " & oboznachenie & vbNewLine & vbNewLine & "Название: " & nazvanie)
+MsgBox ("Èçì.: " & izm & vbNewLine & "Íîìåð èçâåùåíèÿ: " & izveshenie & vbNewLine & "Îáîçíà÷åíèå: " & oboznachenie & vbNewLine & vbNewLine & "Íàçâàíèå: " & nazvanie)
 End Sub
 Sub ApplyTitleFormatting()
 ActiveDocument.Sections(1).Footers(wdHeaderFooterPrimary).Range.ParagraphFormat.SpaceAfter = 0
@@ -279,14 +279,12 @@ header = ActiveDocument.Tables(1).Cell(1, 2)
 header.ParagraphFormat.SpaceAfter = 12
 header.Font.Name = "Times New Roman"
 header.Font.Bold = True
-header.Font.Size = 20
 header.ParagraphFormat.Alignment = wdAlignParagraphCenter
 'List of approvals
 approvals = ActiveDocument.Tables(1).Tables(1)
 approvals.ParagraphFormat.SpaceAfter = 0
 approvals.Font.Bold = False
 approvals.Font.Name = "Times New Roman"
-approvals.Font.Size = 12
 approvals.ParagraphFormat.Alignment = wdAlignParagraphRight
 ActiveDocument.Tables(1).Tables(1).LeftPadding = PixelsToPoints(7)
 ActiveDocument.Tables(1).Tables(1).RightPadding = PixelsToPoints(7)
@@ -295,19 +293,40 @@ For Each Shape In ActiveDocument.Sections(1).Headers(wdHeaderFooterPrimary).Shap
 Confidential = Shape.TextFrame.TextRange.Text
 Confidential = Mid(Confidential, 1, Len(Confidential) - 1)
 LowerConfidential = LCase(Confidential)
-If Shape.Width = 240.9 And LowerConfidential = "конфиденциально" Then
+If Shape.Width = 240.9 And LowerConfidential = "êîíôèäåíöèàëüíî" Then
 Shape.RelativeHorizontalPosition = wdRelativeHorizontalPositionRightMarginArea
 Shape.Left = CentimetersToPoints(-8.2)
 Shape.RelativeVerticalPosition = wdRelativeVerticalPositionTopMarginArea
 Shape.Top = CentimetersToPoints(0.4)
 End If
-If Shape.Width = 240.9 And LowerConfidential = "коммерческая тайна" Then
+If Shape.Width = 240.9 And LowerConfidential = "êîììåð÷åñêàÿ òàéíà" Then
 Shape.RelativeHorizontalPosition = wdRelativeHorizontalPositionRightMarginArea
 Shape.Left = CentimetersToPoints(-8.2)
 Shape.RelativeVerticalPosition = wdRelativeVerticalPositionBottomMarginArea
 Shape.Top = CentimetersToPoints(0)
 End If
+If Shape.Width = 240.9 And LowerConfidential = "ñòðîãî êîíôèäåíöèàëüíî" Then
+Shape.RelativeHorizontalPosition = wdRelativeHorizontalPositionRightMarginArea
+Shape.Left = CentimetersToPoints(-8.2)
+Shape.RelativeVerticalPosition = wdRelativeVerticalPositionTopMarginArea
+Shape.Top = CentimetersToPoints(0.4)
+End If
 Next
+'Fix size of the cell with title
+TextInCell = ActiveDocument.Tables(1).Cell(9, 7).Range.Text
+Length = Len(TextInCell)
+If Length <= 140 Then
+ActiveDocument.Tables(1).Cell(9, 7).Range.Font.Size = 10
+End If
+If Length > 140 Then
+ActiveDocument.Tables(1).Cell(9, 7).Range.Font.Size = 9
+End If
+If Length > 190 Then
+ActiveDocument.Tables(1).Cell(9, 7).Range.Font.Size = 8
+End If
+If Length > 215 Then
+ActiveDocument.Tables(1).Cell(9, 7).Range.Font.Size = 7.5
+End If
 End Sub
 Sub ApplyCustomPageMargins()
 With ActiveDocument.Sections(1).PageSetup
@@ -325,7 +344,7 @@ For Each Shape In ActiveDocument.Sections(1).Headers(wdHeaderFooterPrimary).Shap
 ImageText = Shape.TextFrame.TextRange.Text
 ImageText = Mid(ImageText, 1, Len(ImageText) - 1)
 LowerCaseText = LCase(ImageText)
-If Not Shape.Width = 240.9 And LowerCaseText = "коммерческая тайна" Then
+If Not Shape.Width = 240.9 And LowerCaseText = "êîììåð÷åñêàÿ òàéíà" Then
 Shape.TextFrame.TextRange.Font.Size = 14
 Shape.Height = CentimetersToPoints(0.8)
 Shape.Width = CentimetersToPoints(8.6)
@@ -336,7 +355,7 @@ Shape.Left = CentimetersToPoints(11.55)
 Shape.RelativeVerticalPosition = wdRelativeVerticalPositionPage
 Shape.Top = CentimetersToPoints(28)
 End If
-If Not Shape.Width = 240.9 And LowerCaseText = "конфиденциально" Then
+If Not Shape.Width = 240.9 And LowerCaseText = "êîíôèäåíöèàëüíî" Then
 Shape.TextFrame.TextRange.Font.Size = 14
 Shape.Height = CentimetersToPoints(0.8)
 Shape.Width = CentimetersToPoints(8.6)
@@ -347,7 +366,7 @@ Shape.Left = CentimetersToPoints(11.55)
 Shape.RelativeVerticalPosition = wdRelativeVerticalPositionTopMarginArea
 Shape.Top = CentimetersToPoints(0.7)
 End If
-If Not Shape.Width = 240.9 And LowerCaseText = "строго конфиденциально" Then
+If Not Shape.Width = 240.9 And LowerCaseText = "ñòðîãî êîíôèäåíöèàëüíî" Then
 Shape.TextFrame.TextRange.Font.Size = 14
 Shape.Height = CentimetersToPoints(0.8)
 Shape.Width = CentimetersToPoints(8.6)
@@ -359,302 +378,4 @@ Shape.RelativeVerticalPosition = wdRelativeVerticalPositionTopMarginArea
 Shape.Top = CentimetersToPoints(0.7)
 End If
 Next
-End Sub
-Sub ApplySpecificationFormatting()
-'Table in header
-ActiveDocument.Sections(1).Headers(wdHeaderFooterFirstPage).Range.Tables(1).Range.Cells.VerticalAlignment = wdCellAlignVerticalCenter
-With ActiveDocument.Sections(1).Headers(wdHeaderFooterFirstPage).Range.Tables(1).Range.Font
-        .Name = "Arial"
-        .Size = 12
-        .Bold = True
-        .Italic = False
-End With
-With ActiveDocument.Sections(1).Headers(wdHeaderFooterFirstPage).Range.Tables(1).Range.ParagraphFormat
-        .LeftIndent = CentimetersToPoints(0)
-        .RightIndent = CentimetersToPoints(0)
-        .SpaceBefore = 0
-        .SpaceBeforeAuto = False
-        .SpaceAfter = 0
-        .SpaceAfterAuto = False
-        .LineSpacingRule = wdLineSpaceSingle
-        .Alignment = wdAlignParagraphCenter
-        .WidowControl = True
-        .KeepWithNext = False
-        .KeepTogether = False
-        .PageBreakBefore = False
-        .NoLineNumber = False
-        .Hyphenation = True
-        .FirstLineIndent = CentimetersToPoints(0)
-        .OutlineLevel = wdOutlineLevelBodyText
-        .CharacterUnitLeftIndent = 0
-        .CharacterUnitRightIndent = 0
-        .CharacterUnitFirstLineIndent = 0
-        .LineUnitBefore = 0
-        .LineUnitAfter = 0
-        .MirrorIndents = False
-        .TextboxTightWrap = wdTightNone
-    End With
-Dim TextInCell As String
-TextInCell = ActiveDocument.Sections(1).Headers(wdHeaderFooterFirstPage).Range.Tables(1).Cell(2, 2).Range.Text
-StringLength = Len(TextInCell)
-ActiveDocument.Sections(1).Headers(wdHeaderFooterFirstPage).Range.Tables(1).Cell(2, 2).HeightRule = wdRowHeightExactly
-If StringLength <= 34 Then
-ActiveDocument.Sections(1).Headers(wdHeaderFooterFirstPage).Range.Tables(1).Cell(2, 2).Range.Font.Size = 10
-ActiveDocument.Sections(1).Headers(wdHeaderFooterFirstPage).Range.Tables(1).Cell(2, 2).Range.ParagraphFormat.Alignment = wdAlignParagraphCenter
-Else
-ActiveDocument.Sections(1).Headers(wdHeaderFooterFirstPage).Range.Tables(1).Cell(2, 2).Range.Font.Size = 8
-ActiveDocument.Sections(1).Headers(wdHeaderFooterFirstPage).Range.Tables(1).Cell(2, 2).Range.ParagraphFormat.Alignment = wdAlignParagraphCenter
-End If
-ActiveDocument.Sections(1).Headers(wdHeaderFooterFirstPage).Range.Tables(1).Cell(3, 1).Range.Orientation = wdTextOrientationUpward
-ActiveDocument.Sections(1).Headers(wdHeaderFooterFirstPage).Range.Tables(1).Cell(3, 2).Range.Orientation = wdTextOrientationUpward
-ActiveDocument.Sections(1).Headers(wdHeaderFooterFirstPage).Range.Tables(1).Cell(3, 3).Range.Orientation = wdTextOrientationUpward
-ActiveDocument.Sections(1).Headers(wdHeaderFooterFirstPage).Range.Tables(1).Cell(3, 6).Range.Orientation = wdTextOrientationUpward
-'Table in footer
-Dim TableInFooter As Range
-Set TableInFooter = ActiveDocument.Sections(1).Footers(wdHeaderFooterFirstPage).Range.Tables(1).Range
-TableInFooter.Cells.VerticalAlignment = wdCellAlignVerticalCenter
-With TableInFooter.Font
-        .Name = "Arial"
-        .Size = 8
-        .Bold = False
-        .Italic = False
-End With
-With TableInFooter.ParagraphFormat
-        .LeftIndent = CentimetersToPoints(0)
-        .RightIndent = CentimetersToPoints(0)
-        .SpaceBefore = 0
-        .SpaceBeforeAuto = False
-        .SpaceAfter = 0
-        .SpaceAfterAuto = False
-        .LineSpacingRule = wdLineSpaceSingle
-        .Alignment = wdAlignParagraphCenter
-        .WidowControl = True
-        .KeepWithNext = False
-        .KeepTogether = False
-        .PageBreakBefore = False
-        .NoLineNumber = False
-        .Hyphenation = True
-        .FirstLineIndent = CentimetersToPoints(0)
-        .OutlineLevel = wdOutlineLevelBodyText
-        .CharacterUnitLeftIndent = 0
-        .CharacterUnitRightIndent = 0
-        .CharacterUnitFirstLineIndent = 0
-        .LineUnitBefore = 0
-        .LineUnitAfter = 0
-        .MirrorIndents = False
-        .TextboxTightWrap = wdTightNone
-    End With
-Dim NamesAndFields As Range
-Set NamesAndFields = ActiveDocument.Sections(1).Footers(wdHeaderFooterFirstPage).Range.Tables(1).Cell(3, 1).Range
-NamesAndFields.SetRange Start:=NamesAndFields.Start, End:=ActiveDocument.Sections(1).Footers(wdHeaderFooterFirstPage).Range.Tables(1).Cell(8, 2).Range.End
-NamesAndFields.Select
-Selection.ParagraphFormat.Alignment = wdAlignParagraphLeft
-ActiveDocument.Sections(1).Footers(wdHeaderFooterFirstPage).Range.Tables(1).Cell(1, 6).Range.Font.Bold = True
-ActiveDocument.Sections(1).Footers(wdHeaderFooterFirstPage).Range.Tables(1).Cell(1, 6).Range.Font.Size = 14
-ActiveDocument.Sections(1).Footers(wdHeaderFooterFirstPage).Range.Tables(1).Cell(4, 5).Range.Font.Size = 10
-TableCounter = ActiveDocument.Sections(1).Footers(wdHeaderFooterPrimary).Range.Tables.Count
-'Small table in footer (if any exists)
-If TableCounter > 0 Then
-Dim TableInFooterSmall As Range
-Set TableInFooterSmall = ActiveDocument.Sections(1).Footers(wdHeaderFooterPrimary).Range.Tables(1).Range
-TableInFooterSmall.Cells.VerticalAlignment = wdCellAlignVerticalCenter
-With TableInFooterSmall.Font
-        .Name = "Arial"
-        .Size = 8
-        .Bold = False
-        .Italic = False
-End With
-With TableInFooterSmall.ParagraphFormat
-        .LeftIndent = CentimetersToPoints(0)
-        .RightIndent = CentimetersToPoints(0)
-        .SpaceBefore = 0
-        .SpaceBeforeAuto = False
-        .SpaceAfter = 0
-        .SpaceAfterAuto = False
-        .LineSpacingRule = wdLineSpaceSingle
-        .Alignment = wdAlignParagraphCenter
-        .WidowControl = True
-        .KeepWithNext = False
-        .KeepTogether = False
-        .PageBreakBefore = False
-        .NoLineNumber = False
-        .Hyphenation = True
-        .FirstLineIndent = CentimetersToPoints(0)
-        .OutlineLevel = wdOutlineLevelBodyText
-        .CharacterUnitLeftIndent = 0
-        .CharacterUnitRightIndent = 0
-        .CharacterUnitFirstLineIndent = 0
-        .LineUnitBefore = 0
-        .LineUnitAfter = 0
-        .MirrorIndents = False
-        .TextboxTightWrap = wdTightNone
-    End With
-ActiveDocument.Sections(1).Footers(wdHeaderFooterPrimary).Range.Tables(1).Cell(1, 6).Range.Font.Bold = True
-ActiveDocument.Sections(1).Footers(wdHeaderFooterPrimary).Range.Tables(1).Cell(1, 6).Range.Font.Size = 14
-End If
-'Main table. Applying formatting.
-ActiveDocument.Tables(1).Rows.Height = CentimetersToPoints(1)
-'Main table. Columns 1-3.
-For i = 1 To 3
-ActiveDocument.Tables(1).Columns(i).Cells.VerticalAlignment = wdCellAlignVerticalCenter
-ActiveDocument.Tables(1).Columns(i).Select
-With Selection.Font
-        .Name = "Arial"
-        .Size = 8
-        .Bold = False
-        .Italic = False
-        .Underline = False
-End With
-With Selection.ParagraphFormat
-        .LeftIndent = CentimetersToPoints(0)
-        .RightIndent = CentimetersToPoints(0)
-        .SpaceBefore = 0
-        .SpaceBeforeAuto = False
-        .SpaceAfter = 0
-        .SpaceAfterAuto = False
-        .LineSpacingRule = wdLineSpaceSingle
-        .Alignment = wdAlignParagraphCenter
-        .WidowControl = True
-        .KeepWithNext = False
-        .KeepTogether = False
-        .PageBreakBefore = False
-        .NoLineNumber = False
-        .Hyphenation = True
-        .FirstLineIndent = CentimetersToPoints(0)
-        .OutlineLevel = wdOutlineLevelBodyText
-        .CharacterUnitLeftIndent = 0
-        .CharacterUnitRightIndent = 0
-        .CharacterUnitFirstLineIndent = 0
-        .LineUnitBefore = 0
-        .LineUnitAfter = 0
-        .MirrorIndents = False
-        .TextboxTightWrap = wdTightNone
-    End With
-Next i
-'Main table. Column 6.
-ActiveDocument.Tables(1).Columns(6).Cells.VerticalAlignment = wdCellAlignVerticalCenter
-ActiveDocument.Tables(1).Columns(6).Select
-With Selection.Font
-        .Name = "Arial"
-        .Size = 8
-        .Bold = False
-        .Italic = False
-        .Underline = False
-End With
-With Selection.ParagraphFormat
-        .LeftIndent = CentimetersToPoints(0)
-        .RightIndent = CentimetersToPoints(0)
-        .SpaceBefore = 0
-        .SpaceBeforeAuto = False
-        .SpaceAfter = 0
-        .SpaceAfterAuto = False
-        .LineSpacingRule = wdLineSpaceSingle
-        .Alignment = wdAlignParagraphCenter
-        .WidowControl = True
-        .KeepWithNext = False
-        .KeepTogether = False
-        .PageBreakBefore = False
-        .NoLineNumber = False
-        .Hyphenation = True
-        .FirstLineIndent = CentimetersToPoints(0)
-        .OutlineLevel = wdOutlineLevelBodyText
-        .CharacterUnitLeftIndent = 0
-        .CharacterUnitRightIndent = 0
-        .CharacterUnitFirstLineIndent = 0
-        .LineUnitBefore = 0
-        .LineUnitAfter = 0
-        .MirrorIndents = False
-        .TextboxTightWrap = wdTightNone
-    End With
-'Main table. Column 4.
-ActiveDocument.Tables(1).Columns(4).Cells.VerticalAlignment = wdCellAlignVerticalCenter
-ActiveDocument.Tables(1).Columns(4).Select
-With Selection.Font
-        .Name = "Arial"
-        .Size = 8
-        .Bold = False
-        .Italic = False
-        .Underline = False
-End With
-With Selection.ParagraphFormat
-        .LeftIndent = CentimetersToPoints(0)
-        .RightIndent = CentimetersToPoints(0)
-        .SpaceBefore = 0
-        .SpaceBeforeAuto = False
-        .SpaceAfter = 0
-        .SpaceAfterAuto = False
-        .LineSpacingRule = wdLineSpaceSingle
-        .Alignment = wdAlignParagraphLeft
-        .WidowControl = True
-        .KeepWithNext = False
-        .KeepTogether = False
-        .PageBreakBefore = False
-        .NoLineNumber = False
-        .Hyphenation = True
-        .FirstLineIndent = CentimetersToPoints(0)
-        .OutlineLevel = wdOutlineLevelBodyText
-        .CharacterUnitLeftIndent = 0
-        .CharacterUnitRightIndent = 0
-        .CharacterUnitFirstLineIndent = 0
-        .LineUnitBefore = 0
-        .LineUnitAfter = 0
-        .MirrorIndents = False
-        .TextboxTightWrap = wdTightNone
-    End With
-'Main table. Formatting Column 5.
-ActiveDocument.Tables(1).Columns(5).Cells.VerticalAlignment = wdCellAlignVerticalCenter
-ActiveDocument.Tables(1).Columns(5).Select
-With Selection.Font
-        .Name = "Arial"
-        .Size = 8
-        .Bold = False
-        .Italic = False
-        .Underline = False
-End With
-With Selection.ParagraphFormat
-        .LeftIndent = CentimetersToPoints(0)
-        .RightIndent = CentimetersToPoints(0)
-        .SpaceBefore = 0
-        .SpaceBeforeAuto = False
-        .SpaceAfter = 0
-        .SpaceAfterAuto = False
-        .LineSpacingRule = wdLineSpaceSingle
-        .Alignment = wdAlignParagraphLeft
-        .WidowControl = True
-        .KeepWithNext = False
-        .KeepTogether = False
-        .PageBreakBefore = False
-        .NoLineNumber = False
-        .Hyphenation = True
-        .FirstLineIndent = CentimetersToPoints(0)
-        .OutlineLevel = wdOutlineLevelBodyText
-        .CharacterUnitLeftIndent = 0
-        .CharacterUnitRightIndent = 0
-        .CharacterUnitFirstLineIndent = 0
-        .LineUnitBefore = 0
-        .LineUnitAfter = 0
-        .MirrorIndents = False
-        .TextboxTightWrap = wdTightNone
-    End With
-'Main table. Formatting section names in Column 5.
-CellCounter = ActiveDocument.Tables(1).Columns(5).Cells.Count
-For i = 1 To CellCounter
-TextInCell = ActiveDocument.Tables(1).Columns(5).Cells(i).Range.Text
-TextInCell = Replace(TextInCell, ChrW(13) & ChrW(7), "")
-TextInCell = Replace(TextInCell, ChrW(13), "")
-TextInCell = Replace(TextInCell, ".", "")
-TextInCell = Trim(TextInCell)
-LowerCaseText = LCase(TextInCell)
-If LowerCaseText = "сборочные единицы" Or LowerCaseText = "документация" Or LowerCaseText = "состав оборудования терминала" Or LowerCaseText = "стандартные изделия" _
-Or LowerCaseText = "ïðîãðàììíûå êîìïîíåíòû" Or LowerCaseText = "ïåðåìåííûå êîìïëåêòóþùèå" Or LowerCaseText = "ïåðåìåííûå äàííûå äëÿ èñïîëíåíèé" Or LowerCaseText = "âàðèàíòû èñïîëíåíèÿ ïàáê" _
-Or LowerCaseText = "assembly units" Or LowerCaseText = "documentation" Or LowerCaseText = "terminal hardware specifications" Or LowerCaseText = "standard items" _
-Or LowerCaseText = "software components" Or LowerCaseText = "variable items" Or LowerCaseText = "variable data for various assemblies" Or LowerCaseText = "list of bhss assemblies" Then
-ActiveDocument.Tables(1).Columns(5).Cells(i).Range.Font.Size = 12
-ActiveDocument.Tables(1).Columns(5).Cells(i).Range.Font.Name = "Arial"
-ActiveDocument.Tables(1).Columns(5).Cells(i).Range.Font.Underline = True
-ActiveDocument.Tables(1).Columns(5).Cells(i).Range.Font.Bold = True
-ActiveDocument.Tables(1).Columns(5).Cells(i).Range.Font.Italic = False
-ActiveDocument.Tables(1).Columns(5).Cells(i).Range.ParagraphFormat.Alignment = wdAlignParagraphCenter
-End If
-Next i
 End Sub
