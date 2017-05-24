@@ -1,7 +1,17 @@
+clear
 #Global variables
 $script:JSvariable = 0
 $script:BlackList = @("BTLJ", "KYUP", "MTCH", "BAXXJ", "BTKZ", "SLTJ", "TL6J", "SPL", "RBCT")
+$script:yesNoUserInput = 0
 #Functions
+Function Input-YesOrNo ($Question, $BoxTitle) {
+$a = New-Object -ComObject wscript.shell
+$intAnswer = $a.popup($Question,0,$BoxTitle,4)
+If ($intAnswer -eq 6) {
+$script:yesNoUserInput = 1
+} else {Exit}
+}
+
 Function Select-Folder ($description)
 {
     [System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms") | Out-Null     
@@ -250,7 +260,13 @@ Add-Content -Path "$PSScriptRoot\Check Requirements.html" "<tr>
     Write-Host "-------End of document-------"
     }
 }
-
+$reportExistence = Test-Path -Path "$PSScriptRoot\Check Requirements.html"
+if ($reportExistence) {
+$nl = [System.Environment]::NewLine
+Input-YesOrNo -Question "Отчет Check Requirements.html уже существует. Продолжить?$nl$nl`Да - перезаписать и продолжить исполнение скрипта.$nl`Нет - не перезаписывать и остановить исполнение скрипта.$nl$nl`Если вы не хотите перезаписывать существующий отчет, но хотите продолжить исполнение скрипта - переместите существующий отчет из папки, где расположен файл скрипта, в любое удобное место и нажмите 'Да'." -BoxTitle "Отчет Check Requirements.html уже существует"
+if ($script:yesNoUserInput -eq 1) {Remove-Item -Path "$PSScriptRoot\Check Requirements.html"}
+$script:yesNoUserInput = 0
+}
 $pathToFolder = Select-Folder -description "Выберите папку, в которой нужно соответствие требованиям."
 $ExecutionTime = Measure-Command {
 #========Statistics========
@@ -324,6 +340,7 @@ object.style.display == 'block' ? object.style.display = 'none' : object.style.d
 <li>Во всех документах должен использоваться штамп, который позволяет считывать указанные в нем значения.</li>
 </ul>
 <h3>Спецификации</h3>
+<h5>Не забудьте сверить количество ссылок (на файлы/программы и документы) подсчитанное скриптом с реальными количеством ссылок в спецификации.</h5>
 <table style=""width:60%"">
 <tr>
 <th>Документ</th>
