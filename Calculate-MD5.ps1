@@ -60,23 +60,44 @@ $buttonBrowseFolder.Location = $SystemDrawingPoint
 $buttonBrowseFolder.Add_Click({
                              #some action
                              })
+#Browse file
+$buttonBrowseFile = New-Object System.Windows.Forms.Button
+$buttonBrowseFile.Height = 35
+$buttonBrowseFile.Width = 100
+$buttonBrowseFile.Text = "Обзор..."
+$SystemDrawingPoint = New-Object System.Drawing.Point
+$SystemDrawingPoint.X = 75
+$SystemDrawingPoint.Y = 170
+$buttonBrowseFile.Location = $SystemDrawingPoint
+$buttonBrowseFile.Add_Click({
+                             #some action
+                             })
 #Labels
 #Browse folder label
 $labelBrowseFolder = New-Object System.Windows.Forms.Label
-$labelBrowseFolder.Text = "Укажите путь к папке, в которой необходимо снять MD5 файлов"
+$labelBrowseFolder.Text = "Укажите путь к папке, в которой необходимо снять хеш-суммы файлов"
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 130
-$SystemDrawingPoint.Y = 35
+$SystemDrawingPoint.Y = 36
 $labelBrowseFolder.Location = $SystemDrawingPoint
-$labelBrowseFolder.Width = 360
+$labelBrowseFolder.Width = 400
 $labelBrowseFolder.Height = 30
+#Browse file label
+$labelBrowseFile = New-Object System.Windows.Forms.Label
+$labelBrowseFile.Text = "Укажите путь к *.txt файлу"
+$SystemDrawingPoint = New-Object System.Drawing.Point
+$SystemDrawingPoint.X = 180
+$SystemDrawingPoint.Y = 180
+$labelBrowseFile.Location = $SystemDrawingPoint
+$labelBrowseFile.Width = 200
+$labelBrowseFile.Height = 30
 #radio buttons
 $radioNewList = New-Object System.Windows.Forms.RadioButton
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 50
 $SystemDrawingPoint.Y = 70
 $radioNewList.Location = $SystemDrawingPoint
-$radioNewList.Text = "Создать новый *.txt со списком файлов и их MD5 сумм"
+$radioNewList.Text = "Создать новый *.txt со списком файлов и их хеш-сумм"
 $radioNewList.Width = 460
 $radioNewList.Height = 30
 $radioNewList.Checked = $true
@@ -86,9 +107,9 @@ $radioNewList.Add_Click({
 $radioExistingList = New-Object System.Windows.Forms.RadioButton
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 50
-$SystemDrawingPoint.Y = 160
+$SystemDrawingPoint.Y = 140
 $radioExistingList.Location = $SystemDrawingPoint
-$radioExistingList.Text = "Использовать существующий *.txt со списком файлов и их MD5 сумм"
+$radioExistingList.Text = "Использовать существующий *.txt со списком файлов и их хеш-сумм"
 $radioExistingList.Width = 460
 $radioExistingList.Height = 30
 $radioExistingList.Checked = $false
@@ -97,19 +118,18 @@ $radioExistingList.Add_Click({
                           })
 #inputbox
 $TextBox = New-Object System.Windows.Forms.TextBox 
-$TextBox.Location = New-Object System.Drawing.Size(120,110) 
-$TextBox.Size = New-Object System.Drawing.Size(260,30)
-$TextBox.Text = "MD5 файлов.txt"
+$TextBox.Location = New-Object System.Drawing.Size(140,108) 
+$TextBox.Size = New-Object System.Drawing.Size(200,30)
+$TextBox.Text = "MD5 суммы файлов.txt"
 #labels
 $labelTextBox = New-Object System.Windows.Forms.Label
 $labelTextBox.Text = "Имя файла:"
 $SystemDrawingPoint = New-Object System.Drawing.Point
-$SystemDrawingPoint.X = 50
+$SystemDrawingPoint.X = 75
 $SystemDrawingPoint.Y = 110
 $labelTextBox.Location = $SystemDrawingPoint
 $labelTextBox.Width = 350
 $labelTextBox.Height = 30
-
 $dialog.Controls.Add($buttonExit)
 $dialog.Controls.Add($buttonRunScript)
 $dialog.Controls.Add($buttonBrowseFolder)
@@ -118,6 +138,8 @@ $dialog.Controls.Add($radioNewList)
 $dialog.Controls.Add($radioExistingList)
 $dialog.Controls.Add($TextBox)
 $dialog.Controls.Add($labelTextBox)
+$dialog.Controls.Add($buttonBrowseFile)
+$dialog.Controls.Add($labelBrowseFile)
 $dialog.ShowDialog()
 }
 Custom-Form
