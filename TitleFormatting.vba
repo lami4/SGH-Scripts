@@ -7,7 +7,7 @@ izm = Mid(izm, 1, Len(izm) - 1)
 izveshenie = Mid(izveshenie, 1, Len(izveshenie) - 1)
 oboznachenie = Mid(oboznachenie, 1, Len(oboznachenie) - 1)
 nazvanie = Mid(nazvanie, 1, Len(nazvanie) - 1)
-MsgBox ("Èçì.: " & izm & vbNewLine & "Íîìåð èçâåùåíèÿ: " & izveshenie & vbNewLine & "Îáîçíà÷åíèå: " & oboznachenie & vbNewLine & vbNewLine & "Íàçâàíèå: " & nazvanie)
+  MsgBox ("Изм.: " & izm & vbNewLine & "Номер извещения: " & izveshenie & vbNewLine & "Обозначение: " & oboznachenie & vbNewLine & vbNewLine & "Название: " & nazvanie)
 End Sub
 Sub ApplyTitleFormatting()
 ActiveDocument.Sections(1).Footers(wdHeaderFooterPrimary).Range.ParagraphFormat.SpaceAfter = 0
@@ -293,19 +293,19 @@ For Each Shape In ActiveDocument.Sections(1).Headers(wdHeaderFooterPrimary).Shap
 Confidential = Shape.TextFrame.TextRange.Text
 Confidential = Mid(Confidential, 1, Len(Confidential) - 1)
 LowerConfidential = LCase(Confidential)
-If Shape.Width = 240.9 And LowerConfidential = "êîíôèäåíöèàëüíî" Then
+If Shape.Width = 240.9 And LowerConfidential = "конфиденциально" Then
 Shape.RelativeHorizontalPosition = wdRelativeHorizontalPositionRightMarginArea
 Shape.Left = CentimetersToPoints(-8.2)
 Shape.RelativeVerticalPosition = wdRelativeVerticalPositionTopMarginArea
 Shape.Top = CentimetersToPoints(0.4)
 End If
-If Shape.Width = 240.9 And LowerConfidential = "êîììåð÷åñêàÿ òàéíà" Then
+If Shape.Width = 240.9 And LowerConfidential = "коммерческая тайна" Then
 Shape.RelativeHorizontalPosition = wdRelativeHorizontalPositionRightMarginArea
 Shape.Left = CentimetersToPoints(-8.2)
 Shape.RelativeVerticalPosition = wdRelativeVerticalPositionBottomMarginArea
 Shape.Top = CentimetersToPoints(0)
 End If
-If Shape.Width = 240.9 And LowerConfidential = "ñòðîãî êîíôèäåíöèàëüíî" Then
+If Shape.Width = 240.9 And LowerConfidential = "строго конфиденциально" Then
 Shape.RelativeHorizontalPosition = wdRelativeHorizontalPositionRightMarginArea
 Shape.Left = CentimetersToPoints(-8.2)
 Shape.RelativeVerticalPosition = wdRelativeVerticalPositionTopMarginArea
@@ -344,7 +344,7 @@ For Each Shape In ActiveDocument.Sections(1).Headers(wdHeaderFooterPrimary).Shap
 ImageText = Shape.TextFrame.TextRange.Text
 ImageText = Mid(ImageText, 1, Len(ImageText) - 1)
 LowerCaseText = LCase(ImageText)
-If Not Shape.Width = 240.9 And LowerCaseText = "êîììåð÷åñêàÿ òàéíà" Then
+If Not Shape.Width = 240.9 And LowerCaseText = "коммерческая тайна" Then
 Shape.TextFrame.TextRange.Font.Size = 14
 Shape.Height = CentimetersToPoints(0.8)
 Shape.Width = CentimetersToPoints(8.6)
@@ -355,7 +355,7 @@ Shape.Left = CentimetersToPoints(11.55)
 Shape.RelativeVerticalPosition = wdRelativeVerticalPositionPage
 Shape.Top = CentimetersToPoints(28)
 End If
-If Not Shape.Width = 240.9 And LowerCaseText = "êîíôèäåíöèàëüíî" Then
+If Not Shape.Width = 240.9 And LowerCaseText = "конфиденциально" Then
 Shape.TextFrame.TextRange.Font.Size = 14
 Shape.Height = CentimetersToPoints(0.8)
 Shape.Width = CentimetersToPoints(8.6)
@@ -366,7 +366,7 @@ Shape.Left = CentimetersToPoints(11.55)
 Shape.RelativeVerticalPosition = wdRelativeVerticalPositionTopMarginArea
 Shape.Top = CentimetersToPoints(0.7)
 End If
-If Not Shape.Width = 240.9 And LowerCaseText = "ñòðîãî êîíôèäåíöèàëüíî" Then
+If Not Shape.Width = 240.9 And LowerCaseText = "строго конфиденциально" Then
 Shape.TextFrame.TextRange.Font.Size = 14
 Shape.Height = CentimetersToPoints(0.8)
 Shape.Width = CentimetersToPoints(8.6)
