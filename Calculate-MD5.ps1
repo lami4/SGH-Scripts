@@ -21,7 +21,7 @@ $buttonExit.Width = 100
 $buttonExit.Text = "Закрыть"
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 130
-$SystemDrawingPoint.Y = 275
+$SystemDrawingPoint.Y = 325
 $buttonExit.Location = $SystemDrawingPoint
 $SystemWindowsFormsMargin = New-Object System.Windows.Forms.Padding
 $SystemWindowsFormsMargin.Bottom = 25
@@ -38,7 +38,7 @@ $buttonRunScript.Width = 100
 $buttonRunScript.Text = "Запустить скрипт"
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 25
-$SystemDrawingPoint.Y = 275
+$SystemDrawingPoint.Y = 325
 $buttonRunScript.Location = $SystemDrawingPoint
 $SystemWindowsFormsMargin = New-Object System.Windows.Forms.Padding
 $SystemWindowsFormsMargin.Bottom = 25
@@ -67,7 +67,7 @@ $buttonBrowseFile.Width = 100
 $buttonBrowseFile.Text = "Обзор..."
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 75
-$SystemDrawingPoint.Y = 170
+$SystemDrawingPoint.Y = 230
 $buttonBrowseFile.Location = $SystemDrawingPoint
 $buttonBrowseFile.Add_Click({
                              #some action
@@ -87,15 +87,33 @@ $labelBrowseFile = New-Object System.Windows.Forms.Label
 $labelBrowseFile.Text = "Укажите путь к *.txt файлу"
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 180
-$SystemDrawingPoint.Y = 180
+$SystemDrawingPoint.Y = 240
 $labelBrowseFile.Location = $SystemDrawingPoint
 $labelBrowseFile.Width = 200
 $labelBrowseFile.Height = 30
+#textbox lable
+$labelTextBox = New-Object System.Windows.Forms.Label
+$labelTextBox.Text = "Имя файла:"
+$SystemDrawingPoint = New-Object System.Drawing.Point
+$SystemDrawingPoint.X = 75
+$SystemDrawingPoint.Y = 165
+$labelTextBox.Location = $SystemDrawingPoint
+$labelTextBox.Width = 350
+$labelTextBox.Height = 30
+#combobox label
+$labelAlgorithm = New-Object System.Windows.Forms.Label
+$labelAlgorithm.Text = "Алгоритм:"
+$SystemDrawingPoint = New-Object System.Drawing.Point
+$SystemDrawingPoint.X = 25
+$SystemDrawingPoint.Y = 73
+$labelAlgorithm.Location = $SystemDrawingPoint
+$labelAlgorithm.Width = 350
+$labelAlgorithm.Height = 30
 #radio buttons
 $radioNewList = New-Object System.Windows.Forms.RadioButton
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 50
-$SystemDrawingPoint.Y = 70
+$SystemDrawingPoint.Y = 125
 $radioNewList.Location = $SystemDrawingPoint
 $radioNewList.Text = "Создать новый *.txt со списком файлов и их хеш-сумм"
 $radioNewList.Width = 460
@@ -107,7 +125,7 @@ $radioNewList.Add_Click({
 $radioExistingList = New-Object System.Windows.Forms.RadioButton
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 50
-$SystemDrawingPoint.Y = 140
+$SystemDrawingPoint.Y = 195
 $radioExistingList.Location = $SystemDrawingPoint
 $radioExistingList.Text = "Использовать существующий *.txt со списком файлов и их хеш-сумм"
 $radioExistingList.Width = 460
@@ -118,18 +136,36 @@ $radioExistingList.Add_Click({
                           })
 #inputbox
 $TextBox = New-Object System.Windows.Forms.TextBox 
-$TextBox.Location = New-Object System.Drawing.Size(140,108) 
+$TextBox.Location = New-Object System.Drawing.Size(140,163) 
 $TextBox.Size = New-Object System.Drawing.Size(200,30)
 $TextBox.Text = "MD5 суммы файлов.txt"
-#labels
-$labelTextBox = New-Object System.Windows.Forms.Label
-$labelTextBox.Text = "Имя файла:"
+#combobox
+$DropDownBox = New-Object System.Windows.Forms.ComboBox
+$DropDownBox.Location = New-Object System.Drawing.Size(80,70) 
+$DropDownBox.Size = New-Object System.Drawing.Size(180,20) 
+$DropDownBox.DropDownHeight = 200
+$AlgorithmList = @("MACTripleDES","MD5","RIPEMD160","SHA1","SHA256","SHA384", "SHA512")
+$AlgorithmList | % {$DropDownBox.Items.Add($_)}
+$DropDownBox.SelectedIndex = 1
+$DropDownBox.DropDownStyle = "DropDownList"
+#checkboxes
+#IgnoreExtensions
+$CheckboxIgnoreExtensions = New-Object System.Windows.Forms.CheckBox
+$CheckboxIgnoreExtensions.Width = 475
+$CheckboxIgnoreExtensions.Text = "Игнорировать *.pdf и файлы MS Office"
+$SystemDrawingPoint = New-Object System.Drawing.Point
+$SystemDrawingPoint.X = 25
+$SystemDrawingPoint.Y = 100
+$CheckboxIgnoreExtensions.Location = $SystemDrawingPoint
+#Do not calculate if hash exist
+$CheckboxSkipCalculation = New-Object System.Windows.Forms.CheckBox
+$CheckboxSkipCalculation.Width = 510
+$CheckboxSkipCalculation.Text = "Не считать хеш-сумму, если *.txt уже содержит хеш-сумму для обрабатываемого файла"
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 75
-$SystemDrawingPoint.Y = 110
-$labelTextBox.Location = $SystemDrawingPoint
-$labelTextBox.Width = 350
-$labelTextBox.Height = 30
+$SystemDrawingPoint.Y = 275
+$CheckboxSkipCalculation.Location = $SystemDrawingPoint
+$dialog.Controls.Add($DropDownBox) 
 $dialog.Controls.Add($buttonExit)
 $dialog.Controls.Add($buttonRunScript)
 $dialog.Controls.Add($buttonBrowseFolder)
@@ -140,6 +176,9 @@ $dialog.Controls.Add($TextBox)
 $dialog.Controls.Add($labelTextBox)
 $dialog.Controls.Add($buttonBrowseFile)
 $dialog.Controls.Add($labelBrowseFile)
+$dialog.Controls.Add($CheckboxIgnoreExtensions)
+$dialog.Controls.Add($CheckboxSkipCalculation)
+$dialog.Controls.Add($labelAlgorithm)
 $dialog.ShowDialog()
 }
 Custom-Form
