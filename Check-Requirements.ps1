@@ -385,5 +385,5 @@ $StringForHTML = "<font color=""black"" size=""1"">Для создания да�
 $StringForHTML += "$($ExecutionTime.Days) дней "
 $StringForHTML += "$($ExecutionTime.Hours) часов "
 $StringForHTML += "$($ExecutionTime.Minutes) минут "
-$StringForHTML += "$($ExecutionTime.Seconds) секунд`r`n<br>`r`n</font>`r`n<h3>Проверка оформления и содержимого</h3>"
-(Get-Content -Path "$PSScriptRoot\Check Requirements.html").Replace("<h3>Проверка оформления и содержимого</h3>", $StringForHTML) | Set-Content("$PSScriptRoot\Check Requirements.html") -Encoding UTF8
+$StringForHTML += "$($ExecutionTime.Seconds) секунд`r`n<br>`r`n</font>`r`n<h3>Проверка оформления</h3>"
+(Get-Content -Path "$PSScriptRoot\Check Requirements.html").Replace("<h3>Проверка оформления</h3>", $StringForHTML) | Set-Content("$PSScriptRoot\Check Requirements.html") -Encoding UTF8
