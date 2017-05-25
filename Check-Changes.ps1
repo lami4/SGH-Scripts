@@ -217,12 +217,12 @@ $dialog.DialogResult = "Cancel"
 })
 #Browse folder label
 $labelBrowseFolder = New-Object System.Windows.Forms.Label
-$labelBrowseFolder.Text = "Укажите путь к папке, содержащей файлы, данные которых необходимо сравнить с данными файла учета ПД."
+$labelBrowseFolder.Text = "Укажите путь к папке с файлами, данные которых необходимо сверить с данными файла учета ПД."
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 130
 $SystemDrawingPoint.Y = 30
 $labelBrowseFolder.Location = $SystemDrawingPoint
-$labelBrowseFolder.Width = 350
+$labelBrowseFolder.Width = 395
 $labelBrowseFolder.Height = 30
 #Browse file label
 $labelBrowseFile = New-Object System.Windows.Forms.Label
@@ -235,7 +235,7 @@ $labelBrowseFile.Width = 350
 $labelBrowseFile.Height = 30
 #Input field label
 $labelBrowseInput = New-Object System.Windows.Forms.Label
-$labelBrowseInput.Text = "Укажите номер текущего извещения:"
+$labelBrowseInput.Text = "Номер извещения публикуемого комплекта:"
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 50
 $SystemDrawingPoint.Y = 95
@@ -245,7 +245,7 @@ $labelBrowseInput.Height = 30
 $labelBrowseInput.Enabled = $false
 #TextBox
 $MaskedTextBox = New-Object System.Windows.Forms.MaskedTextBox
-$MaskedTextBox.Location = New-Object System.Drawing.Size(247,93) 
+$MaskedTextBox.Location = New-Object System.Drawing.Size(284,93) 
 $MaskedTextBox.Mask = "00-00-0000"
 $MaskedTextBox.Width = 61
 $MaskedTextBox.BorderStyle = 2
