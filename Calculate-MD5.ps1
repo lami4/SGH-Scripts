@@ -91,13 +91,13 @@ $buttonBrowseFile.Enabled = $false
 $buttonBrowseFile.Add_Click({
                              $FileSelectedByUser = Select-File
                              if ($FileSelectedByUser -ne $null) {
-                             $script:PathToFile = $FileSelectedByUser
+                                $script:PathToFile = $FileSelectedByUser
                              }
                              if ($script:PathToFile -ne "") {
-                             $labelBrowseFile.Text = "Указан файл: $([System.IO.Path]::GetFileName($script:PathToFile))"
-                             Write-Host "Выбран файл: $script:PathToFile"
+                                $labelBrowseFile.Text = "Указан файл: $([System.IO.Path]::GetFileName($script:PathToFile))"
+                                Write-Host "Выбран файл: $script:PathToFile"
                              }
-                             if ($radioExistingList.Checked -eq $true -and $script:PathToFolder -ne "" -and $script:PathToFile -ne "") {$buttonRunScript.Enabled = $true}
+                                if ($radioExistingList.Checked -eq $true -and $script:PathToFolder -ne "" -and $script:PathToFile -ne "") {$buttonRunScript.Enabled = $true}
                              })
 #Labels
 #Browse folder label
