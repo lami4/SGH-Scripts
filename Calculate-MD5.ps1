@@ -49,7 +49,6 @@ $SystemWindowsFormsMargin = New-Object System.Windows.Forms.Padding
 $SystemWindowsFormsMargin.Bottom = 25
 $buttonRunScript.Margin = $SystemWindowsFormsMargin
 $buttonRunScript.Add_Click({
-                            
                             $dialog.DialogResult = "OK";
                             $dialog.Close()
                            })
@@ -66,11 +65,17 @@ $buttonBrowseFolder.Location = $SystemDrawingPoint
 $buttonBrowseFolder.Add_Click({
                              $FolderSelectedByUser = Select-Folder -description "Укажите путь к папке, в которой необходимо снять хеш-суммы файлов."
                              if ($FolderSelectedByUser -ne $null) {
-                             $script:PathToFolder = $FolderSelectedByUser
+                                $script:PathToFolder = $FolderSelectedByUser
                              }
                              if ($script:PathToFolder -ne "") {
-                             $labelBrowseFolder.Text = "Указан путь: $script:PathToFolder"
-                             Write-Host "Выбран путь: $script:PathToFolder"
+                                $labelBrowseFolder.Text = "Указан путь: $script:PathToFolder"
+                                Write-Host "Выбран путь: $script:PathToFolder"
+                             }
+                             if ($radioNewList.Checked -eq $true -and $script:PathToFolder -ne "" -and $TextBox.Text -ne "") {
+                                $buttonRunScript.Enabled = $true
+                             }
+                             if ($radioExistingList.Checked -eq $true -and $script:PathToFolder -ne "" -and $script:PathToFile -ne "") {
+                                $buttonRunScript.Enabled = $true
                              }
                              })
 #Browse file
@@ -92,6 +97,7 @@ $buttonBrowseFile.Add_Click({
                              $labelBrowseFile.Text = "Указан файл: $([System.IO.Path]::GetFileName($script:PathToFile))"
                              Write-Host "Выбран файл: $script:PathToFile"
                              }
+                             if ($radioExistingList.Checked -eq $true -and $script:PathToFolder -ne "" -and $script:PathToFile -ne "") {$buttonRunScript.Enabled = $true}
                              })
 #Labels
 #Browse folder label
@@ -143,6 +149,7 @@ $radioNewList.Height = 30
 $radioNewList.Checked = $true
 $radioNewList.Add_Click({
                           if ($radioNewList.Checked -eq $true) {$buttonBrowseFile.Enabled = $false; $labelBrowseFile.Enabled = $false; $CheckboxSkipCalculation.Enabled = $false; $labelTextBox.Enabled = $true; $TextBox.Enabled = $true}
+                          if ($radioNewList.Checked -eq $true -and ($TextBox.Text -eq "" -or $PathToFolder -eq "")) {$buttonRunScript.Enabled = $false} else {$buttonRunScript.Enabled = $true}
                           })
 $radioExistingList = New-Object System.Windows.Forms.RadioButton
 $SystemDrawingPoint = New-Object System.Drawing.Point
@@ -155,12 +162,20 @@ $radioExistingList.Height = 30
 $radioExistingList.Checked = $false
 $radioExistingList.Add_Click({
                           if ($radioExistingList.Checked -eq $true) {$buttonBrowseFile.Enabled = $true; $labelBrowseFile.Enabled = $true; $CheckboxSkipCalculation.Enabled = $true; $labelTextBox.Enabled = $false; $TextBox.Enabled = $false}
+                          if ($radioExistingList.Checked -eq $true -and ($PathToFolder -eq "" -or $PathToFile -eq "")) {$buttonRunScript.Enabled = $false} else {$buttonRunScript.Enabled = $true}
                           })
 #inputbox
 $TextBox = New-Object System.Windows.Forms.TextBox 
 $TextBox.Location = New-Object System.Drawing.Size(140,163) 
 $TextBox.Size = New-Object System.Drawing.Size(200,30)
 $TextBox.Text = "MD5 суммы файлов.txt"
+$TextBox.Add_TextChanged({
+if ($radioNewList.Checked -eq $true -and $script:PathToFolder -ne "" -and $TextBox.Text -ne "") {
+$buttonRunScript.Enabled = $true
+} else {
+$buttonRunScript.Enabled = $false
+}
+})
 #combobox
 $DropDownBox = New-Object System.Windows.Forms.ComboBox
 $DropDownBox.Location = New-Object System.Drawing.Size(80,70) 
@@ -171,8 +186,9 @@ $AlgorithmList | % {$DropDownBox.Items.Add($_)} | Out-Null
 $DropDownBox.SelectedIndex = 1
 $DropDownBox.DropDownStyle = "DropDownList"
 $DropDownBox.Add_SelectedIndexChanged({
-$TextBox.Text = "$($AlgorithmList[$DropDownBox.SelectedIndex]) суммы файлов.txt"
-                                        })
+                                $TextBox.Text = "$($AlgorithmList[$DropDownBox.SelectedIndex]) суммы файлов.txt"
+                                if ($radioExistingList.Checked -eq $true -and $script:PathToFolder -ne "" -and $script:PathToFile -ne "") {$buttonRunScript.Enabled = $true}   
+                                })
 #checkboxes
 #IgnoreExtensions
 $CheckboxIgnoreExtensions = New-Object System.Windows.Forms.CheckBox
@@ -208,7 +224,6 @@ $dialog.Controls.Add($CheckboxSkipCalculation)
 $dialog.Controls.Add($labelAlgorithm)
 $dialog.ShowDialog()
 }
-
 Function Select-Folder ($description)
 {
     [System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms") | Out-Null
@@ -218,7 +233,6 @@ Function Select-Folder ($description)
     $show = $objForm.ShowDialog()
     If ($show -eq "OK") {Return $objForm.SelectedPath}
 }
-
 Function Select-File 
 {
     Add-Type -AssemblyName System.Windows.Forms
@@ -228,7 +242,6 @@ Function Select-File
     $show = $f.ShowDialog()
     If ($show -eq "OK") {Return $f.FileName}
 }
-
 Custom-Form
 #############################################>
 
