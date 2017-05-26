@@ -372,12 +372,16 @@ if ($Target -eq $null) {
         $Target = $Range.FindNext($Target)
     }
     While ($Target -ne $NULL -and $Target.AddressLocal() -ne $FirstHit.AddressLocal())
+    if ($Changes.Length -gt 0) {
     $GreatestValue = $Changes | Measure-Object -Maximum
     $Index = [array]::IndexOf($NotificationCoordinatesRow, $GreatestValue.Maximum)
     [string]$NotificationNumber = $ExcelActiveSheet.Cells.Item($NotificationCoordinatesRow[$Index], "K").Value()
     if ($GreatestValue.Maximum -eq 0) {$CollectedData += [string]""} else {$CollectedData += [string]$GreatestValue.Maximum}
     $CollectedData += [string]$NotificationNumber
     return $CollectedData
+    } else {
+    return "NoWhiteBackground"
+    }
 }
 }
 
@@ -557,6 +561,14 @@ Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>" -Encoding UTF8
         } elseif ($DocumentData.Notification -eq "" -and $DocumentData.Version -ne "") {
             Add-Status -Status "Ошибка" -MessageInDiv "Ошибка: В документе заполнено поле 'Номер изменения', но не заполнено поле 'Номер извещение'."
             Add-Error -MessageInDiv "Ошибка: В документе заполнено поле 'Номер изменения', но не заполнено поле 'Номер извещение'."
+#========Statistics========
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>" -Encoding UTF8
+#========Statistics========
+        #below
+        } elseif ($DocumentData.Notification -eq "" -and $DocumentData.Version -eq "" -and $DataFromRegister -eq "NoWhiteBackground") {
+            Add-Status -Status "Новый документ***" -MessageInDiv "В документе не указаны номер изменения и номер извещения (пустые ячейки), но файл учета ПД содержит аннулированный документ с таким же обозначением.<br>Крайне вероятно, что данное обозначение используется повторно (т.е. обозначение перестало быть уникальным в рамках данного проекта)."
+            Compare-Strings -FontColor "Green" -DataInDocument "Номер изменения не указан (пустая ячейка)." -DataInRegister "Файл учета ПД содержит аннулированный документ с таким же обозначением." -ComparisonResult "?" -Title "Файл учета"
+            Compare-Strings -FontColor "Green" -DataInDocument "Номер извещения не указан (пустая ячейка)." -DataInRegister "Файл учета ПД содержит аннулированный документ с таким же обозначением." -ComparisonResult "?" -Title "Файл учета"
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>" -Encoding UTF8
 #========Statistics========
