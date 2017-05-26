@@ -374,7 +374,7 @@ if ($Target -eq $null) {
     While ($Target -ne $NULL -and $Target.AddressLocal() -ne $FirstHit.AddressLocal())
     if ($Changes.Length -gt 0) {
     $GreatestValue = $Changes | Measure-Object -Maximum
-    $Index = [array]::IndexOf($NotificationCoordinatesRow, $GreatestValue.Maximum)
+    $Index = [array]::IndexOf($Changes, [int]$GreatestValue.Maximum)
     [string]$NotificationNumber = $ExcelActiveSheet.Cells.Item($NotificationCoordinatesRow[$Index], "K").Value()
     if ($GreatestValue.Maximum -eq 0) {$CollectedData += [string]""} else {$CollectedData += [string]$GreatestValue.Maximum}
     $CollectedData += [string]$NotificationNumber
