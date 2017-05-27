@@ -689,7 +689,8 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "</tr>" -Encoding UTF8
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-References-Report.html" "</table>
 <br>
-<hr>" -Encoding UTF8
+<hr>
+</div>" -Encoding UTF8
 #========Statistics========
 }
 
@@ -763,17 +764,42 @@ function my_f(objName) {
 var object = document.getElementById(objName);
 object.style.display == 'block' ? object.style.display = 'none' : object.style.display = 'block'
 }
+
+function filterErrors() {
+    var divs = document.getElementsByClassName('specification');
+    if (document.getElementById('filterbutton').innerHTML == 'Показать только спецификации с ошибками') {   
+        for (var i=0; i<divs.length; i++) {
+            if (divs[i].innerHTML.toLowerCase().indexOf('red') == -1) {
+            divs[i].style.display = ""none"";
+            document.getElementById('filterbutton').innerHTML = 'Показать все спецификации';
+            }
+        }
+    } else {
+        for (var i=0; i<divs.length; i++) {
+            divs[i].style.display = """";
+            document.getElementById('filterbutton').innerHTML = 'Показать только спецификации с ошибками';
+            }
+    }
+}
 </script>
 </head>
 <body>
 <div>
-<h3>Результаты сравнения</h3>" -Encoding UTF8
+<h3>Анализ</h3>
+<span id=""spcchecked"">Спецификаций проверено:</span>
+<br>
+<br>
+<span id=""errorsfound"">Ошибок найдено:</span>
+<h3>Результаты сравнения</h3>
+<span><button type=""button"" onclick=""filterErrors()"" id=""filterbutton"">Показать только спецификации с ошибками</button></span>
+" -Encoding UTF8
 #========Statistics========
 Measure-Command {
 Get-ChildItem "$script:PathToFilesBeingPublished\*.*" -File -Exclude "*.pdf" | Where-Object {$_.Name -match "SPC"} | % {
 $curSpc = $_.Name
 if ($_.Extension -eq ".xls" -or $_.Extension -eq ".xlsx") {
 Add-Content "$PSScriptRoot\Check-References-Report.html" "
+<div class=""specification"">
 <table style=""width:80%"">
 <tr>
 <td colspan=""5"" id=""tableHeader""><h2>$curSpc</h2></td>
@@ -789,6 +815,7 @@ Write-Host "--------------------------------------------------------
 } else {
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-References-Report.html" "
+<div class=""specification"">
 <table style=""width:80%"">
 <tr>
 <td colspan=""5"" id=""tableHeader""><h2>$curSpc</h2></td>
@@ -802,8 +829,24 @@ Get-DataFromSpecification -selectedFolder $script:PathToFilesBeingPublished -cur
 Add-Content "$PSScriptRoot\Check-References-Report.html" "
 </div>
 </body>
+<script>
+function ErrorCounter() {
+var counter = 0;
+var divs = document.getElementsByClassName('specification');
+    for (var i=0; i<divs.length; i++) {
+        if (divs[i].innerHTML.toLowerCase().indexOf('red') != -1) {
+        counter = counter + 1;
+        }
+    }
+return counter;
+}
+var errors = ErrorCounter();
+document.getElementById('errorsfound').innerHTML = 'Ошибок найдено: ' + errors;
+var specifications = document.getElementsByClassName('specification').length;
+document.getElementById('spcchecked').innerHTML = 'Спецификаций проверено: ' + specifications;
+</script>
 </html>" -Encoding UTF8
 #========Statistics========
 }
-Add-ExecutionTimeToReport -Time $ExecutionTime -ReportName "Check-References-Report" -StringToReplace "<h3>Результаты сравнения</h3>"
+Add-ExecutionTimeToReport -Time $ExecutionTime -ReportName "Check-References-Report" -StringToReplace "<h3>Анализ</h3>"
 Invoke-Item "$PSScriptRoot\Check-References-Report.html"
