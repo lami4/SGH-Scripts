@@ -4,6 +4,12 @@ clear
 #Global variables
 $script:PathToFolder = ""
 $script:PathToFile = ""
+$script:Algorithm = ""
+$script:IgnoreExtensions = $false
+$script:CreateNewTxt = $false
+$script:UseExistingTxt = $false
+$script:TxtName = ""
+$script:SkipCalculation = $false
 #Functions
 Function Custom-Form {
 Add-Type -AssemblyName  System.Windows.Forms
@@ -49,8 +55,22 @@ $SystemWindowsFormsMargin = New-Object System.Windows.Forms.Padding
 $SystemWindowsFormsMargin.Bottom = 25
 $buttonRunScript.Margin = $SystemWindowsFormsMargin
 $buttonRunScript.Add_Click({
-                            $dialog.DialogResult = "OK";
-                            $dialog.Close()
+Write-Host $script:PathToFolder
+                            Write-Host $script:PathToFile
+                            $script:Algorithm = $AlgorithmList[$DropDownBox.SelectedIndex]
+                            Write-Host $script:Algorithm
+                            if ($CheckboxIgnoreExtensions.Checked -eq $true) {$script:IgnoreExtensions = $true} else {$script:IgnoreExtensions = $false}
+                            Write-Host $script:IgnoreExtensions
+                            if ($radioNewList.Checked -eq $true) {$script:CreateNewTxt = $true} else {$script:CreateNewTxt = $false}
+                            Write-Host $script:CreateNewTxt
+                            if ($radioExistingList.Checked -eq $true) {$script:UseExistingTxt = $true} else {$script:UseExistingTxt = $false}
+                            Write-Host $script:UseExistingTxt
+                            $script:TxtName = $TextBox.Text
+                            Write-Host $script:TxtName
+                            if ($CheckboxSkipCalculation.Checked -eq $true -and $radioExistingList.Checked -eq $true) {$script:SkipCalculation = $true} else {$script:SkipCalculation = $false}
+                            Write-Host $script:SkipCalculation
+                            #$dialog.DialogResult = "OK";
+                            #$dialog.Close()
                            })
 $buttonRunScript.Enabled = $false
 #Browse folder
@@ -149,7 +169,7 @@ $radioNewList.Height = 30
 $radioNewList.Checked = $true
 $radioNewList.Add_Click({
                           if ($radioNewList.Checked -eq $true) {$buttonBrowseFile.Enabled = $false; $labelBrowseFile.Enabled = $false; $CheckboxSkipCalculation.Enabled = $false; $labelTextBox.Enabled = $true; $TextBox.Enabled = $true}
-                          if ($radioNewList.Checked -eq $true -and ($TextBox.Text -eq "" -or $PathToFolder -eq "")) {$buttonRunScript.Enabled = $false} else {$buttonRunScript.Enabled = $true}
+                          if ($radioNewList.Checked -eq $true -and ($TextBox.Text -eq "" -or $script:PathToFolder -eq "")) {$buttonRunScript.Enabled = $false} else {$buttonRunScript.Enabled = $true}
                           })
 $radioExistingList = New-Object System.Windows.Forms.RadioButton
 $SystemDrawingPoint = New-Object System.Drawing.Point
@@ -162,7 +182,7 @@ $radioExistingList.Height = 30
 $radioExistingList.Checked = $false
 $radioExistingList.Add_Click({
                           if ($radioExistingList.Checked -eq $true) {$buttonBrowseFile.Enabled = $true; $labelBrowseFile.Enabled = $true; $CheckboxSkipCalculation.Enabled = $true; $labelTextBox.Enabled = $false; $TextBox.Enabled = $false}
-                          if ($radioExistingList.Checked -eq $true -and ($PathToFolder -eq "" -or $PathToFile -eq "")) {$buttonRunScript.Enabled = $false} else {$buttonRunScript.Enabled = $true}
+                          if ($radioExistingList.Checked -eq $true -and ($script:PathToFolder -eq "" -or $script:PathToFile -eq "")) {$buttonRunScript.Enabled = $false} else {$buttonRunScript.Enabled = $true}
                           })
 #inputbox
 $TextBox = New-Object System.Windows.Forms.TextBox 
