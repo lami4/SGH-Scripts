@@ -10,6 +10,8 @@ $script:SelectedMd5ListForPublishedFiles = ""
 $script:UseMd5ListForFilesBeingPublished = $false
 $script:UseMd5ListForPublishedFiles = $false
 $script:yesNoUserInput = 0
+$script:ReferencesToDocuments = 0
+$script:ReferencesToFiles = 0
 
 #Functions
 Function Custom-Form {
@@ -464,6 +466,7 @@ Function Get-DataFromSpecification ($selectedFolder, $currentSPCName) {
         if ($valueInDocumentNameCell.length -ne 0) {
         if ($valueInDocumentNameCell -match '\b([A-Z0-9]{6})-([A-Z]{2})-([A-Z]{2})-\d\d\.\d\d\.\d\d\.([a-z]{1})([A-Z]{3})\.\d\d\.\d\d([^\s]*)') {
             if ($script:CheckTitlesAndNames -eq $true) {
+                $script:ReferencesToDocuments += 1
                 [string]$valueInDocumentTitleCell = (((($document.Tables.Item(1).Cell($i,5).Range.Text).Trim([char]0x0007)) -replace '\.', ' ' -replace ',', ' ' -replace 'ё', 'е' -replace [char]0x2010, '-' -replace '-', ' ' -replace '\s+', ' ').Trim(' ')).ToLower()
                 $documentNames += $valueInDocumentNameCell
                 $documentTitles += $valueInDocumentTitleCell
@@ -472,6 +475,7 @@ Function Get-DataFromSpecification ($selectedFolder, $currentSPCName) {
             if ($script:CheckMD5 -eq $true) {
                 [string]$valueInFileMd5Cell = (((($document.Tables.Item(1).Cell($i,7).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')).ToLower()
                 if ($valueInFileMd5Cell -match '([m,M]\s*[d,D]\s*5)\s*:') {
+                    $script:ReferencesToFiles += 1
                     [string]$valueInFileNameCell = ((($document.Tables.Item(1).Cell($i,4).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')
                     $fileMd5s += $valueInFileMd5Cell
                     $fileNames += $valueInFileNameCell
@@ -543,11 +547,12 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "<td colspan=""3"">Фа
             $document = $word.Documents.Open("$currentDocumentFullName")
             [string]$valueForDocTitle = (((($document.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(4, 5).Range.Text).Trim([char]0x0007)) -replace '\.', ' ' -replace ',', ' ' -replace 'ё', 'е' -replace [char]0x2010, '-' -replace '-', ' ' -replace '\s+', ' ').Trim(' ')).ToLower()
             [string]$valueForDocName = ((($document.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(1, 6).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ' -replace [char]0x2010, '-').Trim(' ')
+            Start-Sleep -Seconds 0.3
             Compare-Strings -SPCvalue $documentData[0][$i] -valueFromDocument $valueForDocName -message "Обозначение" -positive "Совпадает" -negative "Не совпадает" -FileOrDocument "Документ"
-            Start-Sleep -Seconds 0.1
+            Start-Sleep -Seconds 0.3
             Compare-Strings -SPCvalue $documentData[1][$i] -valueFromDocument $valueForDocTitle -message "Наименование" -positive "Совпадает" -negative "Не совпадает" -FileOrDocument "Документ"
             $document.Close([ref]0)
-            Start-Sleep -Seconds 0.2
+            Start-Sleep -Seconds 0.3
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-References-Report.html" "<td>---</td>
 </tr>" -Encoding UTF8
@@ -567,11 +572,12 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "<td colspan=""3"">Фа
             $document = $word.Documents.Open("$currentDocumentFullName")
             [string]$valueForDocTitle = (((($document.Tables.Item(1).Cell(9, 7).Range.Text).Trim([char]0x0007)) -replace '\.', ' ' -replace ',', ' ' -replace 'ё', 'е' -replace [char]0x2010, '-' -replace '-', ' ' -replace '\s+', ' ').Trim(' ')).ToLower()
             [string]$valueForDocName = ((($document.Tables.Item(1).Cell(6, 8).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ' -replace [char]0x2010, '-').Trim(' ')
+            Start-Sleep -Seconds 0.3
             Compare-Strings -SPCvalue $documentData[0][$i] -valueFromDocument $valueForDocName -message "Обозначение"  -positive "Совпадает" -negative "Не совпадает" -FileOrDocument "Документ"
-            Start-Sleep -Seconds 0.1
+            Start-Sleep -Seconds 0.3
             Compare-Strings -SPCvalue $documentData[1][$i] -valueFromDocument $valueForDocTitle -message "Наименование"  -positive "Совпадает" -negative "Не совпадает" -FileOrDocument "Документ"
             $document.Close([ref]0)
-            Start-Sleep -Seconds 0.2
+            Start-Sleep -Seconds 0.3
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-References-Report.html" "<td>---</td>
 </tr>" -Encoding UTF8
@@ -786,12 +792,6 @@ function filterErrors() {
 <body>
 <div>
 <h3>Анализ</h3>
-<span id=""spcchecked"">Спецификаций проверено:</span>
-<br>
-<br>
-<span id=""errorsfound"">Ошибок найдено:</span>
-<h3>Результаты сравнения</h3>
-<span><button type=""button"" onclick=""filterErrors()"" id=""filterbutton"">Показать только спецификации с ошибками</button></span>
 " -Encoding UTF8
 #========Statistics========
 Measure-Command {
@@ -848,5 +848,9 @@ document.getElementById('spcchecked').innerHTML = 'Спецификаций пр
 </html>" -Encoding UTF8
 #========Statistics========
 }
+
+$StringForHTML = "<h3>Анализ</h3>`r`n<span id=""spcchecked"">Спецификаций проверено:</span>`r`n<br>`r`n<br>`r`n<span>Всего ссылок на документы: $script:ReferencesToDocuments</span>`r`n<br>`r`n<br>`r`n<span>Всего ссылок на программы: $script:ReferencesToFiles</span>`r`n<br>`r`n<br>`r`n<span id=""errorsfound"">Ошибок найдено:</span>`r`n<h3>Результаты проверки</h3>`r`n<span><button type=""button"" onclick=""filterErrors()"" id=""filterbutton"">Показать только спецификации с ошибками</button></span>"
+(Get-Content -Path "$PSScriptRoot\Check-References-Report.html").Replace("<h3>Анализ</h3>", $StringForHTML) | Set-Content("$PSScriptRoot\Check-References-Report.html") -Encoding UTF8
+Start-Sleep -Seconds 1
 Add-ExecutionTimeToReport -Time $ExecutionTime -ReportName "Check-References-Report" -StringToReplace "<h3>Анализ</h3>"
 Invoke-Item "$PSScriptRoot\Check-References-Report.html"
