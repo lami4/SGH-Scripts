@@ -263,6 +263,9 @@ Function Select-File
     If ($show -eq "OK") {Return $f.FileName}
 }
 Custom-Form
+#$BlackListedExtensions = @("*.mtl", "*.xls", ".exe")
+$BlackListedExtensions = ""
+Get-ChildItem -Path "$script:PathToFolder" -Exclude $BlackListedExtensions
 #############################################>
 
 $script:yesNoUserInput = 0
