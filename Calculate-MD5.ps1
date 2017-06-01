@@ -10,6 +10,7 @@ $script:CreateNewTxt = $false
 $script:UseExistingTxt = $false
 $script:TxtName = ""
 $script:SkipCalculation = $false
+$BlackListedExtensions = @()
 #Functions
 Function Custom-Form {
 Add-Type -AssemblyName  System.Windows.Forms
@@ -69,8 +70,8 @@ Write-Host $script:PathToFolder
                             Write-Host $script:TxtName
                             if ($CheckboxSkipCalculation.Checked -eq $true -and $radioExistingList.Checked -eq $true) {$script:SkipCalculation = $true} else {$script:SkipCalculation = $false}
                             Write-Host $script:SkipCalculation
-                            #$dialog.DialogResult = "OK";
-                            #$dialog.Close()
+                            $dialog.DialogResult = "OK";
+                            $dialog.Close()
                            })
 $buttonRunScript.Enabled = $false
 #Browse folder
@@ -263,9 +264,31 @@ Function Select-File
     If ($show -eq "OK") {Return $f.FileName}
 }
 Custom-Form
-#$BlackListedExtensions = @("*.mtl", "*.xls", ".exe")
-$BlackListedExtensions = ""
-Get-ChildItem -Path "$script:PathToFolder" -Exclude $BlackListedExtensions
+#checks if user wants to ignore MS Office files and *.pdf
+if ($script:IgnoreExtensions -eq $true) {$BlackListedExtensions = @("*.doc*", "*.xls*", "*.pdf")} else {$BlackListedExtensions = @()}
+#if user select to create a new file with the list of hashsums
+if ($script:CreateNewTxt -eq $true) {
+    Get-ChildItem -Path "$script:PathToFolder" -Exclude $BlackListedExtensions | % {
+        Add-Content -Path "$PSScriptRoot\$script:TxtName" -Value "$($_.Name):$((Get-FileHash -Path $_.FullName -Algorithm $script:Algorithm).Hash)"
+    }
+}
+#if user selects to use an existing file woth the list of hashsums
+if ($script:UseExistingTxt -eq $true) {
+    $FileNamesInExistingTxt = @()
+    #Gets content of the existing txt
+    Get-Content -Path "$script:PathToFile" | % {
+        if ($_ -match ":") {$FileNamesInExistingTxt += (($_ -split (":"))[0]).ToLower()}
+    }
+    #Starts to process files in the specified directory
+    Get-ChildItem -Path "$script:PathToFolder" -Exclude $BlackListedExtensions | % {
+        #user selects not to calculate hash if txt already has the hash for the file in question
+        if ($script:SkipCalculation -eq $true) {
+            if ($FileNamesInExistingTxt -contains $_.FullName.ToLower()) {
+                #do smth
+            }
+        }
+    }
+}
 #############################################>
 
 $script:yesNoUserInput = 0
