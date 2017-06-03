@@ -274,19 +274,39 @@ if ($script:CreateNewTxt -eq $true) {
 }
 #if user selects to use an existing file woth the list of hashsums
 if ($script:UseExistingTxt -eq $true) {
-    $FileNamesInExistingTxt = @()
-    #Gets content of the existing txt
-    Get-Content -Path "$script:PathToFile" | % {
-        if ($_ -match ":") {$FileNamesInExistingTxt += (($_ -split (":"))[0]).ToLower()}
-    }
-    #Starts to process files in the specified directory
-    Get-ChildItem -Path "$script:PathToFolder" -Exclude $BlackListedExtensions | % {
-        #user selects not to calculate hash if txt already has the hash for the file in question
-        if ($script:SkipCalculation -eq $true) {
-            if ($FileNamesInExistingTxt -contains $_.FullName.ToLower()) {
-                #do smth
+    $NewTxtContent = @()
+    #Gets content of the existing txt to the array
+    [System.Collections.ArrayList]$TxtFileContent = @()
+    Get-Content -Path "$script:PathToFile" | % {$TxtFileContent += $_}
+    #user selects not to calculate hash if txt already has the hash for the file in question
+    if ($script:SkipCalculation -eq $true) {
+        #Starts to process files in the specified directory
+        Get-ChildItem -Path "$script:PathToFolder" -Exclude $BlackListedExtensions | % {
+            #if $TxtFileContent has a string equaling the name of the file being processes
+            if (($TxtFileContent | Select-String -Pattern "$($_.Name)" -Quiet) -eq $true) {
+                #gets the velue of this string in the $TxtFileContent
+                $MatchingString = $TxtFileContent | Select-String -Pattern "$($_.Name)"
+                #deletes the string in the $TxtFileContent
+                $TxtFileContent.Remove($MatchingString)
+                #adds the string to NewTxtContent array
+                $NewTxtContent += $MatchingString
+                #Add-Content -Path "$(Split-Path -Path $script:PathToFile -Parent)\Temporary.txt"
+            } else {
+                #if  $TxtFileContent does not have a string equaling to the name of the file being processes
+                #calculates MD5 and adds it to NewTxtContent array
+                $NewTxtContent += "$($_.Name):$((Get-FileHash -Path $_.FullName -Algorithm $script:Algorithm).Hash)"
+                Write-Host "File $($_.Name) is not on the list. Calculating md5 and addint to NewCOntent"
             }
         }
+    #adds the updated $TxtFileContent to $NewTxtContent
+    $NewTxtContent += $TxtFileContent
+    #deletes the existing *.txt
+    Remove-Item -Path $script:PathToFile
+    Start-Sleep -Seconds 1
+    #creates new txt file with hte same name
+    New-Item -Path $script:PathToFile
+    #adds NewTxtContent to the freshly created txt file
+    Add-Content -Path $script:PathToFile -Value $NewTxtContent
     }
 }
 #############################################>
