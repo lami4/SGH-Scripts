@@ -277,26 +277,30 @@ if ($script:UseExistingTxt -eq $true) {
     $NewTxtContent = @()
     #Gets content of the existing txt to the array
     [System.Collections.ArrayList]$TxtFileContent = @()
-    Get-Content -Path "$script:PathToFile" | % {$TxtFileContent += $_}
+    Get-Content -Path "$script:PathToFile" | % {$TxtFileContent += [string]$_}
+    $TxtFileContent | % {Write-Host $_}
     #user selects not to calculate hash if txt already has the hash for the file in question
     if ($script:SkipCalculation -eq $true) {
         #Starts to process files in the specified directory
         Get-ChildItem -Path "$script:PathToFolder" -Exclude $BlackListedExtensions | % {
+        Write-Host "Processing" $_.Name
             #if $TxtFileContent has a string equaling the name of the file being processes
-            if (($TxtFileContent | Select-String -Pattern "$($_.Name)" -Quiet) -eq $true) {
+            if (($TxtFileContent | Select-String -Pattern "$($_.Name)" -SimpleMatch -Quiet) -eq $true) {
                 #gets the velue of this string in the $TxtFileContent
-                $MatchingString = $TxtFileContent | Select-String -Pattern "$($_.Name)"
+                $MatchingString = $TxtFileContent | Select-String -Pattern "$($_.Name)" -SimpleMatch
                 #deletes the string in the $TxtFileContent
-                $TxtFileContent.Remove($MatchingString)
+                $TxtFileContent.Remove("$MatchingString")
                 #adds the string to NewTxtContent array
                 $NewTxtContent += $MatchingString
                 #Add-Content -Path "$(Split-Path -Path $script:PathToFile -Parent)\Temporary.txt"
+                Write-Host $TxtFileContent
             } else {
                 #if  $TxtFileContent does not have a string equaling to the name of the file being processes
                 #calculates MD5 and adds it to NewTxtContent array
                 $NewTxtContent += "$($_.Name):$((Get-FileHash -Path $_.FullName -Algorithm $script:Algorithm).Hash)"
                 Write-Host "File $($_.Name) is not on the list. Calculating md5 and addint to NewCOntent"
             }
+        Write-Host "-----------------------"
         }
     #adds the updated $TxtFileContent to $NewTxtContent
     $NewTxtContent += $TxtFileContent
