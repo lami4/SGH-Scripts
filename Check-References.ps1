@@ -460,7 +460,7 @@ Function Get-DataFromSpecification ($selectedFolder, $currentSPCName) {
     $document = $word.Documents.Open("$selectedFolder\$currentSPCName")
     [int]$rowCount = $document.Tables.Item(1).Rows.Count + 1
     for ($i = 1; $i -lt $rowCount; $i++) {
-        if ($document.Tables.Item(1).Rows.Item($i).Cells.Count -ne 7) {Write-Host "Ignored row as it has less than 7 cells"; continue}
+        if ($document.Tables.Item(1).Rows.Item($i).Cells.Count -ne 7) {continue}
         [string]$valueInDocumentNameCell = ((($document.Tables.Item(1).Cell($i,4).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ' -replace [char]0x2010, '-').Trim(' ')
         if ($valueInDocumentNameCell.length -ne 0) {
         if ($valueInDocumentNameCell -match '\b([A-Z0-9]{6})-([A-Z]{2})-([A-Z]{2})-\d\d\.\d\d\.\d\d\.([a-z]{1})([A-Z]{3})\.\d\d\.\d\d([^\s]*)') {
