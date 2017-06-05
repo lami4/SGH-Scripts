@@ -460,6 +460,7 @@ Function Get-DataFromSpecification ($selectedFolder, $currentSPCName) {
     $document = $word.Documents.Open("$selectedFolder\$currentSPCName")
     [int]$rowCount = $document.Tables.Item(1).Rows.Count + 1
     for ($i = 1; $i -lt $rowCount; $i++) {
+        if ($document.Tables.Item(1).Rows.Item($i).Cells.Count -ne 7) {Write-Host "Ignored row as it has less than 7 cells"; continue}
         [string]$valueInDocumentNameCell = ((($document.Tables.Item(1).Cell($i,4).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ' -replace [char]0x2010, '-').Trim(' ')
         if ($valueInDocumentNameCell.length -ne 0) {
         if ($valueInDocumentNameCell -match '\b([A-Z0-9]{6})-([A-Z]{2})-([A-Z]{2})-\d\d\.\d\d\.\d\d\.([a-z]{1})([A-Z]{3})\.\d\d\.\d\d([^\s]*)') {
@@ -704,7 +705,7 @@ Write-Host "Использовать список" $script:UseList
 $reportExistence = Test-Path -Path "$PSScriptRoot\Check-References-Report.html"
 if ($reportExistence) {
 $nl = [System.Environment]::NewLine
-Input-YesOrNo -Question "Отчет Check-References-Report.html уже существует. Продолжить?$nl$nl`Да - перезаписать и продолжить исполнение скрипта.$nl`Нет - не перезаписывать и остановить исполнение скрипта.$nl$nl`Если вы не хотите перезаписывать существующий отчет, но хотите продолжить исполнение скрипта - переместите существующий отчет из папки, где расположен файл скрипта, в любое удобное место и нажмите 'Да'." -BoxTitle "Отчет Check-References-Report.html уже существует"
+Input-YesOrNo -Question "Отчет Check-References-Report.html уже существует. Продолжить?$nl$nl`Да - перезаписать и продолжить исполнение скрипта.$nl`Нет - не перезаписывать и остановить исполнение скрипта.$nl$nl`Если вы не хотите перезаписывать существующий отчет, но хотите продолжить исполнение скрипта - переместите отчет из папки, где расположен файл скрипта, в любое удобное для вас место и нажмите 'Да'." -BoxTitle "Отчет Check-References-Report.html уже существует"
 if ($script:yesNoUserInput -eq 1) {Remove-Item -Path "$PSScriptRoot\Check-References-Report.html"}
 $script:yesNoUserInput = 0
 }
