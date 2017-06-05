@@ -1,5 +1,4 @@
 <#############################################
-#UI FOR THE SCRIPT
 clear
 #Global variables
 $script:PathToFolder = ""
@@ -10,7 +9,7 @@ $script:CreateNewTxt = $false
 $script:UseExistingTxt = $false
 $script:TxtName = ""
 $script:SkipCalculation = $false
-$BlackListedExtensions = @()
+$script:BlackListedExtensions = @()
 #Functions
 Function Custom-Form {
 Add-Type -AssemblyName  System.Windows.Forms
@@ -71,7 +70,7 @@ Write-Host $script:PathToFolder
                             if ($CheckboxSkipCalculation.Checked -eq $true -and $radioExistingList.Checked -eq $true) {$script:SkipCalculation = $true} else {$script:SkipCalculation = $false}
                             Write-Host $script:SkipCalculation
                             $dialog.DialogResult = "OK";
-                            $dialog.Close()
+                            #$dialog.Close()
                            })
 $buttonRunScript.Enabled = $false
 #Browse folder
@@ -263,12 +262,44 @@ Function Select-File
     $show = $f.ShowDialog()
     If ($show -eq "OK") {Return $f.FileName}
 }
+Function Use-ExistingTxt ($CalculationOption, $NewTxtContent, $TxtFileContent) 
+{
+        #Starts to process files in the specified directory
+        Get-ChildItem -Path "$script:PathToFolder" -Exclude $script:BlackListedExtensions | % {
+            #if $TxtFileContent has a string equaling the name of the file being processes
+            if (($TxtFileContent | Select-String -Pattern "$($_.Name)" -SimpleMatch -Quiet) -eq $true) {
+                #gets the value of this string in the $TxtFileContent
+                $MatchingString = $TxtFileContent | Select-String -Pattern "$($_.Name)" -SimpleMatch
+                #deletes the string in the $TxtFileContent
+                $TxtFileContent.Remove("$MatchingString")
+                #If user selects not to calculate hash if txt already has the hash for the file in question, simply copies string to new txt without any changes
+                if ($CalculationOption -eq "Skip") {$NewTxtContent += $MatchingString}
+                #If user wants to calculate hash if txt already has the hash for the file in question, calculate and copies hash to new txt
+                if ($CalculationOption -eq "NoSkip") {$NewTxtContent += "$($_.Name):$((Get-FileHash -Path $_.FullName -Algorithm $script:Algorithm).Hash)"}
+                #Add-Content -Path "$(Split-Path -Path $script:PathToFile -Parent)\Temporary.txt"
+            } else {
+                #if  $TxtFileContent does not have a string equaling to the name of the file being processes
+                #calculates MD5 and adds it to NewTxtContent array
+                $NewTxtContent += "$($_.Name):$((Get-FileHash -Path $_.FullName -Algorithm $script:Algorithm).Hash)"
+            }
+        }
+    #adds the updated $TxtFileContent to $NewTxtContent
+    $NewTxtContent += $TxtFileContent
+    #deletes the existing *.txt
+    Remove-Item -Path $script:PathToFile
+    Start-Sleep -Seconds 1
+    #creates new txt file with the same name
+    New-Item -Path $script:PathToFile -ItemType "File"
+    #adds NewTxtContent to the freshly created txt file
+    Add-Content -Path $script:PathToFile -Value $NewTxtContent
+}
+
 Custom-Form
 #checks if user wants to ignore MS Office files and *.pdf
-if ($script:IgnoreExtensions -eq $true) {$BlackListedExtensions = @("*.doc*", "*.xls*", "*.pdf")} else {$BlackListedExtensions = @()}
+if ($script:IgnoreExtensions -eq $true) {$script:BlackListedExtensions = @("*.doc*", "*.xls*", "*.pdf")} else {$script:BlackListedExtensions = @()}
 #if user select to create a new file with the list of hashsums
 if ($script:CreateNewTxt -eq $true) {
-    Get-ChildItem -Path "$script:PathToFolder" -Exclude $BlackListedExtensions | % {
+    Get-ChildItem -Path "$script:PathToFolder" -Exclude $script:BlackListedExtensions | % {
         Add-Content -Path "$PSScriptRoot\$script:TxtName" -Value "$($_.Name):$((Get-FileHash -Path $_.FullName -Algorithm $script:Algorithm).Hash)"
     }
 }
@@ -277,68 +308,12 @@ if ($script:UseExistingTxt -eq $true) {
     $NewTxtContent = @()
     #Gets content of the existing txt to the array
     [System.Collections.ArrayList]$TxtFileContent = @(Get-Content -Path "$script:PathToFile")
-    ########$TxtFileContent | % {Write-Host $_}
     #user selects not to calculate hash if txt already has the hash for the file in question
     if ($script:SkipCalculation -eq $true) {
-        #Starts to process files in the specified directory
-        Get-ChildItem -Path "$script:PathToFolder" -Exclude $BlackListedExtensions | % {
-        Write-Host "Processing" $_.Name
-            #if $TxtFileContent has a string equaling the name of the file being processes
-            if (($TxtFileContent | Select-String -Pattern "$($_.Name)" -SimpleMatch -Quiet) -eq $true) {
-                #gets the value of this string in the $TxtFileContent
-                $MatchingString = $TxtFileContent | Select-String -Pattern "$($_.Name)" -SimpleMatch
-                #deletes the string in the $TxtFileContent
-                $TxtFileContent.Remove("$MatchingString")
-                #adds the string to NewTxtContent array
-                $NewTxtContent += $MatchingString
-                #Add-Content -Path "$(Split-Path -Path $script:PathToFile -Parent)\Temporary.txt"
-                Write-Host $TxtFileContent
-            } else {
-                #if  $TxtFileContent does not have a string equaling to the name of the file being processes
-                #calculates MD5 and adds it to NewTxtContent array
-                $NewTxtContent += "$($_.Name):$((Get-FileHash -Path $_.FullName -Algorithm $script:Algorithm).Hash)"
-                Write-Host "File $($_.Name) is not on the list. Calculating md5 and addint to NewCOntent"
-            }
-        Write-Host "-----------------------"
-        }
-    #adds the updated $TxtFileContent to $NewTxtContent
-    $NewTxtContent += $TxtFileContent
-    #deletes the existing *.txt
-    Remove-Item -Path $script:PathToFile
-    Start-Sleep -Seconds 1
-    #creates new txt file with hte same name
-    New-Item -Path $script:PathToFile
-    #adds NewTxtContent to the freshly created txt file
-    Add-Content -Path $script:PathToFile -Value $NewTxtContent
-    #user wants to calculate md5s again, even though txt file already has md5 of some of the files being processed
+    Use-ExistingTxt -CalculationOption "Skip" -NewTxtContent $NewTxtContent -TxtFileContent $TxtFileContent
     } else {
-        Get-ChildItem -Path "$script:PathToFolder" -Exclude $BlackListedExtensions | % {
-            #if $TxtFileContent has a string equaling the name of the file being processes
-            if (($TxtFileContent | Select-String -Pattern "$($_.Name)" -SimpleMatch -Quiet) -eq $true) {
-                #gets the value of this string in the $TxtFileContent
-                $MatchingString = $TxtFileContent | Select-String -Pattern "$($_.Name)" -SimpleMatch
-                #deletes the string in the $TxtFileContent
-                $TxtFileContent.Remove("$MatchingString")
-                #adds the string to NewTxtContent array
-                $NewTxtContent += "$($_.Name):$((Get-FileHash -Path $_.FullName -Algorithm $script:Algorithm).Hash)"
-            } else {
-                #if  $TxtFileContent does not have a string equaling to the name of the file being processes
-                #calculates MD5 and adds it to NewTxtContent array
-                $NewTxtContent += "$($_.Name):$((Get-FileHash -Path $_.FullName -Algorithm $script:Algorithm).Hash)"
-                Write-Host "File $($_.Name) is not on the list. Calculating md5 and addint to NewCOntent"
-            }
-        Write-Host "-----------------------"
-        }
-    #adds the updated $TxtFileContent to $NewTxtContent
-    $NewTxtContent += $TxtFileContent
-    #deletes the existing *.txt
-    Remove-Item -Path $script:PathToFile
-    Start-Sleep -Seconds 1
-    #creates new txt file with hte same name
-    New-Item -Path $script:PathToFile
-    #adds NewTxtContent to the freshly created txt file
-    Add-Content -Path $script:PathToFile -Value $NewTxtContent
-    #user wants to calculate md5s again, even though txt file already has md5 of some of the files being processed
+    #If user wants to calculate hash if txt already has the hash for the file in question, calculate and copies hash to new txt
+    Use-ExistingTxt -CalculationOption "NoSkip" -NewTxtContent $NewTxtContent -TxtFileContent $TxtFileContent
     }
 }
 #############################################>
