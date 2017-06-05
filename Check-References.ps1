@@ -3,10 +3,12 @@ clear
 $script:JSvariable = 0
 $script:CheckTitlesAndNames = $false
 $script:CheckMD5 = $false
-$script:CalculateMD5 = $false
-$script:UseList = $false
-$script:SelectedList = ""
-$script:SelectedCurrentVersionFolder = ""
+$script:PathToFilesBeingPublished = ""
+$script:PathToPublishedFiles = ""
+$script:SelectedMd5ListForFilesBeingPublished = ""
+$script:SelectedMd5ListForPublishedFiles = ""
+$script:UseMd5ListForFilesBeingPublished = $false
+$script:UseMd5ListForPublishedFiles = $false
 $script:yesNoUserInput = 0
 
 #Functions
@@ -31,16 +33,16 @@ $buttonRunScript.Width = 100
 $buttonRunScript.Text = "Запустить скрипт"
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 25
-$SystemDrawingPoint.Y = 270
+$SystemDrawingPoint.Y = 310
 $buttonRunScript.Location = $SystemDrawingPoint
 $SystemWindowsFormsMargin = New-Object System.Windows.Forms.Padding
 $SystemWindowsFormsMargin.Bottom = 25
 $buttonRunScript.Margin = $SystemWindowsFormsMargin
 $buttonRunScript.Add_Click({
-                            if ($checkboxCheckTitlesAndNames.Checked) {$script:CheckTitlesAndNames = $true};
-                            if ($checkboxCheckMD5.Checked) {$script:CheckMD5 = $true};
-                            if ($radioCalculateMD5.Checked) {$script:CalculateMD5 = $true; $script:UseList = $false};
-                            if ($radioUsePrecalculatedMD5.Checked) {$script:CalculateMD5 = $false; $script:UseList = $true};
+                            if ($checkboxCheckTitlesAndNames.Checked -eq $true) {$script:CheckTitlesAndNames = $true}
+                            if ($checkboxCheckMD5.Checked -eq $true) {$script:CheckMD5 = $true}
+                            if ($checkboxUseListBeingPublished.Checked -eq $true) {$script:UseMd5ListForFilesBeingPublished = $true}
+                            if ($checkboxUseListPublished.Checked -eq $true) {$script:UseMd5ListForPublishedFiles = $true}
                             $dialog.DialogResult = "OK";
                             $dialog.Close()})
 $buttonRunScript.Enabled = $false
@@ -51,7 +53,7 @@ $buttonExit.Width = 100
 $buttonExit.Text = "Закрыть"
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 130
-$SystemDrawingPoint.Y = 270
+$SystemDrawingPoint.Y = 310
 $buttonExit.Location = $SystemDrawingPoint
 $SystemWindowsFormsMargin = New-Object System.Windows.Forms.Padding
 $SystemWindowsFormsMargin.Bottom = 25
@@ -60,122 +62,290 @@ $buttonExit.Add_Click({
 $dialog.Close();
 $dialog.DialogResult = "Cancel"
 })
-#Browse
+#Browse for the folder with the new release
+$ButtonBrowseNewRelease = New-Object System.Windows.Forms.Button
+$ButtonBrowseNewRelease.Height = 35
+$ButtonBrowseNewRelease.Width = 100
+$ButtonBrowseNewRelease.Text = "Обзор..."
+$SystemDrawingPoint = New-Object System.Drawing.Point
+$SystemDrawingPoint.X = 25
+$SystemDrawingPoint.Y = 25
+$ButtonBrowseNewRelease.Location = $SystemDrawingPoint
+$ButtonBrowseNewRelease.Enabled = $true
+$ButtonBrowseNewRelease.Add_Click({
+    $FolderSelectedByUser = Select-Folder -description "Выберите папку, в которой находится комплект скомплектованных публикуемых документов."
+    if ($FolderSelectedByUser -ne $null) {
+        $script:PathToFilesBeingPublished = $FolderSelectedByUser
+    }
+        if ($script:PathToFilesBeingPublished -ne "") {
+        $labelBrowseForReadyRelease.Text = "Указан путь: $script:PathToFilesBeingPublished"
+    }
+    Write-Host "($script:PathToFilesBeingPublished)"
+    if ($checkboxCheckMD5.Checked -eq $false -and $checkboxCheckTitlesAndNames.Checked -eq $true -and $script:PathToFilesBeingPublished -ne "") {
+    $buttonRunScript.Enabled = $true    
+    } elseif ($checkboxCheckMD5.Checked -eq $true -and $script:PathToPublishedFiles -ne "" -and $checkboxUseListBeingPublished.Checked -eq $false -and $checkboxUseListPublished.Checked -eq $false) {
+    $buttonRunScript.Enabled = $true
+    } elseif ($checkboxCheckMD5.Checked -eq $true -and $script:PathToPublishedFiles -ne "" -and $checkboxUseListBeingPublished.Checked -eq $true -and $script:SelectedMd5ListForFilesBeingPublished -ne "" -and $checkboxUseListPublished.Checked -eq $false) {
+    $buttonRunScript.Enabled = $true
+    } elseif ($checkboxCheckMD5.Checked -eq $true -and $script:PathToPublishedFiles -ne "" -and $checkboxUseListBeingPublished.Checked -eq $false -and $checkboxUseListPublished.Checked -eq $true -and $script:SelectedMd5ListForPublishedFiles -ne "") {
+    $buttonRunScript.Enabled = $true
+    } elseif ($checkboxCheckTitlesAndNames.Checked -eq $true -and $script:PathToFilesBeingPublished -ne "" -and $checkboxCheckMD5.Checked -eq $true -and $script:PathToPublishedFiles -ne "" -and $checkboxUseListBeingPublished.Checked -eq $true -and $script:SelectedMd5ListForFilesBeingPublished -ne "" -and $checkboxUseListPublished.Checked -eq $true -and $script:SelectedMd5ListForPublishedFiles -ne "") {
+    $buttonRunScript.Enabled = $true
+    } elseif ($checkboxCheckTitlesAndNames.Checked -eq $false -and $script:PathToFilesBeingPublished -ne "" -and $checkboxCheckMD5.Checked -eq $true -and $script:PathToPublishedFiles -ne "" -and $checkboxUseListBeingPublished.Checked -eq $true -and $script:SelectedMd5ListForFilesBeingPublished -ne "" -and $checkboxUseListPublished.Checked -eq $true -and $script:SelectedMd5ListForPublishedFiles -ne "") {
+    $buttonRunScript.Enabled = $true
+    } else {
+    $buttonRunScript.Enabled = $false
+    }
+})
+#Browse for files of the current release
 $buttonBrowseCV = New-Object System.Windows.Forms.Button
 $buttonBrowseCV.Height = 35
 $buttonBrowseCV.Width = 100
 $buttonBrowseCV.Text = "Обзор..."
 $SystemDrawingPoint = New-Object System.Drawing.Point
-$SystemDrawingPoint.X = 25
-$SystemDrawingPoint.Y = 78
+$SystemDrawingPoint.X = 50
+$SystemDrawingPoint.Y = 120
 $buttonBrowseCV.Location = $SystemDrawingPoint
 $buttonBrowseCV.Enabled = $false
 $buttonBrowseCV.Add_Click({
-                           Select-CurrentVersionFolder -description "Укажите путь к папке с документами и файлами текущей версии"
-                           if ($script:SelectedCurrentVersionFolder -ne "") {
-                           $buttonRunScript.Enabled = $true
-                           $labelBrowseCV.Text = "Указан путь: $script:SelectedCurrentVersionFolder"
-                           }
+    $FolderSelectedByUser = Select-Folder -description "Выберите папку, в которой находятся программы (файлы) текущего релиза."
+    if ($FolderSelectedByUser -ne $null) {
+        $script:PathToPublishedFiles = $FolderSelectedByUser
+    }
+        if ($script:PathToPublishedFiles -ne "") {
+        $labelBrowseCV.Text = "Указан путь: $script:PathToPublishedFiles"
+    }
+    Write-Host "($script:PathToPublishedFiles)"
+    if ($checkboxCheckMD5.Checked -eq $true -and $script:PathToFilesBeingPublished -ne "" -and $script:PathToPublishedFiles -ne "" -and $checkboxUseListBeingPublished.Checked -eq $false -and $checkboxUseListPublished.Checked -eq $false) {
+    $buttonRunScript.Enabled = $true
+    } elseif ($checkboxCheckMD5.Checked -eq $true -and $script:PathToFilesBeingPublished -ne "" -and $script:PathToPublishedFiles -ne "" -and $checkboxUseListBeingPublished.Checked -eq $true -and $script:SelectedMd5ListForFilesBeingPublished -ne "" -and $checkboxUseListPublished.Checked -eq $false) {
+    $buttonRunScript.Enabled = $true
+    } elseif ($checkboxCheckMD5.Checked -eq $true -and $script:PathToFilesBeingPublished -ne "" -and $script:PathToPublishedFiles -ne "" -and $checkboxUseListBeingPublished.Checked -eq $false -and $checkboxUseListPublished.Checked -eq $true -and $script:SelectedMd5ListForPublishedFiles -ne "") {
+    $buttonRunScript.Enabled = $true
+    } elseif ($checkboxCheckTitlesAndNames.Checked -eq $true -and $script:PathToFilesBeingPublished -ne "" -and $checkboxCheckMD5.Checked -eq $true -and $script:PathToPublishedFiles -ne "" -and $checkboxUseListBeingPublished.Checked -eq $true -and $script:SelectedMd5ListForFilesBeingPublished -ne "" -and $checkboxUseListPublished.Checked -eq $true -and $script:SelectedMd5ListForPublishedFiles -ne "") {
+    $buttonRunScript.Enabled = $true
+    } elseif ($checkboxCheckTitlesAndNames.Checked -eq $false -and $script:PathToFilesBeingPublished -ne "" -and $checkboxCheckMD5.Checked -eq $true -and $script:PathToPublishedFiles -ne "" -and $checkboxUseListBeingPublished.Checked -eq $true -and $script:SelectedMd5ListForFilesBeingPublished -ne "" -and $checkboxUseListPublished.Checked -eq $true -and $script:SelectedMd5ListForPublishedFiles -ne "") {
+    $buttonRunScript.Enabled = $true
+    } else {
+    $buttonRunScript.Enabled = $false
+    }
 })
-$buttonBrowse = New-Object System.Windows.Forms.Button
-$buttonBrowse.Height = 35
-$buttonBrowse.Width = 100
-$buttonBrowse.Text = "Обзор..."
+#Browse for the MD5 list of the published files
+$ButtonBrowseForMd5ListPublished = New-Object System.Windows.Forms.Button
+$ButtonBrowseForMd5ListPublished.Height = 35
+$ButtonBrowseForMd5ListPublished.Width = 100
+$ButtonBrowseForMd5ListPublished.Text = "Обзор..."
 $SystemDrawingPoint = New-Object System.Drawing.Point
-$SystemDrawingPoint.X = 28
-$SystemDrawingPoint.Y = 91
-$buttonBrowse.Location = $SystemDrawingPoint
-$buttonBrowse.Enabled = $false
-$buttonBrowse.Add_Click({
-                        Select-File
-                        if ($script:SelectedList -ne "") {
-                            if ($script:SelectedCurrentVersionFolder -ne "") {$buttonRunScript.Enabled = $true}
-                            $labelBrowse.Text = "Выбран файл: $([System.IO.Path]::GetFileName($script:SelectedList))"
-                        }
+$SystemDrawingPoint.X = 75
+$SystemDrawingPoint.Y = 260
+$ButtonBrowseForMd5ListPublished.Location = $SystemDrawingPoint
+$ButtonBrowseForMd5ListPublished.Enabled = $false
+$ButtonBrowseForMd5ListPublished.Add_Click({
+    $FileSelectedByUser = Select-File
+    if ($FileSelectedByUser -ne $null) {
+        $script:SelectedMd5ListForPublishedFiles = $FileSelectedByUser
+    }
+    if ($script:SelectedMd5ListForPublishedFiles -ne "") 
+    {
+       $labelBrowseForMd5ListPublished.Text = "Выбран файл: $([System.IO.Path]::GetFileName($script:SelectedMd5ListForPublishedFiles))"
+    }
+    Write-Host "($script:SelectedMd5ListForPublishedFiles)"
+    if ($script:PathToFilesBeingPublished -ne "" -and $script:PathToPublishedFiles -ne "" -and $checkboxUseListBeingPublished.Checked -eq $false -and $script:SelectedMd5ListForPublishedFiles  -ne "") {
+    $buttonRunScript.Enabled = $true
+    } elseif ($script:PathToFilesBeingPublished -ne "" -and $script:PathToPublishedFiles -ne "" -and $checkboxUseListBeingPublished.Checked -eq $true -and $script:SelectedMd5ListForPublishedFiles -ne "" -and $script:SelectedMd5ListForFilesBeingPublished -ne "") {
+    $buttonRunScript.Enabled = $true
+    } else {
+    $buttonRunScript.Enabled = $false
+    }            
 })
-#Labels
-#Browse label
-$labelBrowse = New-Object System.Windows.Forms.Label
-$labelBrowse.Text = "Укажите файл со списком MD5 неизмененных файлов"
+#Browse for the MD5 list for the files being published
+$ButtonBrowseForMd5ListBeingPublished = New-Object System.Windows.Forms.Button
+$ButtonBrowseForMd5ListBeingPublished.Height = 35
+$ButtonBrowseForMd5ListBeingPublished.Width = 100
+$ButtonBrowseForMd5ListBeingPublished.Text = "Обзор..."
 $SystemDrawingPoint = New-Object System.Drawing.Point
-$SystemDrawingPoint.X = 140
-$SystemDrawingPoint.Y = 102
-$labelBrowse.Location = $SystemDrawingPoint
-$labelBrowse.Width = 305
-$labelBrowse.Enabled = $false
+$SystemDrawingPoint.X = 75
+$SystemDrawingPoint.Y = 190
+$ButtonBrowseForMd5ListBeingPublished.Location = $SystemDrawingPoint
+$ButtonBrowseForMd5ListBeingPublished.Enabled = $false
+$ButtonBrowseForMd5ListBeingPublished.Add_Click({
+    $FileSelectedByUser = Select-File
+    if ($FileSelectedByUser -ne $null) {
+        $script:SelectedMd5ListForFilesBeingPublished = $FileSelectedByUser
+    }
+    if ($script:SelectedMd5ListForFilesBeingPublished -ne "") 
+    {
+       $labelBrowseForMd5ListBeingPublished.Text = "Выбран файл: $([System.IO.Path]::GetFileName($script:SelectedMd5ListForFilesBeingPublished))"
+    }
+    Write-Host "($script:SelectedMd5ListForFilesBeingPublished)"
+    if ($script:PathToFilesBeingPublished -ne "" -and $script:PathToPublishedFiles -ne "" -and $script:SelectedMd5ListForFilesBeingPublished -ne "" -and $checkboxUseListPublished.Checked -eq $false) {
+    $buttonRunScript.Enabled = $true
+    } elseif ($script:PathToFilesBeingPublished -ne "" -and $script:PathToPublishedFiles -ne "" -and $script:SelectedMd5ListForFilesBeingPublished -ne "" -and $checkboxUseListPublished.Checked -eq $true -and $script:SelectedMd5ListForPublishedFiles -ne "") {
+    $buttonRunScript.Enabled = $true
+    } else {
+    $buttonRunScript.Enabled = $false
+    }          
+})
+#LABELS
+#Browse for the folder with a new release prepared to get checked
+$labelBrowseForReadyRelease = New-Object System.Windows.Forms.Label
+$labelBrowseForReadyRelease.Text = "Укажите путь к скомплектованному комплекту публикуемых документов и программ"
+$SystemDrawingPoint = New-Object System.Drawing.Point
+$SystemDrawingPoint.X = 135
+$SystemDrawingPoint.Y = 35
+$labelBrowseForReadyRelease.Location = $SystemDrawingPoint
+$labelBrowseForReadyRelease.Width = 500
+$labelBrowseForReadyRelease.Enabled = $true
+#Browse for the md5 list for the published files
+$labelBrowseForMd5ListPublished = New-Object System.Windows.Forms.Label
+$labelBrowseForMd5ListPublished.Text = "Укажите файл со списком MD5 программ (файлов) текущего релиза"
+$SystemDrawingPoint = New-Object System.Drawing.Point
+$SystemDrawingPoint.X = 185
+$SystemDrawingPoint.Y = 270
+$labelBrowseForMd5ListPublished.Location = $SystemDrawingPoint
+$labelBrowseForMd5ListPublished.Width = 400
+$labelBrowseForMd5ListPublished.Enabled = $false
+#Browse for md5 list for the files being published
+$labelBrowseForMd5ListBeingPublished = New-Object System.Windows.Forms.Label
+$labelBrowseForMd5ListBeingPublished.Text = "Укажите файл со списком MD5 публикуемых программ (файлов)"
+$SystemDrawingPoint = New-Object System.Drawing.Point
+$SystemDrawingPoint.X = 185
+$SystemDrawingPoint.Y = 200
+$labelBrowseForMd5ListBeingPublished.Location = $SystemDrawingPoint
+$labelBrowseForMd5ListBeingPublished.Width = 400
+$labelBrowseForMd5ListBeingPublished.Enabled = $false
 #Browse current version label
 $labelBrowseCV = New-Object System.Windows.Forms.Label
-$labelBrowseCV.Text = "Укажите папку с файлами текущего релиза"
+$labelBrowseCV.Text = "Укажите папку с программами (файлами) текущего релиза"
 $SystemDrawingPoint = New-Object System.Drawing.Point
-$SystemDrawingPoint.X = 140
-$SystemDrawingPoint.Y = 88
+$SystemDrawingPoint.X = 160
+$SystemDrawingPoint.Y = 130
 $labelBrowseCV.Location = $SystemDrawingPoint
 $labelBrowseCV.Width = 400
 $labelBrowseCV.Height = 30
 $labelBrowseCV.Enabled = $false
+#CHECKBOXES
 #Check Titles and Names
 $checkboxCheckTitlesAndNames = New-Object System.Windows.Forms.CheckBox
 $checkboxCheckTitlesAndNames.Width = 475
 $checkboxCheckTitlesAndNames.Text = "Сравнить обозначения и имена документов"
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 25
-$SystemDrawingPoint.Y = 25
+$SystemDrawingPoint.Y = 65
 $checkboxCheckTitlesAndNames.Location = $SystemDrawingPoint
 $checkboxCheckTitlesAndNames.Add_CheckStateChanged({
-                                                  if ($checkboxCheckTitlesAndNames.Checked -eq $true -and $checkboxCheckMD5.Checked -eq $false -and $script:SelectedCurrentVersionFolder -eq "") {$buttonRunScript.Enabled = $true};
-                                                  if ($checkboxCheckTitlesAndNames.Checked -eq $false -and $checkboxCheckMD5.Checked -eq $false -and $script:SelectedCurrentVersionFolder -eq "") {$buttonRunScript.Enabled = $false};
-                                                  if ($checkboxCheckTitlesAndNames.Checked -eq $false -and $checkboxCheckMD5.Checked -eq $true -and $script:SelectedCurrentVersionFolder -ne "") {$buttonRunScript.Enabled = $true};
-                                                  if ($checkboxCheckTitlesAndNames.Checked -eq $false -and $checkboxCheckMD5.Checked -eq $false -and $script:SelectedCurrentVersionFolder -ne "") {$buttonRunScript.Enabled = $false};
-                                                  if ($checkboxCheckTitlesAndNames.Checked -eq $true -and $checkboxCheckMD5.Checked -eq $false -and $script:SelectedCurrentVersionFolder -ne "") {$buttonRunScript.Enabled = $true};
-                                                  })
+    if ($checkboxCheckTitlesAndNames.Checked -eq $true -and $checkboxCheckMD5.Checked -eq $false -and $script:PathToFilesBeingPublished -ne "") {
+    $buttonRunScript.Enabled = $true
+    } elseif ($script:PathToFilesBeingPublished -ne "" -and $checkboxCheckMD5.Checked -eq $true -and $script:PathToPublishedFiles -ne "" -and $checkboxUseListBeingPublished.Checked -eq $false -and $checkboxUseListPublished.Checked -eq $false) {
+    $buttonRunScript.Enabled = $true
+    } elseif ($script:PathToFilesBeingPublished -ne "" -and $checkboxCheckMD5.Checked -eq $true -and $script:PathToPublishedFiles -ne "" -and $checkboxUseListBeingPublished.Checked -eq $true -and $script:SelectedMd5ListForFilesBeingPublished -ne "" -and $checkboxUseListPublished.Checked -eq $false) {
+    $buttonRunScript.Enabled = $true
+    } elseif ($script:PathToFilesBeingPublished -ne "" -and $checkboxCheckMD5.Checked -eq $true -and $script:PathToPublishedFiles -ne "" -and $checkboxUseListBeingPublished.Checked -eq $false  -and $checkboxUseListPublished.Checked -eq $true -and $script:SelectedMd5ListForPublishedFiles -ne "") {
+    $buttonRunScript.Enabled = $true
+    } elseif ($script:PathToFilesBeingPublished -ne "" -and $checkboxCheckMD5.Checked -eq $true -and $script:PathToPublishedFiles -ne "" -and $checkboxUseListBeingPublished.Checked -eq $true -and $script:SelectedMd5ListForFilesBeingPublished -eq "" -and $checkboxUseListPublished.Checked -eq $true -and $script:SelectedMd5ListForPublishedFiles -ne "") {
+    $buttonRunScript.Enabled = $false
+    } elseif ($script:PathToFilesBeingPublished -ne "" -and $checkboxCheckMD5.Checked -eq $true -and $script:PathToPublishedFiles -ne "" -and $checkboxUseListBeingPublished.Checked -eq $true -and $script:SelectedMd5ListForFilesBeingPublished -ne "" -and $checkboxUseListPublished.Checked -eq $true -and $script:SelectedMd5ListForPublishedFiles -eq "") {
+    $buttonRunScript.Enabled = $false
+    } elseif ($script:PathToFilesBeingPublished -ne "" -and $checkboxCheckMD5.Checked -eq $true -and $script:PathToPublishedFiles -ne "" -and $checkboxUseListBeingPublished.Checked -eq $true -and $script:SelectedMd5ListForFilesBeingPublished -ne "" -and $checkboxUseListPublished.Checked -eq $true -and $script:SelectedMd5ListForPublishedFiles -ne "") {
+    $buttonRunScript.Enabled = $true
+    } else {
+    $buttonRunScript.Enabled = $false
+    }
+})
 #Check MD5
 $checkboxCheckMD5 = New-Object System.Windows.Forms.CheckBox
 $checkboxCheckMD5.Width = 475
 $checkboxCheckMD5.Text = "Сравнить контрольные суммы"
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 25
-$SystemDrawingPoint.Y = 50
+$SystemDrawingPoint.Y = 90
 $checkboxCheckMD5.Location = $SystemDrawingPoint
 $checkboxCheckMD5.Add_CheckStateChanged({
-                                        if ($checkboxCheckTitlesAndNames.Checked -or $checkboxCheckMD5.Checked -and $script:SelectedCurrentVersionFolder -ne "") {$buttonRunScript.Enabled = $true} else {$buttonRunScript.Enabled = $false};
-                                        if ($checkboxCheckMD5.Checked) {$groupboxMD5.Enabled = $true} else {$groupboxMD5.Enabled = $false};
-                                        if ($checkboxCheckMD5.Checked) {$radioCalculateMD5.Checked = $true} else {$radioCalculateMD5.Checked = $false; $radioUsePrecalculatedMD5.Checked = $false; $buttonBrowse.Enabled = $false; $labelBrowse.Enabled = $false};
-                                        if ($checkboxCheckMD5.Checked) {$labelBrowseCV.Enabled = $true; $buttonBrowseCV.Enabled = $true} else {$labelBrowseCV.Enabled = $false; $buttonBrowseCV.Enabled = $false};
-                                        if ($checkboxCheckMD5.Checked -eq $false -and $checkboxCheckTitlesAndNames.Checked) {$buttonRunScript.Enabled = $true}
-                                        })
-#radio button
-$groupboxMD5 = New-Object System.Windows.Forms.GroupBox
-$groupboxMD5.Height = 140
-$groupboxMD5.Width = 450
+    if ($checkboxCheckMD5.Checked -eq $true) {
+    $buttonBrowseCV.Enabled = $true
+    $labelBrowseCV.Enabled = $true
+    $checkboxUseListBeingPublished.Enabled = $true
+    $checkboxUseListPublished.Enabled = $true
+    } else {
+    $buttonBrowseCV.Enabled = $false
+    $labelBrowseCV.Enabled = $false
+    $checkboxUseListBeingPublished.Enabled = $false
+    $checkboxUseListPublished.Enabled = $false
+    $checkboxUseListBeingPublished.Checked = $false
+    $checkboxUseListPublished.Checked = $false
+    }
+    if ($checkboxCheckMD5.Checked -eq $false -and $checkboxCheckTitlesAndNames.Checked -eq $true -and $script:PathToFilesBeingPublished -ne "") {
+    $buttonRunScript.Enabled = $true
+    } elseif ($checkboxCheckMD5.Checked -eq $true -and $script:PathToPublishedFiles -ne "" -and $script:PathToFilesBeingPublished -ne "" -and $checkboxUseListBeingPublished.Checked -eq $false -and $checkboxUseListPublished.Checked -eq $false) {
+    $buttonRunScript.Enabled = $true
+    } elseif ($checkboxCheckTitlesAndNames.Checked -eq $true -and $script:PathToFilesBeingPublished -ne "" -and $checkboxCheckMD5.Checked -eq $true -and $script:PathToPublishedFiles -ne "" -and $checkboxUseListBeingPublished.Checked -eq $true -and $script:SelectedMd5ListForFilesBeingPublished -ne "" -and $checkboxUseListPublished.Checked -eq $true -and $script:SelectedMd5ListForPublishedFiles -ne "") {
+    $buttonRunScript.Enabled = $true
+    } elseif ($checkboxCheckTitlesAndNames.Checked -eq $false -and $script:PathToFilesBeingPublished -ne "" -and $checkboxCheckMD5.Checked -eq $true -and $script:PathToPublishedFiles -ne "" -and $checkboxUseListBeingPublished.Checked -eq $true -and $script:SelectedMd5ListForFilesBeingPublished -ne "" -and $checkboxUseListPublished.Checked -eq $true -and $script:SelectedMd5ListForPublishedFiles -ne "") {
+    $buttonRunScript.Enabled = $true
+    } else {
+    $buttonRunScript.Enabled = $false
+    }
+})
+#Use MD5 list for files being published
+$checkboxUseListBeingPublished = New-Object System.Windows.Forms.CheckBox
+$checkboxUseListBeingPublished.Width = 475
+$checkboxUseListBeingPublished.Text = "Использовать файл с MD5 публикуемых программ"
 $SystemDrawingPoint = New-Object System.Drawing.Point
-$SystemDrawingPoint.X = 25
-$SystemDrawingPoint.Y = 120
-$groupboxMD5.Text = "Выберите способ"
-$groupboxMD5.Location = $SystemDrawingPoint
-$groupboxMD5.Enabled = $false
-$radioCalculateMD5 = New-Object System.Windows.Forms.RadioButton
+$SystemDrawingPoint.X = 50
+$SystemDrawingPoint.Y = 160
+$checkboxUseListBeingPublished.Location = $SystemDrawingPoint
+$checkboxUseListBeingPublished.Enabled = $false
+$checkboxUseListBeingPublished.Add_CheckStateChanged({
+    if ($checkboxUseListBeingPublished.Checked -eq $true) {
+    $labelBrowseForMd5ListBeingPublished.Enabled = $true; 
+    $ButtonBrowseForMd5ListBeingPublished.Enabled = $true
+    } else {
+    $labelBrowseForMd5ListBeingPublished.Enabled = $false; 
+    $ButtonBrowseForMd5ListBeingPublished.Enabled = $false
+    }
+    
+    if ($script:PathToFilesBeingPublished -ne "" -and $script:PathToPublishedFiles -ne "" -and $script:SelectedMd5ListForFilesBeingPublished -ne "" -and $checkboxUseListPublished.Checked -eq $false) {
+    $buttonRunScript.Enabled = $true
+    } elseif ($script:PathToFilesBeingPublished -ne "" -and $script:PathToPublishedFiles -ne "" -and $script:SelectedMd5ListForFilesBeingPublished -ne "" -and $checkboxUseListPublished.Checked -eq $true -and $script:SelectedMd5ListForPublishedFiles -ne "") {
+    $buttonRunScript.Enabled = $true
+    } elseif ($script:PathToFilesBeingPublished -ne "" -and $script:PathToPublishedFiles -ne "" -and $checkboxUseListBeingPublished.Checked -eq $false -and $checkboxUseListPublished.Checked -eq $true -and $script:SelectedMd5ListForPublishedFiles -ne "") {
+    $buttonRunScript.Enabled = $true
+    } elseif ($script:PathToFilesBeingPublished -ne "" -and $script:PathToPublishedFiles -ne "" -and $checkboxUseListBeingPublished.Checked -eq $false -and $checkboxUseListPublished.Checked -eq $false) {
+    $buttonRunScript.Enabled = $true
+    } else {
+    $buttonRunScript.Enabled = $false
+    }
+})
+#Use MD5 list for published files
+$checkboxUseListPublished = New-Object System.Windows.Forms.CheckBox
+$checkboxUseListPublished.Width = 475
+$checkboxUseListPublished.Text = "Использовать файл с MD5 программ текущего релиза"
 $SystemDrawingPoint = New-Object System.Drawing.Point
-$SystemDrawingPoint.X = 10
-$SystemDrawingPoint.Y = 25
-$radioCalculateMD5.Location = $SystemDrawingPoint
-$radioCalculateMD5.Text = "Подсчитывать MD5 для каждого неизмененного файла перед сравнением"
-$radioCalculateMD5.Width = 435
-$radioCalculateMD5.Add_CLick({
-                            if ($radioCalculateMD5.Checked -and $script:SelectedCurrentVersionFolder -ne "") {$buttonBrowse.Enabled = $false; $labelBrowse.Enabled = $false; $buttonRunScript.Enabled = $true}
-                            if ($radioCalculateMD5.Checked -and $script:SelectedCurrentVersionFolder -eq "") {$buttonBrowse.Enabled = $false; $labelBrowse.Enabled = $false; $buttonRunScript.Enabled = $false}
-                            })
-#$radioCalculateMD5.Enabled = $false
-$radioUsePrecalculatedMD5 = New-Object System.Windows.Forms.RadioButton
-$SystemDrawingPoint = New-Object System.Drawing.Point
-$SystemDrawingPoint.X = 10
-$SystemDrawingPoint.Y = 60
-$radioUsePrecalculatedMD5.Location = $SystemDrawingPoint
-$radioUsePrecalculatedMD5.Text = "Использовать заранне подсчитанные MD5 неизмененных файлов"
-$radioUsePrecalculatedMD5.Width = 435
-$radioUsePrecalculatedMD5.Add_Click({
-                                    if ($radioUsePrecalculatedMD5.Checked) {$buttonBrowse.Enabled = $true; $labelBrowse.Enabled = $true};
-                                    if ($script:SelectedList -eq "" -or $script:SelectedCurrentVersionFolder -eq "") {$buttonRunScript.Enabled = $false} else {$buttonRunScript.Enabled = $true}
-                                    })
+$SystemDrawingPoint.X = 50
+$SystemDrawingPoint.Y = 230
+$checkboxUseListPublished.Location = $SystemDrawingPoint
+$checkboxUseListPublished.Enabled = $false
+$checkboxUseListPublished.Add_CheckStateChanged({
+    if ($checkboxUseListPublished.Checked -eq $true) {
+    $labelBrowseForMd5ListPublished.Enabled = $true; 
+    $ButtonBrowseForMd5ListPublished.Enabled = $true
+    } else {
+    $labelBrowseForMd5ListPublished.Enabled = $false; 
+    $ButtonBrowseForMd5ListPublished.Enabled = $false
+    }
+    if ($script:PathToFilesBeingPublished -ne "" -and $script:PathToPublishedFiles -ne "" -and $script:SelectedMd5ListForPublishedFiles -ne "" -and $checkboxUseListBeingPublished.Checked -eq $false) {
+    $buttonRunScript.Enabled = $true
+    } elseif ($script:PathToFilesBeingPublished -ne "" -and $script:PathToPublishedFiles -ne "" -and $script:SelectedMd5ListForPublishedFiles -ne "" -and $checkboxUseListBeingPublished.Checked -eq $true -and $script:SelectedMd5ListForFilesBeingPublished -ne "") {
+    $buttonRunScript.Enabled = $true
+    } elseif ($script:PathToFilesBeingPublished -ne "" -and $script:PathToPublishedFiles -ne "" -and $checkboxUseListBeingPublished.Checked -eq $true -and $script:SelectedMd5ListForFilesBeingPublished -ne "" -and $checkboxUseListPublished.Checked -eq $false) {
+    $buttonRunScript.Enabled = $true
+    } elseif ($script:PathToFilesBeingPublished -ne "" -and $script:PathToPublishedFiles -ne "" -and $checkboxUseListBeingPublished.Checked -eq $false -and $checkboxUseListPublished.Checked -eq $false) {
+    $buttonRunScript.Enabled = $true
+    } else {
+    $buttonRunScript.Enabled = $false
+    }
+})
+
 #Add UI elements to the form
 $dialog.Controls.Add($checkboxCheckTitlesAndNames)
 $dialog.Controls.Add($checkboxCheckMD5)
@@ -184,10 +354,14 @@ $dialog.Controls.Add($buttonExit)
 $dialog.Controls.Add($groupboxMD5)
 $dialog.Controls.Add($buttonBrowseCV)
 $dialog.Controls.Add($labelBrowseCV)
-$groupboxMD5.Controls.Add($radioCalculateMD5)
-$groupboxMD5.Controls.Add($radioUsePrecalculatedMD5)
-$groupboxMD5.Controls.Add($buttonBrowse)
-$groupboxMD5.Controls.Add($labelBrowse)
+$dialog.Controls.Add($ButtonBrowseNewRelease)
+$dialog.Controls.Add($checkboxUseListBeingPublished)
+$dialog.Controls.Add($ButtonBrowseForMd5ListBeingPublished)
+$dialog.Controls.Add($checkboxUseListPublished)
+$dialog.Controls.Add($ButtonBrowseForMd5ListPublished)
+$dialog.Controls.Add($labelBrowseForMd5ListPublished)
+$dialog.Controls.Add($labelBrowseForMd5ListBeingPublished)
+$dialog.Controls.Add($labelBrowseForReadyRelease)
 $dialog.ShowDialog()
 }
 
@@ -197,17 +371,7 @@ $f = new-object Windows.Forms.OpenFileDialog
 $f.InitialDirectory = "$PSScriptRoot"
 $f.Filter = "Text Files (*.txt)|*.txt|All Files (*.*)|*.*"
 $show = $f.ShowDialog()
-If ($show -eq "OK") {$script:SelectedList = $f.FileName}
-}
-
-Function Select-CurrentVersionFolder ($description)
-{
-    [System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms") | Out-Null
-    $objForm = New-Object System.Windows.Forms.FolderBrowserDialog
-    $objForm.Rootfolder = "Desktop"
-    $objForm.Description = $description
-    $Show = $objForm.ShowDialog()
-    If ($Show -eq "OK") {$script:SelectedCurrentVersionFolder = $objForm.SelectedPath}
+If ($show -eq "OK") {Return $f.FileName}
 }
 
 Function Select-Folder ($description)
@@ -219,8 +383,6 @@ Function Select-Folder ($description)
     $Show = $objForm.ShowDialog()
         If ($Show -eq "OK") {
         Return $objForm.SelectedPath
-        } Else {
-        Exit
         }
 }
 
@@ -232,7 +394,7 @@ $script:yesNoUserInput = 1
 } else {Exit}
 }
 
-Function Compare-Strings ($SPCvalue, $valueFromDocument, $message, $positive, $negative) 
+Function Compare-Strings ($SPCvalue, $valueFromDocument, $message, $positive, $negative, $FileOrDocument) 
 {
     if ($valueFromDocument -eq $SPCvalue) {
     Write-Host "$message совпадает" -ForegroundColor Green
@@ -245,7 +407,7 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "<td><font color=""gree
 <td id=""indication"">$SPCvalue</td>
 </tr>
 <tr>
-<td id=""indication"">Документ:</td>
+<td id=""indication"">$($FileOrDocument):</td>
 <td id=""indication"">$valueFromDocument</td>
 </tr>
 </table>
@@ -264,7 +426,7 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "<td><font color=""red"
 <td id=""indication"">$SPCvalue</td>
 </tr>
 <tr>
-<td id=""indication"">Документ:</td>
+<td id=""indication"">$($FileOrDocument):</td>
 <td id=""indication"">$valueFromDocument</td>
 </tr>
 </table>
@@ -300,7 +462,7 @@ Function Get-DataFromSpecification ($selectedFolder, $currentSPCName) {
     for ($i = 1; $i -lt $rowCount; $i++) {
         [string]$valueInDocumentNameCell = ((($document.Tables.Item(1).Cell($i,4).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ' -replace [char]0x2010, '-').Trim(' ')
         if ($valueInDocumentNameCell.length -ne 0) {
-        if ($valueInDocumentNameCell -match '\b([A-Z]{6})-([A-Z]{2})-([A-Z]{2})-\d\d\.\d\d\.\d\d\.([a-z]{1})([A-Z]{3})\.\d\d\.\d\d([^\s]*)') {
+        if ($valueInDocumentNameCell -match '\b([A-Z0-9]{6})-([A-Z]{2})-([A-Z]{2})-\d\d\.\d\d\.\d\d\.([a-z]{1})([A-Z]{3})\.\d\d\.\d\d([^\s]*)') {
             if ($script:CheckTitlesAndNames -eq $true) {
                 [string]$valueInDocumentTitleCell = (((($document.Tables.Item(1).Cell($i,5).Range.Text).Trim([char]0x0007)) -replace '\.', ' ' -replace ',', ' ' -replace 'ё', 'е' -replace [char]0x2010, '-' -replace '-', ' ' -replace '\s+', ' ').Trim(' ')).ToLower()
                 $documentNames += $valueInDocumentNameCell
@@ -350,10 +512,12 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "<tr>
 </td>
 </tr>" -Encoding UTF8
 }
+Start-Sleep -Seconds 0.5
 #========Statistics========
 if ($script:CheckTitlesAndNames -eq $true) {
-Write-Host "Сравниваю наименования и обозначения указанные в спецификации..."
+Write-Host "Проверяю наименования и обозначения указанные в спецификации..."
     for ($i = 0; $i -lt $documentData[0].Length; $i++) {
+Start-Sleep -Seconds 0.3
     $currentDocumentBaseName = $documentData[0][$i]
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-References-Report.html" "<tr>
@@ -361,6 +525,7 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "<tr>
 #========Statistics========
     $documentExistence = Test-Path -Path "$selectedFolder\$currentDocumentBaseName.*" -Exclude "*.pdf"
         if ($documentExistence -eq $true) {
+Start-Sleep -Seconds 0.2
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-References-Report.html" "<td><font color=""green""><b>Найден</b></font></td>" -Encoding UTF8
 #========Statistics========
@@ -374,13 +539,15 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "<td colspan=""3"">Фа
 </tr>" -Encoding UTF8
 #========Statistics========
             } else {
-            Write-Host "$currentDocumentFullName найден (спецификация). Результаты сравнения:"
+            Write-Host "$($currentDocumentFullName.BaseName) найден (спецификация). Результаты сравнения:"
             $document = $word.Documents.Open("$currentDocumentFullName")
             [string]$valueForDocTitle = (((($document.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(4, 5).Range.Text).Trim([char]0x0007)) -replace '\.', ' ' -replace ',', ' ' -replace 'ё', 'е' -replace [char]0x2010, '-' -replace '-', ' ' -replace '\s+', ' ').Trim(' ')).ToLower()
             [string]$valueForDocName = ((($document.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(1, 6).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ' -replace [char]0x2010, '-').Trim(' ')
-            Compare-Strings -SPCvalue $documentData[0][$i] -valueFromDocument $valueForDocName -message "Обозначение" -positive "Совпадает" -negative "Не совпадает"
-            Compare-Strings -SPCvalue $documentData[1][$i] -valueFromDocument $valueForDocTitle -message "Наименование" -positive "Совпадает" -negative "Не совпадает"
+            Compare-Strings -SPCvalue $documentData[0][$i] -valueFromDocument $valueForDocName -message "Обозначение" -positive "Совпадает" -negative "Не совпадает" -FileOrDocument "Документ"
+            Start-Sleep -Seconds 0.1
+            Compare-Strings -SPCvalue $documentData[1][$i] -valueFromDocument $valueForDocTitle -message "Наименование" -positive "Совпадает" -negative "Не совпадает" -FileOrDocument "Документ"
             $document.Close([ref]0)
+            Start-Sleep -Seconds 0.2
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-References-Report.html" "<td>---</td>
 </tr>" -Encoding UTF8
@@ -396,13 +563,15 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "<td colspan=""3"">Фа
 </tr>" -Encoding UTF8
 #========Statistics========
             } else {
-            Write-Host "$currentDocumentFullName найден. Результаты сравнения:"
+            Write-Host "$($currentDocumentFullName.BaseName) найден. Результаты сравнения:"
             $document = $word.Documents.Open("$currentDocumentFullName")
             [string]$valueForDocTitle = (((($document.Tables.Item(1).Cell(9, 7).Range.Text).Trim([char]0x0007)) -replace '\.', ' ' -replace ',', ' ' -replace 'ё', 'е' -replace [char]0x2010, '-' -replace '-', ' ' -replace '\s+', ' ').Trim(' ')).ToLower()
             [string]$valueForDocName = ((($document.Tables.Item(1).Cell(6, 8).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ' -replace [char]0x2010, '-').Trim(' ')
-            Compare-Strings -SPCvalue $documentData[0][$i] -valueFromDocument $valueForDocName -message "Обозначение"  -positive "Совпадает" -negative "Не совпадает"
-            Compare-Strings -SPCvalue $documentData[1][$i] -valueFromDocument $valueForDocTitle -message "Наименование"  -positive "Совпадает" -negative "Не совпадает"
+            Compare-Strings -SPCvalue $documentData[0][$i] -valueFromDocument $valueForDocName -message "Обозначение"  -positive "Совпадает" -negative "Не совпадает" -FileOrDocument "Документ"
+            Start-Sleep -Seconds 0.1
+            Compare-Strings -SPCvalue $documentData[1][$i] -valueFromDocument $valueForDocTitle -message "Наименование"  -positive "Совпадает" -negative "Не совпадает" -FileOrDocument "Документ"
             $document.Close([ref]0)
+            Start-Sleep -Seconds 0.2
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-References-Report.html" "<td>---</td>
 </tr>" -Encoding UTF8
@@ -410,6 +579,7 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "<td>---</td>
             }
             }
         } else {
+Start-Sleep -Seconds 0.2
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-References-Report.html" "
 <td><font color=""red""><b>Не найден</b></font></td>
@@ -423,77 +593,96 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "
 }
 
 if ($script:CheckMD5 -eq $true) {
+    #Get data from the MD5 list for files being published
+    if ($script:UseMd5ListForFilesBeingPublished -eq $true) {
+        $FilesBeingPublishedData = @(), @()
+        Get-Content -Path "$script:SelectedMd5ListForFilesBeingPublished" | % {
+            if ($_ -match ":") {
+                $FilesBeingPublishedData[0] += (($_ -split (":"))[0]).ToLower(); $FilesBeingPublishedData[1] += (($_ -split (":"))[1].ToLower()).Trim(" ")
+            }
+        }
+    }
+    #Get data from the MD5 list for published files
+    if ($script:UseMd5ListForPublishedFiles -eq $true) {
+        $PublishedFilesData = @(), @()
+        Get-Content -Path "$script:SelectedMd5ListForPublishedFiles" | % {
+            if ($_ -match ":") {
+                $PublishedFilesData[0] += (($_ -split (":"))[0]).ToLower(); $PublishedFilesData[1] += (($_ -split (":"))[1].ToLower()).Trim(" ")
+            }
+        }
+    }
     for ($i = 0; $i -lt $fileData[0].Length; $i++) {
+    Start-Sleep -Seconds 0.3
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-References-Report.html" "<tr>
 <td>$($fileData[0][$i])</td>" -Encoding UTF8
 #========Statistics========
-        #Check existence in the folder with new/updated files
-        if ((Test-Path -Path "$selectedFolder\$($fileData[0][$i])") -eq $true) {
+        $FileDataFromSpecification = @{Name = ([string]$fileData[0][$i]).ToLower(); Checksum = [string]$fileData[1][$i]}
+        #if the file found in the folder with files being published
+        if ((Test-Path -Path "$selectedFolder\$($FileDataFromSpecification.Name)") -eq $true) {
+        Write-Host "$($FileDataFromSpecification.Name) найден. Результаты сравнения:"
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-References-Report.html" "<td><font color=""green""><b>Найден</b></font></td>
 <td>---</td>
 <td>---</td>" -Encoding UTF8
 #========Statistics========
-            Write-Host "$($fileData[0][$i]) найден. Результаты сравнения:"
-            #Get file hash and compare it by using function Compare-String
-            Compare-Strings -SPCvalue (($fileData[1][$i] -split (":"))[1].Trim(' ')).ToLower() -valueFromDocument (Get-FileHash -Path "$selectedFolder\$($fileData[0][$i])" -Algorithm MD5).Hash.ToLower() -message "Контрольная сумма MD5" -positive "Совпадает" -negative "Не совпадает"
-#========Statistics========
-Add-Content "$PSScriptRoot\Check-References-Report.html" "</tr>" -Encoding UTF8
-#========Statistics========
-        } else {
-            #Check existence in the folder with current release
-            if ((Test-Path -Path "$script:SelectedCurrentVersionFolder\$($fileData[0][$i])") -eq $true) {
-#========Statistics========
-Add-Content "$PSScriptRoot\Check-References-Report.html" "<td><font color=""green""><b>Найден</b></font></td>
-<td>---</td>
-<td>---</td>" -Encoding UTF8
-#========Statistics========
-                Write-Host "$($fileData[0][$i]) найден. Результаты сравнения:"
-                #if user selects to calculate each MD5 before comparing
-                if ($script:CalculateMD5 -eq $true) {
-                    #Get file hash and compare it by using function Compare-String
-                    Compare-Strings -SPCvalue (($fileData[1][$i] -split (":"))[1].Trim(' ')).ToLower() -valueFromDocument (Get-FileHash -Path "$script:SelectedCurrentVersionFolder\$($fileData[0][$i])" -Algorithm MD5).Hash.ToLower() -message "Контрольная сумма MD5" -positive "Совпадает" -negative "Не совпадает"
-#========Statistics========
-Add-Content "$PSScriptRoot\Check-References-Report.html" "</tr>" -Encoding UTF8
-#========Statistics========                    
-                }
-                #if user selects to use the list
-                if ($script:UseList -eq $true) {
-                    #1) Put values from the list to an array
-                    Get-Content -Path "$script:SelectedList" | % {
-                        $FileNameFromList += ($_ -split (":"))[0]
-                        $MD5FromList += (($_ -split (":"))[1].ToLower()).Trim(" ")
-                    }
-                    $FileProperties = $FileNameFromList, $MD5FromList
-                    #2) Find the file name in an array
-                    if ($FileProperties[0] -contains "$($fileData[0][$i])") {
-                        #if the array contains the file name, 3) Get the MD5 of the found file and compare it
-                        $index = [array]::IndexOf($FileProperties[0], $fileData[0][$i])
-                        Compare-Strings -SPCvalue (($fileData[1][$i] -split (":"))[1].Trim(' ')).ToLower() -valueFromDocument $FileProperties[1][$index].ToLower() -message "Контрольная сумма MD5" -positive "Совпадает" -negative "Не совпадает"
-                        } else {
-#========Statistics========
-Add-Content "$PSScriptRoot\Check-References-Report.html" "<td><font color=""red""><b>Не найден в списке</b></font></td>" -Encoding UTF8
-Write-Host "Файл найден в указанной директории, но не найден в списке с MD5 суммами. Сравнить контрольные суммы невозможно."
-#========Statistics======== 
-                    }
-#========Statistics========
-Add-Content "$PSScriptRoot\Check-References-Report.html" "</tr>" -Encoding UTF8
-#========Statistics========               
+            #if user selects to use precalculated md5 for files being published
+            if ($script:UseMd5ListForFilesBeingPublished -eq $true) {
+                if ($FilesBeingPublishedData[0] -contains $FileDataFromSpecification.Name) {
+                    $index = [array]::IndexOf($FilesBeingPublishedData[0], $FileDataFromSpecification.Name)
+                    Start-Sleep -Seconds 1
+                    Compare-Strings -SPCvalue ([string](($FileDataFromSpecification.Checksum -split (":"))[1].Trim(' ')).ToLower()) -valueFromDocument ([string]$FilesBeingPublishedData[1][$index]) -message "Контрольная сумма MD5" -positive "Совпадает" -negative "Не совпадает" -FileOrDocument "MD5 файла"
+                    #Write-Host "File found in the list."
+                } else {
+                    Start-Sleep -Seconds 1
+                    Compare-Strings -SPCvalue (($FileDataFromSpecification.Checksum -split (":"))[1].Trim(' ')).ToLower() -valueFromDocument (Get-FileHash -Path "$selectedFolder\$($FileDataFromSpecification.Name)" -Algorithm MD5).Hash.ToLower() -message "Контрольная сумма MD5" -positive "Совпадает" -negative "Не совпадает" -FileOrDocument "MD5 файла"
+                    #Write-Host "File not found in the list. Calculating checksum."
                 }
             } else {
-            #file does not exist in any folders -> record in report
-            Write-Host "$($fileData[0][$i]) не найден."
-#========Statistics========
-Add-Content "$PSScriptRoot\Check-References-Report.html" "
-<td><font color=""red""><b>Не найден</b></font></td>
-<td>---</td>
-<td>---</td>
-<td>---</td>
-</tr>" -Encoding UTF8
-#========Statistics========
+            Start-Sleep -Seconds 1
+            Compare-Strings -SPCvalue (($FileDataFromSpecification.Checksum -split (":"))[1].Trim(' ')).ToLower() -valueFromDocument (Get-FileHash -Path "$selectedFolder\$($FileDataFromSpecification.Name)" -Algorithm MD5).Hash.ToLower() -message "Контрольная сумма MD5" -positive "Совпадает" -negative "Не совпадает" -FileOrDocument "MD5 файла"
+            #Write-Host "Calcuating all MD5s"
             }
+         #if the file is not found in the folder with files being published, the script goes to the folder that contains files of the current release
+        } elseif ((Test-Path -Path "$script:PathToPublishedFiles\$($FileDataFromSpecification.Name)") -eq $true) {
+        Write-Host "$($FileDataFromSpecification.Name) найден. Результаты сравнения:"
+#========Statistics========
+Add-Content "$PSScriptRoot\Check-References-Report.html" "<td><font color=""green""><b>Найден</b></font></td>
+<td>---</td>
+<td>---</td>" -Encoding UTF8
+#========Statistics========
+            #if user selects to use precalculated md5 for published files
+            if ($script:UseMd5ListForPublishedFiles -eq $true) {
+                if ($PublishedFilesData[0] -contains $FileDataFromSpecification.Name) {
+                    $index = [array]::IndexOf($PublishedFilesData[0], $FileDataFromSpecification.Name)
+                    Start-Sleep -Seconds 1
+                    Compare-Strings -SPCvalue ([string](($FileDataFromSpecification.Checksum -split (":"))[1].Trim(' ')).ToLower()) -valueFromDocument ([string]$PublishedFilesData[1][$index]) -message "Контрольная сумма MD5" -positive "Совпадает" -negative "Не совпадает" -FileOrDocument "MD5 файла"
+                    #Write-Host "File found in the list. (published)"
+                } else {
+                    Start-Sleep -Seconds 1
+                    Compare-Strings -SPCvalue (($FileDataFromSpecification.Checksum -split (":"))[1].Trim(' ')).ToLower() -valueFromDocument (Get-FileHash -Path "$script:PathToPublishedFiles\$($FileDataFromSpecification.Name)" -Algorithm MD5).Hash.ToLower() -message "Контрольная сумма MD5" -positive "Совпадает" -negative "Не совпадает" -FileOrDocument "MD5 файла"
+                    #Write-Host "File not found in the list. Calculating checksum. (published)"
+                }
+            } else {
+                Start-Sleep -Seconds 1
+                Compare-Strings -SPCvalue (($FileDataFromSpecification.Checksum -split (":"))[1].Trim(' ')).ToLower() -valueFromDocument (Get-FileHash -Path "$script:PathToPublishedFiles\$($FileDataFromSpecification.Name)" -Algorithm MD5).Hash.ToLower() -message "Контрольная сумма MD5" -positive "Совпадает" -negative "Не совпадает" -FileOrDocument "MD5 файла"
+                #Write-Host "Calcuating all MD5s (published)"
+            }
+        #if file not found anywhere
+        } else {
+        Start-Sleep -Seconds 1
+        Write-Host "$($FileDataFromSpecification.Name) не найден."
+#========Statistics========
+Add-Content "$PSScriptRoot\Check-References-Report.html" "<td><font color=""red""><b>Не найден</b></font></td>
+<td>---</td>
+<td>---</td>
+<td>---</td>" -Encoding UTF8
+#========Statistics========        
         }
+        Start-Sleep -Seconds 1
+#========Statistics========
+Add-Content "$PSScriptRoot\Check-References-Report.html" "</tr>" -Encoding UTF8
+#========Statistics========
     }
 }
     $word.Quit()
@@ -508,19 +697,17 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "</table>
 #script code
 $result = Custom-Form
 if ($result -ne "OK") {Exit}
-#<Write-Host $script:CheckTitlesAndNames
+<#Write-Host $script:CheckTitlesAndNames
 Write-Host $script:CheckMD5
-Write-Host "Считать суммы" $script:CalculateMD5
 Write-Host "Использовать список" $script:UseList
 #>
 $reportExistence = Test-Path -Path "$PSScriptRoot\Check-References-Report.html"
 if ($reportExistence) {
 $nl = [System.Environment]::NewLine
-Input-YesOrNo -Question "Отчет Check-References-Report.html уже существует. Продолжить?$nl$nl`Да - перезаписать и продолжить исполнение скрипта.$nl`Нет - не перезаписывать и остановить исполнение скрипта.$nl$nl`Если вы не хотите перезаписывать существующий отчет, но хотите продолжить исполнение скрипта - переместите отчет из папки, где расположен файл скрипта, в любое удобное для вас место и нажмите 'Да'." -BoxTitle "Отчет Check-References-Report.html уже существует"
+Input-YesOrNo -Question "Отчет Check-References-Report.html уже существует. Продолжить?$nl$nl`Да - перезаписать и продолжить исполнение скрипта.$nl`Нет - не перезаписывать и остановить исполнение скрипта.$nl$nl`Если вы не хотите перезаписывать существующий отчет, но хотите продолжить исполнение скрипта - переместите существующий отчет из папки, где расположен файл скрипта, в любое удобное место и нажмите 'Да'." -BoxTitle "Отчет Check-References-Report.html уже существует"
 if ($script:yesNoUserInput -eq 1) {Remove-Item -Path "$PSScriptRoot\Check-References-Report.html"}
 $script:yesNoUserInput = 0
 }
-$pathToFolder = Select-Folder -description "Выберите папку, в которой нужно проверить входимость."
 $ExecutionTime = Measure-Command {
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-References-Report.html" "<!DOCTYPE html>
@@ -583,7 +770,7 @@ object.style.display == 'block' ? object.style.display = 'none' : object.style.d
 <h3>Результаты сравнения</h3>" -Encoding UTF8
 #========Statistics========
 Measure-Command {
-Get-ChildItem "$pathToFolder\*.*" -File -Exclude "*.pdf" | Where-Object {$_.Name -match "SPC"} | % {
+Get-ChildItem "$script:PathToFilesBeingPublished\*.*" -File -Exclude "*.pdf" | Where-Object {$_.Name -match "SPC"} | % {
 $curSpc = $_.Name
 if ($_.Extension -eq ".xls" -or $_.Extension -eq ".xlsx") {
 Add-Content "$PSScriptRoot\Check-References-Report.html" "
@@ -607,11 +794,10 @@ Add-Content "$PSScriptRoot\Check-References-Report.html" "
 <td colspan=""5"" id=""tableHeader""><h2>$curSpc</h2></td>
 </tr>" -Encoding UTF8
 #========Statistics========
-Get-DataFromSpecification -selectedFolder $pathToFolder -currentSPCName $_.Name
+Get-DataFromSpecification -selectedFolder $script:PathToFilesBeingPublished -currentSPCName $_.Name
 }
 }
 }
-Write-Host $executionTime.
 #========Statistics========
 Add-Content "$PSScriptRoot\Check-References-Report.html" "
 </div>
