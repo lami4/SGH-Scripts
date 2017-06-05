@@ -3,6 +3,7 @@ clear
 $script:JSvariable = 0
 $script:CheckTitlesAndNames = $false
 $script:CheckMD5 = $false
+$script:CheckConsistency = $false
 $script:PathToFilesBeingPublished = ""
 $script:PathToPublishedFiles = ""
 $script:SelectedMd5ListForFilesBeingPublished = ""
@@ -12,6 +13,7 @@ $script:UseMd5ListForPublishedFiles = $false
 $script:yesNoUserInput = 0
 $script:ReferencesToDocuments = 0
 $script:ReferencesToFiles = 0
+$script:ItemsReferencedTo = @()
 
 #Functions
 Function Custom-Form {
@@ -35,12 +37,13 @@ $buttonRunScript.Width = 100
 $buttonRunScript.Text = "Запустить скрипт"
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 25
-$SystemDrawingPoint.Y = 310
+$SystemDrawingPoint.Y = 335
 $buttonRunScript.Location = $SystemDrawingPoint
 $SystemWindowsFormsMargin = New-Object System.Windows.Forms.Padding
 $SystemWindowsFormsMargin.Bottom = 25
 $buttonRunScript.Margin = $SystemWindowsFormsMargin
 $buttonRunScript.Add_Click({
+                            if ($checkboxCheckConsistency.Checked -eq $true) {$script:CheckConsistency = $true}
                             if ($checkboxCheckTitlesAndNames.Checked -eq $true) {$script:CheckTitlesAndNames = $true}
                             if ($checkboxCheckMD5.Checked -eq $true) {$script:CheckMD5 = $true}
                             if ($checkboxUseListBeingPublished.Checked -eq $true) {$script:UseMd5ListForFilesBeingPublished = $true}
@@ -55,7 +58,7 @@ $buttonExit.Width = 100
 $buttonExit.Text = "Закрыть"
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 130
-$SystemDrawingPoint.Y = 310
+$SystemDrawingPoint.Y = 335
 $buttonExit.Location = $SystemDrawingPoint
 $SystemWindowsFormsMargin = New-Object System.Windows.Forms.Padding
 $SystemWindowsFormsMargin.Bottom = 25
@@ -106,7 +109,7 @@ $buttonBrowseCV.Width = 100
 $buttonBrowseCV.Text = "Обзор..."
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 50
-$SystemDrawingPoint.Y = 120
+$SystemDrawingPoint.Y = 145
 $buttonBrowseCV.Location = $SystemDrawingPoint
 $buttonBrowseCV.Enabled = $false
 $buttonBrowseCV.Add_Click({
@@ -139,7 +142,7 @@ $ButtonBrowseForMd5ListPublished.Width = 100
 $ButtonBrowseForMd5ListPublished.Text = "Обзор..."
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 75
-$SystemDrawingPoint.Y = 260
+$SystemDrawingPoint.Y = 285
 $ButtonBrowseForMd5ListPublished.Location = $SystemDrawingPoint
 $ButtonBrowseForMd5ListPublished.Enabled = $false
 $ButtonBrowseForMd5ListPublished.Add_Click({
@@ -167,7 +170,7 @@ $ButtonBrowseForMd5ListBeingPublished.Width = 100
 $ButtonBrowseForMd5ListBeingPublished.Text = "Обзор..."
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 75
-$SystemDrawingPoint.Y = 190
+$SystemDrawingPoint.Y = 215
 $ButtonBrowseForMd5ListBeingPublished.Location = $SystemDrawingPoint
 $ButtonBrowseForMd5ListBeingPublished.Enabled = $false
 $ButtonBrowseForMd5ListBeingPublished.Add_Click({
@@ -203,7 +206,7 @@ $labelBrowseForMd5ListPublished = New-Object System.Windows.Forms.Label
 $labelBrowseForMd5ListPublished.Text = "Укажите файл со списком MD5 программ (файлов) текущего релиза"
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 185
-$SystemDrawingPoint.Y = 270
+$SystemDrawingPoint.Y = 295
 $labelBrowseForMd5ListPublished.Location = $SystemDrawingPoint
 $labelBrowseForMd5ListPublished.Width = 400
 $labelBrowseForMd5ListPublished.Enabled = $false
@@ -212,7 +215,7 @@ $labelBrowseForMd5ListBeingPublished = New-Object System.Windows.Forms.Label
 $labelBrowseForMd5ListBeingPublished.Text = "Укажите файл со списком MD5 публикуемых программ (файлов)"
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 185
-$SystemDrawingPoint.Y = 200
+$SystemDrawingPoint.Y = 225
 $labelBrowseForMd5ListBeingPublished.Location = $SystemDrawingPoint
 $labelBrowseForMd5ListBeingPublished.Width = 400
 $labelBrowseForMd5ListBeingPublished.Enabled = $false
@@ -221,21 +224,32 @@ $labelBrowseCV = New-Object System.Windows.Forms.Label
 $labelBrowseCV.Text = "Укажите папку с программами (файлами) текущего релиза"
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 160
-$SystemDrawingPoint.Y = 130
+$SystemDrawingPoint.Y = 155
 $labelBrowseCV.Location = $SystemDrawingPoint
 $labelBrowseCV.Width = 400
 $labelBrowseCV.Height = 30
 $labelBrowseCV.Enabled = $false
 #CHECKBOXES
+#Check consistency
+$checkboxCheckConsistency = New-Object System.Windows.Forms.CheckBox
+$checkboxCheckConsistency.Width = 475
+$checkboxCheckConsistency.Text = "Проверить комплектность"
+$SystemDrawingPoint = New-Object System.Drawing.Point
+$SystemDrawingPoint.X = 25
+$SystemDrawingPoint.Y = 65
+$checkboxCheckConsistency.Location = $SystemDrawingPoint
+$checkboxCheckConsistency.Enabled = $false
+$checkboxCheckConsistency.Add_CheckStateChanged({})
 #Check Titles and Names
 $checkboxCheckTitlesAndNames = New-Object System.Windows.Forms.CheckBox
 $checkboxCheckTitlesAndNames.Width = 475
 $checkboxCheckTitlesAndNames.Text = "Сравнить обозначения и имена документов"
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 25
-$SystemDrawingPoint.Y = 65
+$SystemDrawingPoint.Y = 90
 $checkboxCheckTitlesAndNames.Location = $SystemDrawingPoint
 $checkboxCheckTitlesAndNames.Add_CheckStateChanged({
+    if ($checkboxCheckMD5.Checked -eq $true -and $checkboxCheckTitlesAndNames.Checked -eq $true) {$checkboxCheckConsistency.Enabled = $true} else {$checkboxCheckConsistency.Enabled = $false}
     if ($checkboxCheckTitlesAndNames.Checked -eq $true -and $checkboxCheckMD5.Checked -eq $false -and $script:PathToFilesBeingPublished -ne "") {
     $buttonRunScript.Enabled = $true
     } elseif ($script:PathToFilesBeingPublished -ne "" -and $checkboxCheckMD5.Checked -eq $true -and $script:PathToPublishedFiles -ne "" -and $checkboxUseListBeingPublished.Checked -eq $false -and $checkboxUseListPublished.Checked -eq $false) {
@@ -260,9 +274,10 @@ $checkboxCheckMD5.Width = 475
 $checkboxCheckMD5.Text = "Сравнить контрольные суммы"
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 25
-$SystemDrawingPoint.Y = 90
+$SystemDrawingPoint.Y = 115
 $checkboxCheckMD5.Location = $SystemDrawingPoint
 $checkboxCheckMD5.Add_CheckStateChanged({
+    if ($checkboxCheckTitlesAndNames.Checked -eq $true -and $checkboxCheckMD5.Checked -eq $true) {$checkboxCheckConsistency.Enabled = $true} else {$checkboxCheckConsistency.Enabled = $false}
     if ($checkboxCheckMD5.Checked -eq $true) {
     $buttonBrowseCV.Enabled = $true
     $labelBrowseCV.Enabled = $true
@@ -294,7 +309,7 @@ $checkboxUseListBeingPublished.Width = 475
 $checkboxUseListBeingPublished.Text = "Использовать файл с MD5 публикуемых программ"
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 50
-$SystemDrawingPoint.Y = 160
+$SystemDrawingPoint.Y = 185
 $checkboxUseListBeingPublished.Location = $SystemDrawingPoint
 $checkboxUseListBeingPublished.Enabled = $false
 $checkboxUseListBeingPublished.Add_CheckStateChanged({
@@ -324,7 +339,7 @@ $checkboxUseListPublished.Width = 475
 $checkboxUseListPublished.Text = "Использовать файл с MD5 программ текущего релиза"
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 50
-$SystemDrawingPoint.Y = 230
+$SystemDrawingPoint.Y = 255
 $checkboxUseListPublished.Location = $SystemDrawingPoint
 $checkboxUseListPublished.Enabled = $false
 $checkboxUseListPublished.Add_CheckStateChanged({
@@ -364,6 +379,7 @@ $dialog.Controls.Add($ButtonBrowseForMd5ListPublished)
 $dialog.Controls.Add($labelBrowseForMd5ListPublished)
 $dialog.Controls.Add($labelBrowseForMd5ListBeingPublished)
 $dialog.Controls.Add($labelBrowseForReadyRelease)
+$dialog.Controls.Add($checkboxCheckConsistency)
 $dialog.ShowDialog()
 }
 
@@ -462,12 +478,14 @@ Function Get-DataFromSpecification ($selectedFolder, $currentSPCName) {
     $document = $word.Documents.Open("$selectedFolder\$currentSPCName")
     [int]$rowCount = $document.Tables.Item(1).Rows.Count + 1
     for ($i = 1; $i -lt $rowCount; $i++) {
+        if ($document.Tables.Item(1).Rows.Item($i).Cells.Count -ne 7) {continue}
         [string]$valueInDocumentNameCell = ((($document.Tables.Item(1).Cell($i,4).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ' -replace [char]0x2010, '-').Trim(' ')
         if ($valueInDocumentNameCell.length -ne 0) {
         if ($valueInDocumentNameCell -match '\b([A-Z0-9]{6})-([A-Z]{2})-([A-Z]{2})-\d\d\.\d\d\.\d\d\.([a-z]{1})([A-Z]{3})\.\d\d\.\d\d([^\s]*)') {
             if ($script:CheckTitlesAndNames -eq $true) {
-                $script:ReferencesToDocuments += 1
                 [string]$valueInDocumentTitleCell = (((($document.Tables.Item(1).Cell($i,5).Range.Text).Trim([char]0x0007)) -replace '\.', ' ' -replace ',', ' ' -replace 'ё', 'е' -replace [char]0x2010, '-' -replace '-', ' ' -replace '\s+', ' ').Trim(' ')).ToLower()
+                if ($script:CheckConsistency -eq $true) {$script:ItemsReferencedTo += $valueInDocumentNameCell}
+                $script:ReferencesToDocuments += 1
                 $documentNames += $valueInDocumentNameCell
                 $documentTitles += $valueInDocumentTitleCell
                 }
@@ -475,8 +493,9 @@ Function Get-DataFromSpecification ($selectedFolder, $currentSPCName) {
             if ($script:CheckMD5 -eq $true) {
                 [string]$valueInFileMd5Cell = (((($document.Tables.Item(1).Cell($i,7).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')).ToLower()
                 if ($valueInFileMd5Cell -match '([m,M]\s*[d,D]\s*5)\s*:') {
-                    $script:ReferencesToFiles += 1
                     [string]$valueInFileNameCell = ((($document.Tables.Item(1).Cell($i,4).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')
+                    if ($script:CheckConsistency -eq $true) {$script:ItemsReferencedTo += $valueInFileNameCell}
+                    $script:ReferencesToFiles += 1
                     $fileMd5s += $valueInFileMd5Cell
                     $fileNames += $valueInFileNameCell
                 }
@@ -854,3 +873,15 @@ $StringForHTML = "<h3>Анализ</h3>`r`n<span id=""spcchecked"">Специф�
 Start-Sleep -Seconds 1
 Add-ExecutionTimeToReport -Time $ExecutionTime -ReportName "Check-References-Report" -StringToReplace "<h3>Анализ</h3>"
 Invoke-Item "$PSScriptRoot\Check-References-Report.html"
+Write-Host $script:ItemsReferencedTo
+
+Function Check-Consistency() {
+#Processes documents in $script:PathToFilesBeingPublished
+Get-ChildItem -Path "$script:PathToFilesBeingPublished\*.*" -Include "*.pdf", "*.xls*", "*.doc*"
+#Processes documents in $script:PathToPublishedFiles
+Get-ChildItem -Path "$script:PathToPublishedFiles\*.*" -Include "*.pdf", "*.xls*", "*.doc*"
+#Processes software in $script:PathToFilesBeingPublished
+Get-ChildItem -Path "$script:PathToFilesBeingPublished\*.*" -Exclude "*.pdf", "*.xls*", "*.doc*"
+#Processes software in $script:PathToPublishedFiles
+Get-ChildItem -Path "$script:PathToPublishedFiles\*.*" -Exclude "*.pdf", "*.xls*", "*.doc*"
+}
