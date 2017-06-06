@@ -302,6 +302,8 @@ for ($i = 0; $i -lt $files.Count; $i++) {
     $existence = Test-Path -Path "$script:SelectedFolder\$currentFileName"
     if ($existence -eq $true) {
     $document = $application.documents.open("$script:SelectedFolder\$currentFileName")
+    #Unprotects the document
+    try {$document.Unprotect(); Write-Host "Document was protected, but got unprotected by the script."} catch {Write-Host "Document is not protected. Unprotection is not required."}
     $builtInProperties = $document.BuiltInDocumentProperties
     $customProperties = $document.CustomDocumentProperties
     $binding = “System.Reflection.BindingFlags” -as [type]
@@ -356,8 +358,10 @@ Write-Host "Getting ready to unhide hidden text/update fields and/or TOCs in doc
 $application = New-Object -ComObject word.application
 $application.Visible = $false
 Get-ChildItem -Path "$script:SelectedFolder\*.*" -Include "*.doc*", "*.dot*" | % {
-Write-Host "Processing" $_.Name
+Write-Host "Processing $($_.Name)..."
 $document = $application.documents.open($_.FullName)
+#Unprotects the document
+try {$document.Unprotect(); Write-Host "Document was protected, but got unprotected by the script."} catch {Write-Host "Document is not protected. Unprotection is not required."}
 Start-Sleep -Seconds 5
 #updates fields in footers and headers
 if ($script:UpdateFieldsInFootersAndHeaders -eq $true) {
@@ -387,9 +391,9 @@ if ($script:UpdateFieldsInDocumentBody -eq $true) {
     $wholestory = $document.Range()
     $page = $wholestory.Information(4)  
     if ($_.BaseName -match "SPC") {
-    $document.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(5, 10).Range.Text = $page
+    try {$document.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(5, 10).Range.Text = $page} catch {Write-Host "Cannot update Total Number of Pages as the document is using an old title page" -ForegroundColor Red}
     } else {
-    $document.Tables.Item(1).Cell(10, 12).Range.Text = $page
+    try {$document.Tables.Item(1).Cell(10, 12).Range.Text = $page} catch {Write-Host "Cannot update Total Number of Pages as the document is using an old title page" -ForegroundColor Red}
     }
     $document.Fields.Update()
 }
