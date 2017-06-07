@@ -1,4 +1,4 @@
-Sub LocateWatermarksInTranslatedDocumentBody()
+Sub LocateWatermarksInTranslatedDocument()
 'Applies the following coordinates and formatting to all shapes in headers and footers
 For Each Shape In ActiveDocument.Sections(1).Headers(wdHeaderFooterPrimary).Shapes
 ImageText = Shape.TextFrame.TextRange.Text
