@@ -33,8 +33,8 @@ $worksheet.Range("E:E").NumberFormat = "@"
 $worksheet.Cells.Item(1, 1) = "Property name"
 $worksheet.Cells.Item(1, 2) = "Property value"
 $worksheet.Cells.Item(1, 3) = "Property holder"
-$worksheet.Cells.Item(1, 4) = "Processed files"
-$worksheet.Cells.Item(1, 5) = "Property type"
+$worksheet.Cells.Item(1, 4) = "Property type"
+$worksheet.Cells.Item(1, 5) = "Processed files"
 Get-ChildItem -Path "$selectedPath\*.*" -Include "*.doc*", "*.dot*" | % {
 Write-Host "Taking properties from" $_.Name
 $document = $application.documents.open($_.FullName)
@@ -54,7 +54,7 @@ $pn = [System.__ComObject].InvokeMember(“name”,$binding::GetProperty,$null,$
     $worksheet.Cells.Item($row, 1) = "$propertyName"
     $worksheet.Cells.Item($row, 2) = "$propertyValue"
     $worksheet.Cells.Item($row, 3) = $document.Name
-    $worksheet.Cells.Item($row, 5) = "B"
+    $worksheet.Cells.Item($row, 4) = "B"
     $row += 1
     }
 }
@@ -74,11 +74,11 @@ $pn = [System.__ComObject].InvokeMember(“name”,$binding::GetProperty,$null,$
     $worksheet.Cells.Item($row, 1) = "$propertyName"
     $worksheet.Cells.Item($row, 2) = "$propertyValue"
     $worksheet.Cells.Item($row, 3) = $document.Name
-    $worksheet.Cells.Item($row, 5) = "C"
+    $worksheet.Cells.Item($row, 4) = "C"
     $row += 1
     }
 }
-$worksheet.Cells.Item($listOfFiles, 4) = $_.Name
+$worksheet.Cells.Item($listOfFiles, 5) = $_.Name
 $listOfFiles += 1
 Write-Host "------End of document-----"
 $document.Close([ref]0)
