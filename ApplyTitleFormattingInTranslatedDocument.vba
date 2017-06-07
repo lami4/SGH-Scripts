@@ -277,24 +277,6 @@ approvals.Font.Name = "Times New Roman"
 approvals.ParagraphFormat.Alignment = wdAlignParagraphRight
 ActiveDocument.Tables(1).Tables(1).LeftPadding = PixelsToPoints(7)
 ActiveDocument.Tables(1).Tables(1).RightPadding = PixelsToPoints(7)
-'Place captions
-For Each Shape In ActiveDocument.Sections(1).Headers(wdHeaderFooterPrimary).Shapes
-Confidential = Shape.TextFrame.TextRange.Text
-Confidential = Mid(Confidential, 1, Len(Confidential) - 1)
-LowerConfidential = LCase(Confidential)
-If Shape.Width = 240.95 And LowerConfidential = "confidential" Then
-Shape.RelativeHorizontalPosition = wdRelativeHorizontalPositionRightMarginArea
-Shape.Left = CentimetersToPoints(-8.2)
-Shape.RelativeVerticalPosition = wdRelativeVerticalPositionTopMarginArea
-Shape.Top = CentimetersToPoints(0.4)
-End If
-If Shape.Width = 240.95 And LowerConfidential = "trade secret" Then
-Shape.RelativeHorizontalPosition = wdRelativeHorizontalPositionRightMarginArea
-Shape.Left = CentimetersToPoints(-8.2)
-Shape.RelativeVerticalPosition = wdRelativeVerticalPositionBottomMarginArea
-Shape.Top = CentimetersToPoints(0)
-End If
-Next
 'Fix size of the cell with title
 TextInCell = ActiveDocument.Tables(1).Cell(9, 7).Range.Text
 Length = Len(TextInCell)
