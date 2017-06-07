@@ -20,7 +20,7 @@ $dialog = New-Object System.Windows.Forms.Form
 $dialog.ShowIcon = $false
 $dialog.AutoSize = $true
 $dialog.Text = "Script Settings"
-$dialog.AutoSizeMode = "GrowAndShrink"
+#$dialog.AutoSizeMode = "GrowAndShrink"
 $dialog.WindowState = "Normal"
 $dialog.SizeGripStyle = "Hide"
 $dialog.ShowInTaskbar = $true
@@ -201,7 +201,7 @@ $checkboxRunATFmacro.Add_CheckStateChanged({if ($checkboxRunAFISmacro.Checked -o
 #Run "LocateWatermarksInTranslatedDocumentBody" macro
 $checkboxRunLWIDBmacro = New-Object System.Windows.Forms.CheckBox
 $checkboxRunLWIDBmacro.Width = 375
-$checkboxRunLWIDBmacro.Text = "Run 'LocateWatermarksInTranslatedDocumentBody' Macro"
+$checkboxRunLWIDBmacro.Text = "Run 'LocateWatermarksInTranslatedDocument' Macro"
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 25
 $SystemDrawingPoint.Y = 275
@@ -288,9 +288,9 @@ $excel.Visible = $false
 $workbook = $excel.WorkBooks.Open($script:SelectedFile)
 $worksheet = $workbook.Worksheets.Item(1)
 $xldown = -4121
-$lastNonemptyCellInColumn = $worksheet.Range("D:D").End($xldown).Row
+$lastNonemptyCellInColumn = $worksheet.Range("E:E").End($xldown).Row
 for ($i = 2; $i -le $lastNonemptyCellInColumn; $i++) {
-[string]$valueInCell = $worksheet.Cells.Item($i, "D").Value()
+[string]$valueInCell = $worksheet.Cells.Item($i, "E").Value()
 $files += $valueInCell
 }
 Write-Host "Getting ready to replace properties in documents..."
@@ -321,8 +321,8 @@ for ($i = 0; $i -lt $files.Count; $i++) {
     #Write-Host "Name:" $propertyName
     $propertyValue = $worksheet.Cells.Item($currentAddress, "B").Value()
     #Write-Host "Value:" $propertyValue
-    $propertyType = $worksheet.Cells.Item($currentAddress, "E").Value()
-    #Write-Host "Type:" $propertyType
+    $propertyType = $worksheet.Cells.Item($currentAddress, "D").Value()
+    Write-Host "Type:" $propertyType
         if ($propertyType -eq "B") {
             if ($script:TranslateBuiltInProperties -eq $true) {
             #set new translated values for BuiltInProperties
@@ -411,7 +411,7 @@ $application.Visible = $false
 Get-ChildItem -Path "$script:SelectedFolder\*.*" -Include "*.doc*", "*.dot*" | % {
 $document = $application.documents.open($_.FullName)
 if ($script:RunATFmacro -eq $true -and $_.Name -notmatch "SPC") {Write-Host "Working on $($_.Name):";Write-Host "Running ApplyTitleFormattingInTranslatedDocument...";$application.Run("ApplyTitleFormattingInTranslatedDocument")}
-if ($script:RunLWIDBmacro -eq $true -and $_.Name -notmatch "SPC") {Write-Host "Working on $($_.Name):";Write-Host "Running LocateWatermarksInTranslatedDocumentBody...";$application.Run("LocateWatermarksInTranslatedDocumentBody")}
+if ($script:RunLWIDBmacro -eq $true -and $_.Name -notmatch "SPC") {Write-Host "Working on $($_.Name):";Write-Host "Running LocateWatermarksInTranslatedDocument...";$application.Run("LocateWatermarksInTranslatedDocument")}
 if ($script:RunAFISmacro -eq $true -and $_.Name -match "SPC") {Write-Host "Working on $($_.Name):";Write-Host "Running ApplyFormattingInSpecification...";$application.Run("ApplyFormattingInSpecification")}
 $document.Close()
 }
