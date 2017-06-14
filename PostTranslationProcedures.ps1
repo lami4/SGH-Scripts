@@ -221,10 +221,10 @@ $checkboxRunAFISmacro.Add_CheckStateChanged({if ($checkboxRunAFISmacro.Checked -
 $buttonRunScriptForSP = New-Object System.Windows.Forms.Button
 $buttonRunScriptForSP.Height = 30
 $buttonRunScriptForSP.Width = 80
-$buttonRunScriptForSP.Text = "Run Script"
+$buttonRunScriptForSP.Text = "Get props"
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 25
-$SystemDrawingPoint.Y = 335
+$SystemDrawingPoint.Y = 360
 $buttonRunScriptForSP.Location = $SystemDrawingPoint
 $SystemWindowsFormsMargin = New-Object System.Windows.Forms.Padding
 $SystemWindowsFormsMargin.Bottom = 25
@@ -238,7 +238,7 @@ $buttonExitForSP.Width = 80
 $buttonExitForSP.Text = "Exit"
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 115
-$SystemDrawingPoint.Y = 335
+$SystemDrawingPoint.Y = 360
 $buttonExitForSP.Location = $SystemDrawingPoint
 $SystemWindowsFormsMargin = New-Object System.Windows.Forms.Padding
 $SystemWindowsFormsMargin.Bottom = 25
@@ -262,7 +262,7 @@ $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 110
 $SystemDrawingPoint.Y = 32
 $labelBrowseFolderForSP.Location = $SystemDrawingPoint
-$labelBrowseFolderForSP.Width = 300
+$labelBrowseFolderForSP.Width = 400
 $labelBrowseFolderForSP.Height = 40
 $labelBrowseFolderForSP.Enabled = $true
 #CheckboxGetBuiltInProperties
@@ -277,12 +277,49 @@ $checkboxGetBuiltInProperties.Add_CheckStateChanged({})
 #CheckboxGetCustomInProperties
 $checkboxGetCustomProperties = New-Object System.Windows.Forms.CheckBox
 $checkboxGetCustomProperties.Width = 300
-$checkboxGetCustomProperties.Text = "Get Custon Properties"
+$checkboxGetCustomProperties.Text = "Get Custom Properties"
 $SystemDrawingPoint = New-Object System.Drawing.Point
 $SystemDrawingPoint.X = 25
 $SystemDrawingPoint.Y = 90
 $checkboxGetCustomProperties.Location = $SystemDrawingPoint
 $checkboxGetCustomProperties.Add_CheckStateChanged({})
+#CheckboxGetPropertiesWithNoValue
+$checkboxGetPropertiesWithNoValue = New-Object System.Windows.Forms.CheckBox
+$checkboxGetPropertiesWithNoValue.Width = 300
+$checkboxGetPropertiesWithNoValue.Text = "Ignore Properties That Have No Value"
+$SystemDrawingPoint = New-Object System.Drawing.Point
+$SystemDrawingPoint.X = 25
+$SystemDrawingPoint.Y = 115
+$checkboxGetPropertiesWithNoValue.Location = $SystemDrawingPoint
+$checkboxGetPropertiesWithNoValue.Add_CheckStateChanged({})
+#ListBox
+$blacklist = @("Last author", "Template", "Security", "Revision number", "Application name", "Last print date", "Number of bytes", "Number of characters (with spaces)", "Number of multimedia clips", "Number of hidden Slides", "Number of notes", "Number of slides", "Number of paragraphs", "Number of lines", "Number of characters", "Number of words", "Number of pages", "Total editing time", "Last save time", "Creation date")
+$GetPropertiesListBox = New-Object System.Windows.Forms.ListBox
+$GetPropertiesListBox.Width = 190
+$GetPropertiesListBox.Height = 200
+$SystemDrawingPoint = New-Object System.Drawing.Point
+$SystemDrawingPoint.X = 25
+$SystemDrawingPoint.Y = 140
+$GetPropertiesListBox.Location = $SystemDrawingPoint
+$blacklist | % {$GetPropertiesListBox.Items.Add($_)}
+$GetPropertiesListBox.HorizontalScrollbar = $true
+#inputbox
+$GetPropertiesTextBox = New-Object System.Windows.Forms.TextBox 
+$GetPropertiesTextBox.Location = New-Object System.Drawing.Size(230,140) 
+$GetPropertiesTextBox.Size = New-Object System.Drawing.Size(200,30)
+#AddPropertyToTheListButton
+$buttonAddPropertyToTheListButton = New-Object System.Windows.Forms.Button
+$buttonAddPropertyToTheListButton.Height = 22
+$buttonAddPropertyToTheListButton.Width = 60
+$buttonAddPropertyToTheListButton.Text = "Add"
+$SystemDrawingPoint = New-Object System.Drawing.Point
+$SystemDrawingPoint.X = 430
+$SystemDrawingPoint.Y = 139
+$buttonAddPropertyToTheListButton.Location = $SystemDrawingPoint
+$buttonAddPropertyToTheListButton.Enabled = $true
+$buttonAddPropertyToTheListButton.Add_Click({
+$GetPropertiesListBox.Items.Insert(0, $GetPropertiesTextBox.Text)
+})
 #tabs
 #Tab Control 
 $TabControl = New-object System.Windows.Forms.TabControl
@@ -292,8 +329,8 @@ $SystemDrawingPoint.X = 5
 $SystemDrawingPoint.Y = 5
 $tabControl.Location = $SystemDrawingPoint
 $SystemDrawingSize = New-Object System.Drawing.Size
-$SystemDrawingSize.Height = 415
-$SystemDrawingSize.Width = 450
+$SystemDrawingSize.Height = 450
+$SystemDrawingSize.Width = 550
 $tabControl.Size = $SystemDrawingSize
 $TabControl.AutoSize = $true
 #GetProperties page
@@ -308,10 +345,14 @@ $SetPropertiesPage.Text = "Set Properties”
 $dialog.Controls.Add($tabControl)
 $tabControl.Controls.Add($GetPropertiesPage)
 $tabControl.Controls.Add($SetPropertiesPage)
+$GetPropertiesPage.Controls.Add($buttonAddPropertyToTheListButton)
+$GetPropertiesPage.Controls.Add($GetPropertiesTextBox)
+$GetPropertiesPage.Controls.Add($GetPropertiesListBox)
 $GetPropertiesPage.Controls.Add($buttonBrowseFolderForSP)
 $GetPropertiesPage.Controls.Add($labelBrowseFolderForSP)
 $GetPropertiesPage.Controls.Add($checkboxGetCustomProperties)
 $GetPropertiesPage.Controls.Add($checkboxGetBuiltInProperties)
+$GetPropertiesPage.Controls.Add($checkboxGetPropertiesWithNoValue)
 $GetPropertiesPage.Controls.Add($buttonRunScriptForSP)
 $GetPropertiesPage.Controls.Add($buttonExitForSP)
 $SetPropertiesPage.Controls.Add($checkboxTranslateBuiltInProperties)
