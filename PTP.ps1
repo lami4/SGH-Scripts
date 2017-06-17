@@ -15,7 +15,7 @@ Function Custom-Form {
     #TAB CONTROL
     $TabControl = New-object System.Windows.Forms.TabControl
     $TabControl.Location = New-Object System.Drawing.Size(5,5)
-    $TabControl.Size = New-Object System.Drawing.Size(500,550)
+    $TabControl.Size = New-Object System.Drawing.Size(550,550) #width,height
     $Form.Controls.Add($TabControl)
     #GET PROPERTIES PAGE
     $GetPropertiesPage = New-Object System.Windows.Forms.TabPage
@@ -56,31 +56,87 @@ Function Custom-Form {
     $GetPropertyCheckboxIgnorePropertiesWithNoValue.Text = "Ignore Properties That Have No Value"
     $GetPropertyCheckboxIgnorePropertiesWithNoValue.Add_CheckStateChanged({})
     $GetPropertiesPage.Controls.Add($GetPropertyCheckboxIgnorePropertiesWithNoValue)
+    #Checkbox 'Ignore Properties That Have No Value'
+    $GetPropertyCheckboxUseBlacklist = New-Object System.Windows.Forms.CheckBox
+    $GetPropertyCheckboxUseBlacklist.Location = New-Object System.Drawing.Point(25,140)
+    $GetPropertyCheckboxUseBlacklist.Width = 300
+    $GetPropertyCheckboxUseBlacklist.Text = "Use Blacklist"
+    $GetPropertyCheckboxUseBlacklist.Add_CheckStateChanged({})
+    $GetPropertiesPage.Controls.Add($GetPropertyCheckboxUseBlacklist)
+    #Groupbox 'Blacklist settings'
+    $GetPropertyGroupboxBlacklistSettings = New-Object System.Windows.Forms.GroupBox
+    $GetPropertyGroupboxBlacklistSettings.Location = New-Object System.Drawing.Point(25,170) #x,y
+    $GetPropertyGroupboxBlacklistSettings.Size = New-Object System.Drawing.Point(500,295) #width,height
+    $GetPropertyGroupboxBlacklistSettings.Text = "Blacklist Settings"
+    $GetPropertyGroupboxBlacklistSettings.Enabled = $true
+    $GetPropertiesPage.Controls.Add($GetPropertyGroupboxBlacklistSettings)
     #Listbox 'Black list'
     $DefaultBlackList = @("Last author", "Template", "Security", "Revision number", "Application name", "Last print date", "Number of bytes", "Number of characters (with spaces)", "Number of multimedia clips", "Number of hidden Slides", "Number of notes", "Number of slides", "Number of paragraphs", "Number of lines", "Number of characters", "Number of words", "Number of pages", "Total editing time", "Last save time", "Creation date")
     $GetPropertyListBoxBlackList = New-Object System.Windows.Forms.ListBox
-    $GetPropertyListBoxBlackList.Location = New-Object System.Drawing.Point(25,140) #x,y
-    $GetPropertyListBoxBlackList.Size = New-Object System.Drawing.Point(210,250) #width,height
+    $GetPropertyListBoxBlackList.Location = New-Object System.Drawing.Point(15,25) #x,y
+    $GetPropertyListBoxBlackList.Size = New-Object System.Drawing.Point(210,260) #width,height
     $DefaultBlackList | % {$GetPropertyListBoxBlackList.Items.Add($_)}
-    $GetPropertiesPage.Controls.Add($GetPropertyListBoxBlackList)
-    #Inputbox 'Add item to the list'
-    $GetPropertyInputboxAddItem = New-Object System.Windows.Forms.TextBox 
-    $GetPropertyInputboxAddItem.Location = New-Object System.Drawing.Size(250,140) #x,y
-    $GetPropertyInputboxAddItem.Size = New-Object System.Drawing.Size(180,30) #width,height
-    $GetPropertiesPage.Controls.Add($GetPropertyInputboxAddItem)
+    $GetPropertyListBoxBlackList.Add_SelectedIndexChanged({
+        if ($GetPropertyListBoxBlackList.SelectedIndex -ne -1) {
+        Write-Host "$($GetPropertyListBoxBlackList.SelectedIndex)"
+        $GetPropertyInputboxEditItem.Text = $GetPropertyListBoxBlackList.SelectedItem
+        } else {
+        $GetPropertyInputboxEditItem.Text = "Select item on the blacklist to edit it"
+        }
+    })
+    $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyListBoxBlackList)
     #Button 'Add'
     $GetPropertyButtonAddItem = New-Object System.Windows.Forms.Button
-    $GetPropertyButtonAddItem.Location = New-Object System.Drawing.Point(435,140) #x,y
-    $GetPropertyButtonAddItem.Size = New-Object System.Drawing.Point(50,30) #width,height
+    $GetPropertyButtonAddItem.Location = New-Object System.Drawing.Point(235,24) #x,y
+    $GetPropertyButtonAddItem.Size = New-Object System.Drawing.Point(50,22) #width,height
     $GetPropertyButtonAddItem.Text = "Add"
-    #$GetPropertyButtonAddItem.BackColor = "Red"
-    $GetPropertyButtonAddItem.TabStop = $false 
-    $GetPropertyButtonAddItem.FlatStyle = "Flat"
-    $GetPropertyButtonAddItem.FlatAppearance.BorderSize = 0
     $GetPropertyButtonAddItem.Add_Click({
         $GetPropertyListBoxBlackList.Items.Insert(0, $GetPropertyInputboxAddItem.Text)
         })
-    $GetPropertiesPage.Controls.Add($GetPropertyButtonAddItem)
+    $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyButtonAddItem)
+    #Inputbox 'Add item to the list'
+    $GetPropertyInputboxAddItem = New-Object System.Windows.Forms.TextBox 
+    $GetPropertyInputboxAddItem.Location = New-Object System.Drawing.Size(295,25) #x,y
+    $GetPropertyInputboxAddItem.Width = 190
+    $GetPropertyInputboxAddItem.Text = "Type in property name to add it"
+    $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyInputboxAddItem)
+    #Button 'Edit'
+    $GetPropertyButtonEditItem = New-Object System.Windows.Forms.Button
+    $GetPropertyButtonEditItem.Location = New-Object System.Drawing.Point(235,52) #x,y
+    $GetPropertyButtonEditItem.Size = New-Object System.Drawing.Point(50,22) #width,height
+    $GetPropertyButtonEditItem.Text = "Edit"
+    $GetPropertyButtonEditItem.Add_Click({})
+    $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyButtonEditItem)
+    #Inputbox 'Edit the selected item'
+    $GetPropertyInputboxEditItem = New-Object System.Windows.Forms.TextBox 
+    $GetPropertyInputboxEditItem.Location = New-Object System.Drawing.Size(295,53) #x,y
+    $GetPropertyInputboxEditItem.Width = 190
+    $GetPropertyInputboxEditItem.Enabled = $false
+    $GetPropertyInputboxEditItem.Text = "Select item on the blacklist to edit it"
+    $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyInputboxEditItem)
+    #Button 'Delete'
+    $GetPropertyButtonDeleteItem = New-Object System.Windows.Forms.Button
+    $GetPropertyButtonDeleteItem.Location = New-Object System.Drawing.Point(235,80) #x,y
+    $GetPropertyButtonDeleteItem.Size = New-Object System.Drawing.Point(50,22) #width,height
+    $GetPropertyButtonDeleteItem.Text = "Delete"
+    $GetPropertyButtonDeleteItem.Add_Click({
+        $GetPropertyListBoxBlackList.Items.Remove($GetPropertyListBoxBlackList.SelectedItem)
+    })
+    $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyButtonDeleteItem)
+    #Button 'Export'
+    $GetPropertyButtonExportList = New-Object System.Windows.Forms.Button
+    $GetPropertyButtonExportList.Location = New-Object System.Drawing.Point(235,108) #x,y
+    $GetPropertyButtonExportList.Size = New-Object System.Drawing.Point(50,22) #width,height
+    $GetPropertyButtonExportList.Text = "Export"
+    $GetPropertyButtonExportList.Add_Click({})
+    $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyButtonExportList)
+    #Button 'Import'
+    $GetPropertyButtonImportList = New-Object System.Windows.Forms.Button
+    $GetPropertyButtonImportList.Location = New-Object System.Drawing.Point(235,136) #x,y
+    $GetPropertyButtonImportList.Size = New-Object System.Drawing.Point(50,22) #width,height
+    $GetPropertyButtonImportList.Text = "Import"
+    $GetPropertyButtonImportList.Add_Click({})
+    $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyButtonImportList)
     #SET PROPERTIES PAGE
     $SetPropertiesPage = New-Object System.Windows.Forms.TabPage
     $SetPropertiesPage.Text = "Set Properties”
