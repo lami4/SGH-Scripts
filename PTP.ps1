@@ -81,7 +81,7 @@ Function Custom-Form {
         Write-Host "$($GetPropertyListBoxBlackList.SelectedIndex)"
         $GetPropertyInputboxEditItem.Text = $GetPropertyListBoxBlackList.SelectedItem
         } else {
-        $GetPropertyInputboxEditItem.Text = "Select item on the blacklist to edit it"
+        $GetPropertyInputboxEditItem.Text = "Select item on the blacklist to edit it..."
         }
     })
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyListBoxBlackList)
@@ -92,14 +92,29 @@ Function Custom-Form {
     $GetPropertyButtonAddItem.Text = "Add"
     $GetPropertyButtonAddItem.Add_Click({
         $GetPropertyListBoxBlackList.Items.Insert(0, $GetPropertyInputboxAddItem.Text)
+        $GetPropertyInputboxAddItem.Text = "Type in property name to add it..."
+        $GetPropertyInputboxAddItem.ForeColor = "Gray"
         })
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyButtonAddItem)
     #Inputbox 'Add item to the list'
     $GetPropertyInputboxAddItem = New-Object System.Windows.Forms.TextBox 
     $GetPropertyInputboxAddItem.Location = New-Object System.Drawing.Size(295,25) #x,y
     $GetPropertyInputboxAddItem.Width = 190
-    $GetPropertyInputboxAddItem.Text = "Type in property name to add it"
+    $GetPropertyInputboxAddItem.Text = "Type in property name to add it..."
+    $GetPropertyInputboxAddItem.ForeColor = "Gray"
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyInputboxAddItem)
+    $GetPropertyInputboxAddItem.Add_GotFocus({
+        if ($GetPropertyInputboxAddItem.Text -eq "Type in property name to add it...") {
+            $GetPropertyInputboxAddItem.Text = ""
+            $GetPropertyInputboxAddItem.ForeColor = "Black"
+        }
+        })
+    $GetPropertyInputboxAddItem.Add_LostFocus({
+        if ($GetPropertyInputboxAddItem.Text -eq "") {
+            $GetPropertyInputboxAddItem.Text = "Type in property name to add it..."
+            $GetPropertyInputboxAddItem.ForeColor = "Gray"
+        }
+        })
     #Button 'Edit'
     $GetPropertyButtonEditItem = New-Object System.Windows.Forms.Button
     $GetPropertyButtonEditItem.Location = New-Object System.Drawing.Point(235,52) #x,y
@@ -112,7 +127,7 @@ Function Custom-Form {
     $GetPropertyInputboxEditItem.Location = New-Object System.Drawing.Size(295,53) #x,y
     $GetPropertyInputboxEditItem.Width = 190
     $GetPropertyInputboxEditItem.Enabled = $false
-    $GetPropertyInputboxEditItem.Text = "Select item on the blacklist to edit it"
+    $GetPropertyInputboxEditItem.Text = "Select item on the blacklist to edit it..."
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyInputboxEditItem)
     #Button 'Delete'
     $GetPropertyButtonDeleteItem = New-Object System.Windows.Forms.Button
@@ -141,7 +156,6 @@ Function Custom-Form {
     $SetPropertiesPage = New-Object System.Windows.Forms.TabPage
     $SetPropertiesPage.Text = "Set Properties”
     $TabControl.Controls.Add($SetPropertiesPage)
-
     $Form.ShowDialog()
 }
 
