@@ -78,12 +78,10 @@ Function Custom-Form {
     $DefaultBlackList | % {$GetPropertyListBoxBlackList.Items.Add($_)}
     $GetPropertyListBoxBlackList.Add_SelectedIndexChanged({
         if ($GetPropertyListBoxBlackList.SelectedIndex -ne -1) {
-        Write-Host "$($GetPropertyListBoxBlackList.SelectedIndex)"
-        $GetPropertyInputboxEditItem.Text = $GetPropertyListBoxBlackList.SelectedItem
-        } else {
-        $GetPropertyInputboxEditItem.Text = "Select item on the blacklist to edit it..."
+            Write-Host "$($GetPropertyListBoxBlackList.SelectedIndex)"
+            $GetPropertyInputboxEditItem.Text = $GetPropertyListBoxBlackList.SelectedItem
         }
-    })
+        })
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyListBoxBlackList)
     #Button 'Add'
     $GetPropertyButtonAddItem = New-Object System.Windows.Forms.Button
@@ -91,9 +89,11 @@ Function Custom-Form {
     $GetPropertyButtonAddItem.Size = New-Object System.Drawing.Point(50,22) #width,height
     $GetPropertyButtonAddItem.Text = "Add"
     $GetPropertyButtonAddItem.Add_Click({
-        $GetPropertyListBoxBlackList.Items.Insert(0, $GetPropertyInputboxAddItem.Text)
-        $GetPropertyInputboxAddItem.Text = "Type in property name to add it..."
-        $GetPropertyInputboxAddItem.ForeColor = "Gray"
+        if ($GetPropertyInputboxAddItem.Text -ne "Type in property name to add it...") {
+            $GetPropertyListBoxBlackList.Items.Insert(0, $GetPropertyInputboxAddItem.Text)
+            $GetPropertyInputboxAddItem.Text = "Type in property name to add it..."
+            $GetPropertyInputboxAddItem.ForeColor = "Gray"
+        }
         })
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyButtonAddItem)
     #Inputbox 'Add item to the list'
@@ -102,7 +102,6 @@ Function Custom-Form {
     $GetPropertyInputboxAddItem.Width = 190
     $GetPropertyInputboxAddItem.Text = "Type in property name to add it..."
     $GetPropertyInputboxAddItem.ForeColor = "Gray"
-    $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyInputboxAddItem)
     $GetPropertyInputboxAddItem.Add_GotFocus({
         if ($GetPropertyInputboxAddItem.Text -eq "Type in property name to add it...") {
             $GetPropertyInputboxAddItem.Text = ""
@@ -115,12 +114,20 @@ Function Custom-Form {
             $GetPropertyInputboxAddItem.ForeColor = "Gray"
         }
         })
+    $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyInputboxAddItem)
     #Button 'Edit'
     $GetPropertyButtonEditItem = New-Object System.Windows.Forms.Button
     $GetPropertyButtonEditItem.Location = New-Object System.Drawing.Point(235,52) #x,y
     $GetPropertyButtonEditItem.Size = New-Object System.Drawing.Point(50,22) #width,height
     $GetPropertyButtonEditItem.Text = "Edit"
-    $GetPropertyButtonEditItem.Add_Click({})
+    $GetPropertyButtonEditItem.Add_Click({
+        if ($GetPropertyInputboxEditItem.Text -ne "Select item on the blacklist to edit it...") {
+            $GetPropertyInputboxEditItem.Enabled = $true
+            $GetPropertyButtonApplyItem.Enabled = $true
+            $GetPropertyButtonCancelItem.Enabled = $true 
+            $GetPropertyButtonEditItem.Enabled = $false  
+        }
+        })
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyButtonEditItem)
     #Inputbox 'Edit the selected item'
     $GetPropertyInputboxEditItem = New-Object System.Windows.Forms.TextBox 
@@ -129,25 +136,67 @@ Function Custom-Form {
     $GetPropertyInputboxEditItem.Enabled = $false
     $GetPropertyInputboxEditItem.Text = "Select item on the blacklist to edit it..."
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyInputboxEditItem)
+    #Button 'Apply'
+    $GetPropertyButtonApplyItem = New-Object System.Windows.Forms.Button
+    $GetPropertyButtonApplyItem.Location = New-Object System.Drawing.Point(295,75) #x,y
+    $GetPropertyButtonApplyItem.Size = New-Object System.Drawing.Point(50,22) #width,height
+    $GetPropertyButtonApplyItem.Text = "Apply"
+    $GetPropertyButtonApplyItem.Enabled = $false
+    $GetPropertyButtonApplyItem.Add_Click({
+            $GetPropertyListBoxBlackList.Items.Insert($GetPropertyListBoxBlackList.SelectedIndex, ($GetPropertyInputboxEditItem.Text).Trim(' '))
+            $GetPropertyListBoxBlackList.Items.Remove($GetPropertyListBoxBlackList.SelectedItem)
+            $GetPropertyInputboxEditItem.Enabled = $false
+            $GetPropertyButtonApplyItem.Enabled = $false
+            $GetPropertyButtonCancelItem.Enabled = $false
+            $GetPropertyButtonEditItem.Enabled = $true 
+            $GetPropertyInputboxEditItem.Text = "Select item on the blacklist to edit it..."
+        })
+    $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyButtonApplyItem)
+    #Button 'Cancel'
+    $GetPropertyButtonCancelItem = New-Object System.Windows.Forms.Button
+    $GetPropertyButtonCancelItem.Location = New-Object System.Drawing.Point(347,75) #x,y
+    $GetPropertyButtonCancelItem.Size = New-Object System.Drawing.Point(50,22) #width,height
+    $GetPropertyButtonCancelItem.Text = "Cancel"
+    $GetPropertyButtonCancelItem.Enabled = $false
+    $GetPropertyButtonCancelItem.Add_Click({
+            $GetPropertyInputboxEditItem.Enabled = $false
+            $GetPropertyButtonApplyItem.Enabled = $false
+            $GetPropertyButtonCancelItem.Enabled = $false
+            $GetPropertyButtonEditItem.Enabled = $true    
+        })
+    $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyButtonCancelItem)
     #Button 'Delete'
     $GetPropertyButtonDeleteItem = New-Object System.Windows.Forms.Button
-    $GetPropertyButtonDeleteItem.Location = New-Object System.Drawing.Point(235,80) #x,y
+    $GetPropertyButtonDeleteItem.Location = New-Object System.Drawing.Point(235,103) #x,y
     $GetPropertyButtonDeleteItem.Size = New-Object System.Drawing.Point(50,22) #width,height
     $GetPropertyButtonDeleteItem.Text = "Delete"
     $GetPropertyButtonDeleteItem.Add_Click({
         $GetPropertyListBoxBlackList.Items.Remove($GetPropertyListBoxBlackList.SelectedItem)
-    })
+        $GetPropertyInputboxEditItem.Text = "Select item on the blacklist to edit it..."
+        })
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyButtonDeleteItem)
+    #Label for 'Delete' button
+    $GetPropertyLabelButtonDelete = New-Object System.Windows.Forms.Label
+    $GetPropertyLabelButtonDelete.Location =  New-Object System.Drawing.Point(295,106) #x,y
+    $GetPropertyLabelButtonDelete.Size =  New-Object System.Drawing.Point(200,15) #width,height
+    $GetPropertyLabelButtonDelete.Text = "Delete unwanted file from the blacklist"
+    $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyLabelButtonDelete)
     #Button 'Export'
     $GetPropertyButtonExportList = New-Object System.Windows.Forms.Button
-    $GetPropertyButtonExportList.Location = New-Object System.Drawing.Point(235,108) #x,y
+    $GetPropertyButtonExportList.Location = New-Object System.Drawing.Point(235,131) #x,y
     $GetPropertyButtonExportList.Size = New-Object System.Drawing.Point(50,22) #width,height
     $GetPropertyButtonExportList.Text = "Export"
     $GetPropertyButtonExportList.Add_Click({})
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyButtonExportList)
+    #Label for 'Export' button
+    $GetPropertyLabelButtonExport = New-Object System.Windows.Forms.Label
+    $GetPropertyLabelButtonExport.Location =  New-Object System.Drawing.Point(295,134) #x,y
+    $GetPropertyLabelButtonExport.Size =  New-Object System.Drawing.Point(200,15) #width,height
+    $GetPropertyLabelButtonExport.Text = "Export your blacklist for later use"
+    $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyLabelButtonExport)
     #Button 'Import'
     $GetPropertyButtonImportList = New-Object System.Windows.Forms.Button
-    $GetPropertyButtonImportList.Location = New-Object System.Drawing.Point(235,136) #x,y
+    $GetPropertyButtonImportList.Location = New-Object System.Drawing.Point(235,159) #x,y
     $GetPropertyButtonImportList.Size = New-Object System.Drawing.Point(50,22) #width,height
     $GetPropertyButtonImportList.Text = "Import"
     $GetPropertyButtonImportList.Add_Click({})
