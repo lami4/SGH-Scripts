@@ -1,4 +1,5 @@
-Function Custom-Form {
+Function Custom-Form 
+{
     Add-Type -AssemblyName System.Windows.Forms
     #FORM
     $Form = New-Object System.Windows.Forms.Form
@@ -56,19 +57,21 @@ Function Custom-Form {
     $GetPropertyCheckboxIgnorePropertiesWithNoValue.Text = "Ignore Properties That Have No Value"
     $GetPropertyCheckboxIgnorePropertiesWithNoValue.Add_CheckStateChanged({})
     $GetPropertiesPage.Controls.Add($GetPropertyCheckboxIgnorePropertiesWithNoValue)
-    #Checkbox 'Ignore Properties That Have No Value'
+    #Checkbox 'Use Blacklist'
     $GetPropertyCheckboxUseBlacklist = New-Object System.Windows.Forms.CheckBox
     $GetPropertyCheckboxUseBlacklist.Location = New-Object System.Drawing.Point(25,140)
     $GetPropertyCheckboxUseBlacklist.Width = 300
     $GetPropertyCheckboxUseBlacklist.Text = "Use Blacklist"
-    $GetPropertyCheckboxUseBlacklist.Add_CheckStateChanged({})
+    $GetPropertyCheckboxUseBlacklist.Add_CheckStateChanged({
+    if ($GetPropertyCheckboxUseBlacklist.Checked -eq $true) {$GetPropertyGroupboxBlacklistSettings.Enabled = $true} else {$GetPropertyGroupboxBlacklistSettings.Enabled = $false}
+    })
     $GetPropertiesPage.Controls.Add($GetPropertyCheckboxUseBlacklist)
     #Groupbox 'Blacklist settings'
     $GetPropertyGroupboxBlacklistSettings = New-Object System.Windows.Forms.GroupBox
     $GetPropertyGroupboxBlacklistSettings.Location = New-Object System.Drawing.Point(25,170) #x,y
     $GetPropertyGroupboxBlacklistSettings.Size = New-Object System.Drawing.Point(500,295) #width,height
     $GetPropertyGroupboxBlacklistSettings.Text = "Blacklist Settings"
-    $GetPropertyGroupboxBlacklistSettings.Enabled = $true
+    $GetPropertyGroupboxBlacklistSettings.Enabled = $false
     $GetPropertiesPage.Controls.Add($GetPropertyGroupboxBlacklistSettings)
     #Listbox 'Black list'
     $DefaultBlackList = @("Last author", "Template", "Security", "Revision number", "Application name", "Last print date", "Number of bytes", "Number of characters (with spaces)", "Number of multimedia clips", "Number of hidden Slides", "Number of notes", "Number of slides", "Number of paragraphs", "Number of lines", "Number of characters", "Number of words", "Number of pages", "Total editing time", "Last save time", "Creation date")
@@ -182,7 +185,13 @@ Function Custom-Form {
     $GetPropertyButtonExportList.Location = New-Object System.Drawing.Point(235,131) #x,y
     $GetPropertyButtonExportList.Size = New-Object System.Drawing.Point(50,22) #width,height
     $GetPropertyButtonExportList.Text = "Export"
-    $GetPropertyButtonExportList.Add_Click({})
+    $GetPropertyButtonExportList.Add_Click({
+        $PathToExportedFile = Export-BlackList
+        if ($PathToExportedFile -ne $null) {
+            If (Test-Path -Path $PathToExportedFile) {Remove-Item -Path $PathToExportedFile -Force}
+            $GetPropertyListBoxBlackList.Items | % {Add-Content -Path $PathToExportedFile -Value $_}
+        }
+        })
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyButtonExportList)
     #Label for 'Export' button
     $GetPropertyLabelButtonExport = New-Object System.Windows.Forms.Label
@@ -195,7 +204,15 @@ Function Custom-Form {
     $GetPropertyButtonImportList.Location = New-Object System.Drawing.Point(235,159) #x,y
     $GetPropertyButtonImportList.Size = New-Object System.Drawing.Point(50,22) #width,height
     $GetPropertyButtonImportList.Text = "Import"
-    $GetPropertyButtonImportList.Add_Click({})
+    $GetPropertyButtonImportList.Add_Click({
+        $PathToImportedFile = Import-BlackList
+        Write-Host $PathToImportedFile
+            if ($PathToImportedFile -ne $null) {
+                $TxtBlackListContent = @(Get-Content -Path $PathToImportedFile)
+                $GetPropertyListBoxBlackList.Items.Clear()
+                $TxtBlackListContent | % {$GetPropertyListBoxBlackList.Items.Add($_)}
+            }
+        })
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyButtonImportList)
     #Label for 'Import' button
     $GetPropertyLabelButtonImport = New-Object System.Windows.Forms.Label
@@ -203,6 +220,27 @@ Function Custom-Form {
     $GetPropertyLabelButtonImport.Size =  New-Object System.Drawing.Point(200,15) #width,height
     $GetPropertyLabelButtonImport.Text = "Import your blacklist"
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyLabelButtonImport)
+    #Checkbox 'Get Only Blacklisted Properties'
+    $GetPropertyCheckboxTurnIntoWhite = New-Object System.Windows.Forms.CheckBox
+    $GetPropertyCheckboxTurnIntoWhite.Location = New-Object System.Drawing.Point(235,190) #x,y
+    $GetPropertyCheckboxTurnIntoWhite.Width = 200
+    $GetPropertyCheckboxTurnIntoWhite.Text = "Get Only Blacklisted Properties"
+    $GetPropertyCheckboxTurnIntoWhite.Add_CheckStateChanged({})
+    $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyCheckboxTurnIntoWhite)
+    #Button 'Extract Properties'
+    $GetPropertyButtonExtract = New-Object System.Windows.Forms.Button
+    $GetPropertyButtonExtract.Location = New-Object System.Drawing.Point(25,480) #x,y
+    $GetPropertyButtonExtract.Size = New-Object System.Drawing.Point(80,30)
+    $GetPropertyButtonExtract.Text = "Run"
+    $GetPropertyButtonExtract.Add_Click({})
+    $GetPropertiesPage.Controls.Add($GetPropertyButtonExtract)
+    #Button 'Exit'
+    $GetPropertyButtonExit = New-Object System.Windows.Forms.Button
+    $GetPropertyButtonExit.Location = New-Object System.Drawing.Point(115,480) #x,y
+    $GetPropertyButtonExit.Size = New-Object System.Drawing.Point(80,30)
+    $GetPropertyButtonExit.Text = "Exit"
+    $GetPropertyButtonExit.Add_Click({})
+    $GetPropertiesPage.Controls.Add($GetPropertyButtonExit)
     #SET PROPERTIES PAGE
     $SetPropertiesPage = New-Object System.Windows.Forms.TabPage
     $SetPropertiesPage.Text = "Set Properties”
@@ -210,7 +248,8 @@ Function Custom-Form {
     $Form.ShowDialog()
 }
 
-Function Disable-AllExceptEditing ($BooleanRest, $BooleanEditing) {
+Function Disable-AllExceptEditing ($BooleanRest, $BooleanEditing) 
+{
         $GetPropertyButtonBrowse.Enabled = $BooleanRest
         $GetPropertyLabelButtonBrowse.Enabled = $BooleanRest
         $GetPropertyCheckboxGetBuiltInProperties.Enabled = $BooleanRest
@@ -230,6 +269,27 @@ Function Disable-AllExceptEditing ($BooleanRest, $BooleanEditing) {
         $GetPropertyButtonApplyItem.Enabled = $BooleanEditing
         $GetPropertyButtonCancelItem.Enabled = $BooleanEditing
         $GetPropertyButtonEditItem.Enabled = $BooleanRest
+        $GetPropertyCheckboxTurnIntoWhite.Enabled = $BooleanRest
+        $GetPropertyButtonExtract.Enabled = $BooleanRest
+        $GetPropertyButtonExit.Enabled = $BooleanRest
+}
+
+Function Export-BlackList
+{ 
+    Add-Type -AssemblyName System.Windows.Forms
+    $SaveFileDialog = New-Object System.Windows.Forms.SaveFileDialog
+    $SaveFileDialog.Filter = "Text file (*.txt)| *.txt"
+    $DialogResult = $SaveFileDialog.ShowDialog()
+    if ($DialogResult -eq "OK") {return $SaveFileDialog.FileName} else {return $null}
+}
+
+Function Import-BlackList 
+{
+    Add-Type -AssemblyName System.Windows.Forms
+    $OpenFileDialog = New-Object Windows.Forms.OpenFileDialog
+    $OpenFileDialog.Filter = "Text file (*.txt)| *.txt"
+    $DialogResult = $OpenFileDialog.ShowDialog()
+    if ($DialogResult -eq "OK") {return $OpenFileDialog.FileName} else {return $null}
 }
 
 Custom-Form
