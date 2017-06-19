@@ -15,7 +15,7 @@ Function Custom-Form {
     #TAB CONTROL
     $TabControl = New-object System.Windows.Forms.TabControl
     $TabControl.Location = New-Object System.Drawing.Size(5,5)
-    $TabControl.Size = New-Object System.Drawing.Size(550,550) #width,height
+    $TabControl.Size = New-Object System.Drawing.Size(560,550) #width,height
     $Form.Controls.Add($TabControl)
     #GET PROPERTIES PAGE
     $GetPropertiesPage = New-Object System.Windows.Forms.TabPage
@@ -122,11 +122,7 @@ Function Custom-Form {
     $GetPropertyButtonEditItem.Text = "Edit"
     $GetPropertyButtonEditItem.Add_Click({
         if ($GetPropertyInputboxEditItem.Text -ne "Select item on the blacklist to edit it...") {
-            $GetPropertyInputboxEditItem.Enabled = $true
-            $GetPropertyButtonApplyItem.Enabled = $true
-            $GetPropertyButtonCancelItem.Enabled = $true 
-            $GetPropertyButtonEditItem.Enabled = $false
-            Disable-AllExceptEditing -Boolean $false
+            Disable-AllExceptEditing -BooleanRest $false -BooleanEditing $true
         }
         })
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyButtonEditItem)
@@ -144,18 +140,15 @@ Function Custom-Form {
     $GetPropertyButtonApplyItem.Text = "Apply"
     $GetPropertyButtonApplyItem.Enabled = $false
     $GetPropertyButtonApplyItem.Add_Click({
+        if ($GetPropertyInputboxEditItem.Text -eq $GetPropertyListBoxBlackList.SelectedItem) {
+            Disable-AllExceptEditing -BooleanRest $true -BooleanEditing $false
+        } else {
+            $SelectedIndex = $GetPropertyListBoxBlackList.SelectedIndex
             $GetPropertyListBoxBlackList.Items.Insert($GetPropertyListBoxBlackList.SelectedIndex, ($GetPropertyInputboxEditItem.Text).Trim(' '))
             $GetPropertyListBoxBlackList.Items.Remove($GetPropertyListBoxBlackList.SelectedItem)
-            $GetPropertyInputboxEditItem.Enabled = $false
-            $GetPropertyButtonApplyItem.Enabled = $false
-            $GetPropertyButtonCancelItem.Enabled = $false
-            $GetPropertyButtonEditItem.Enabled = $true
-            if ($GetPropertyListBoxBlackList.SelectedIndex -ne -1) {
-                $GetPropertyInputboxEditItem.Text = $GetPropertyListBoxBlackList.SelectedItem
-            } else {
-                $GetPropertyInputboxEditItem.Text = "Select item on the blacklist to edit it..."
-            }
-            Disable-AllExceptEditing -Boolean $true
+            $GetPropertyListBoxBlackList.SelectedIndex = $SelectedIndex
+            Disable-AllExceptEditing -BooleanRest $true -BooleanEditing $false
+        }
         })
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyButtonApplyItem)
     #Button 'Cancel'
@@ -165,11 +158,7 @@ Function Custom-Form {
     $GetPropertyButtonCancelItem.Text = "Cancel"
     $GetPropertyButtonCancelItem.Enabled = $false
     $GetPropertyButtonCancelItem.Add_Click({
-            $GetPropertyInputboxEditItem.Enabled = $false
-            $GetPropertyButtonApplyItem.Enabled = $false
-            $GetPropertyButtonCancelItem.Enabled = $false
-            $GetPropertyButtonEditItem.Enabled = $true
-            Disable-AllExceptEditing -Boolean $true    
+        Disable-AllExceptEditing -BooleanRest $true -BooleanEditing $false    
         })
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyButtonCancelItem)
     #Button 'Delete'
@@ -185,7 +174,7 @@ Function Custom-Form {
     #Label for 'Delete' button
     $GetPropertyLabelButtonDelete = New-Object System.Windows.Forms.Label
     $GetPropertyLabelButtonDelete.Location =  New-Object System.Drawing.Point(295,106) #x,y
-    $GetPropertyLabelButtonDelete.Size =  New-Object System.Drawing.Point(200,15) #width,height
+    $GetPropertyLabelButtonDelete.Size =  New-Object System.Drawing.Point(203,15) #width,height
     $GetPropertyLabelButtonDelete.Text = "Delete unwanted item from the blacklist"
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyLabelButtonDelete)
     #Button 'Export'
@@ -221,22 +210,26 @@ Function Custom-Form {
     $Form.ShowDialog()
 }
 
-Function Disable-AllExceptEditing ($Boolean) {
-        $GetPropertyButtonBrowse.Enabled = $Boolean
-        $GetPropertyLabelButtonBrowse.Enabled = $Boolean
-        $GetPropertyCheckboxGetBuiltInProperties.Enabled = $Boolean
-        $GetPropertyCheckboxGetCustomProperties.Enabled = $Boolean
-        $GetPropertyCheckboxIgnorePropertiesWithNoValue.Enabled = $Boolean
-        $GetPropertyCheckboxUseBlacklist.Enabled = $Boolean
-        $GetPropertyListBoxBlackList.Enabled = $Boolean
-        $GetPropertyButtonAddItem.Enabled = $Boolean
-        $GetPropertyInputboxAddItem.Enabled = $Boolean
-        $GetPropertyButtonDeleteItem.Enabled = $Boolean
-        $GetPropertyLabelButtonDelete.Enabled = $Boolean
-        $GetPropertyButtonExportList.Enabled = $Boolean
-        $GetPropertyLabelButtonExport.Enabled = $Boolean
-        $GetPropertyButtonImportList.Enabled = $Boolean
-        $GetPropertyLabelButtonImport.Enabled = $Boolean
+Function Disable-AllExceptEditing ($BooleanRest, $BooleanEditing) {
+        $GetPropertyButtonBrowse.Enabled = $BooleanRest
+        $GetPropertyLabelButtonBrowse.Enabled = $BooleanRest
+        $GetPropertyCheckboxGetBuiltInProperties.Enabled = $BooleanRest
+        $GetPropertyCheckboxGetCustomProperties.Enabled = $BooleanRest
+        $GetPropertyCheckboxIgnorePropertiesWithNoValue.Enabled = $BooleanRest
+        $GetPropertyCheckboxUseBlacklist.Enabled = $BooleanRest
+        $GetPropertyListBoxBlackList.Enabled = $BooleanRest
+        $GetPropertyButtonAddItem.Enabled = $BooleanRest
+        $GetPropertyInputboxAddItem.Enabled = $BooleanRest
+        $GetPropertyButtonDeleteItem.Enabled = $BooleanRest
+        $GetPropertyLabelButtonDelete.Enabled = $BooleanRest
+        $GetPropertyButtonExportList.Enabled = $BooleanRest
+        $GetPropertyLabelButtonExport.Enabled = $BooleanRest
+        $GetPropertyButtonImportList.Enabled = $BooleanRest
+        $GetPropertyLabelButtonImport.Enabled = $BooleanRest
+        $GetPropertyInputboxEditItem.Enabled = $BooleanEditing
+        $GetPropertyButtonApplyItem.Enabled = $BooleanEditing
+        $GetPropertyButtonCancelItem.Enabled = $BooleanEditing
+        $GetPropertyButtonEditItem.Enabled = $BooleanRest
 }
 
 Custom-Form
