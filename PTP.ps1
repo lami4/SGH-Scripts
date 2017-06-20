@@ -16,7 +16,7 @@ Function Custom-Form
     #TAB CONTROL
     $TabControl = New-object System.Windows.Forms.TabControl
     $TabControl.Location = New-Object System.Drawing.Size(5,5)
-    $TabControl.Size = New-Object System.Drawing.Size(560,550) #width,height
+    $TabControl.Size = New-Object System.Drawing.Size(560,545) #width,height
     $Form.Controls.Add($TabControl)
     #GET PROPERTIES PAGE
     $GetPropertiesPage = New-Object System.Windows.Forms.TabPage
@@ -28,14 +28,33 @@ Function Custom-Form
     $GetPropertyButtonBrowse.Location = New-Object System.Drawing.Point(25,25)
     $GetPropertyButtonBrowse.Size = New-Object System.Drawing.Point(80,30)
     $GetPropertyButtonBrowse.Text = "Browse..."
-    $GetPropertyButtonBrowse.Add_Click({})
+    $GetPropertyButtonBrowse.Add_Click({
+        $PathToSelectedFolder = Select-Folder -Description "Select folder with files whose properties will be extracted"
+        if ($PathToSelectedFolder -ne $null) {
+            if ($PathToSelectedFolder.Length -gt 85) {
+                #$ToolTip.RemoveAll()
+                $GetPropertyLabelButtonBrowse.Text = "Specified directory's name is too long to display it here. Hover to see the full path."
+                #Tooltip for label of 'Browse...' button
+                #$ToolTip = New-Object System.Windows.Forms.ToolTip
+                $ToolTip.SetToolTip($GetPropertyLabelButtonBrowse, "$PathToSelectedFolder")
+            } else {
+                #$ToolTip.RemoveAll()
+                $GetPropertyLabelButtonBrowse.Text = "Specified directory: '$(Split-Path -Path $PathToSelectedFolder -Leaf)'. Hover to see the full path."
+                $ToolTip.SetToolTip($GetPropertyLabelButtonBrowse, "$PathToSelectedFolder")
+            }
+        }
+        })
     $GetPropertiesPage.Controls.Add($GetPropertyButtonBrowse)
     #Label for 'Browse...' button
     $GetPropertyLabelButtonBrowse = New-Object System.Windows.Forms.Label
     $GetPropertyLabelButtonBrowse.Location =  New-Object System.Drawing.Point(110,32)
-    $GetPropertyLabelButtonBrowse.Size =  New-Object System.Drawing.Point(400,40)
+    $GetPropertyLabelButtonBrowse.Width = 400
     $GetPropertyLabelButtonBrowse.Text = "Specify folder with documents whose properties will be extracted"
+    $GetPropertyLabelButtonBrowse.AutoSize = $true
+    $GetPropertyLabelButtonBrowse.MaximumSize = New-Object System.Drawing.Point(430,38)
     $GetPropertiesPage.Controls.Add($GetPropertyLabelButtonBrowse)
+    #Tooltip for label of 'Browse...' button
+    $ToolTip = New-Object System.Windows.Forms.ToolTip
     #Checkbox 'Get Built-In Properties'
     $GetPropertyCheckboxGetBuiltInProperties = New-Object System.Windows.Forms.CheckBox
     $GetPropertyCheckboxGetBuiltInProperties.Location = New-Object System.Drawing.Point(25,65)
@@ -69,14 +88,25 @@ Function Custom-Form
     #Groupbox 'Blacklist settings'
     $GetPropertyGroupboxBlacklistSettings = New-Object System.Windows.Forms.GroupBox
     $GetPropertyGroupboxBlacklistSettings.Location = New-Object System.Drawing.Point(25,170) #x,y
-    $GetPropertyGroupboxBlacklistSettings.Size = New-Object System.Drawing.Point(500,295) #width,height
+    $GetPropertyGroupboxBlacklistSettings.Size = New-Object System.Drawing.Point(500,300) #width,height
     $GetPropertyGroupboxBlacklistSettings.Text = "Blacklist Settings"
     $GetPropertyGroupboxBlacklistSettings.Enabled = $false
     $GetPropertiesPage.Controls.Add($GetPropertyGroupboxBlacklistSettings)
+    
+    
+    #Label for 'Black list' listbox
+    $GetPropertyLabelBlacklistListBox = New-Object System.Windows.Forms.Label
+    $GetPropertyLabelBlacklistListBox.Location =  New-Object System.Drawing.Point(13,19) #x,y
+    $GetPropertyLabelBlacklistListBox.Width = 250
+    $GetPropertyLabelBlacklistListBox.Height = 13
+    $GetPropertyLabelBlacklistListBox.Text = "Properties blacklisted by default:"
+    $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyLabelBlacklistListBox)
+    
+    
     #Listbox 'Black list'
     $DefaultBlackList = @("Last author", "Template", "Security", "Revision number", "Application name", "Last print date", "Number of bytes", "Number of characters (with spaces)", "Number of multimedia clips", "Number of hidden Slides", "Number of notes", "Number of slides", "Number of paragraphs", "Number of lines", "Number of characters", "Number of words", "Number of pages", "Total editing time", "Last save time", "Creation date")
     $GetPropertyListBoxBlackList = New-Object System.Windows.Forms.ListBox
-    $GetPropertyListBoxBlackList.Location = New-Object System.Drawing.Point(15,25) #x,y
+    $GetPropertyListBoxBlackList.Location = New-Object System.Drawing.Point(15,35) #x,y
     $GetPropertyListBoxBlackList.Size = New-Object System.Drawing.Point(210,260) #width,height
     $DefaultBlackList | % {$GetPropertyListBoxBlackList.Items.Add($_)}
     $GetPropertyListBoxBlackList.Add_SelectedIndexChanged({
@@ -88,7 +118,7 @@ Function Custom-Form
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyListBoxBlackList)
     #Button 'Add'
     $GetPropertyButtonAddItem = New-Object System.Windows.Forms.Button
-    $GetPropertyButtonAddItem.Location = New-Object System.Drawing.Point(235,24) #x,y
+    $GetPropertyButtonAddItem.Location = New-Object System.Drawing.Point(235,34) #x,y
     $GetPropertyButtonAddItem.Size = New-Object System.Drawing.Point(50,22) #width,height
     $GetPropertyButtonAddItem.Text = "Add"
     $GetPropertyButtonAddItem.Add_Click({
@@ -101,7 +131,7 @@ Function Custom-Form
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyButtonAddItem)
     #Inputbox 'Add item to the list'
     $GetPropertyInputboxAddItem = New-Object System.Windows.Forms.TextBox 
-    $GetPropertyInputboxAddItem.Location = New-Object System.Drawing.Size(295,25) #x,y
+    $GetPropertyInputboxAddItem.Location = New-Object System.Drawing.Size(295,35) #x,y
     $GetPropertyInputboxAddItem.Width = 190
     $GetPropertyInputboxAddItem.Text = "Type in property name to add it..."
     $GetPropertyInputboxAddItem.ForeColor = "Gray"
@@ -120,7 +150,7 @@ Function Custom-Form
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyInputboxAddItem)
     #Button 'Edit'
     $GetPropertyButtonEditItem = New-Object System.Windows.Forms.Button
-    $GetPropertyButtonEditItem.Location = New-Object System.Drawing.Point(235,52) #x,y
+    $GetPropertyButtonEditItem.Location = New-Object System.Drawing.Point(235,62) #x,y
     $GetPropertyButtonEditItem.Size = New-Object System.Drawing.Point(50,22) #width,height
     $GetPropertyButtonEditItem.Text = "Edit"
     $GetPropertyButtonEditItem.Add_Click({
@@ -131,14 +161,14 @@ Function Custom-Form
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyButtonEditItem)
     #Inputbox 'Edit the selected item'
     $GetPropertyInputboxEditItem = New-Object System.Windows.Forms.TextBox 
-    $GetPropertyInputboxEditItem.Location = New-Object System.Drawing.Size(295,53) #x,y
+    $GetPropertyInputboxEditItem.Location = New-Object System.Drawing.Size(295,63) #x,y
     $GetPropertyInputboxEditItem.Width = 190
     $GetPropertyInputboxEditItem.Enabled = $false
     $GetPropertyInputboxEditItem.Text = "Select item on the blacklist to edit it..."
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyInputboxEditItem)
     #Button 'Apply'
     $GetPropertyButtonApplyItem = New-Object System.Windows.Forms.Button
-    $GetPropertyButtonApplyItem.Location = New-Object System.Drawing.Point(295,75) #x,y
+    $GetPropertyButtonApplyItem.Location = New-Object System.Drawing.Point(295,85) #x,y
     $GetPropertyButtonApplyItem.Size = New-Object System.Drawing.Point(50,22) #width,height
     $GetPropertyButtonApplyItem.Text = "Apply"
     $GetPropertyButtonApplyItem.Enabled = $false
@@ -156,7 +186,7 @@ Function Custom-Form
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyButtonApplyItem)
     #Button 'Cancel'
     $GetPropertyButtonCancelItem = New-Object System.Windows.Forms.Button
-    $GetPropertyButtonCancelItem.Location = New-Object System.Drawing.Point(347,75) #x,y
+    $GetPropertyButtonCancelItem.Location = New-Object System.Drawing.Point(347,85) #x,y
     $GetPropertyButtonCancelItem.Size = New-Object System.Drawing.Point(50,22) #width,height
     $GetPropertyButtonCancelItem.Text = "Cancel"
     $GetPropertyButtonCancelItem.Enabled = $false
@@ -166,7 +196,7 @@ Function Custom-Form
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyButtonCancelItem)
     #Button 'Delete'
     $GetPropertyButtonDeleteItem = New-Object System.Windows.Forms.Button
-    $GetPropertyButtonDeleteItem.Location = New-Object System.Drawing.Point(235,103) #x,y
+    $GetPropertyButtonDeleteItem.Location = New-Object System.Drawing.Point(235,113) #x,y
     $GetPropertyButtonDeleteItem.Size = New-Object System.Drawing.Point(50,22) #width,height
     $GetPropertyButtonDeleteItem.Text = "Delete"
     $GetPropertyButtonDeleteItem.Add_Click({
@@ -176,17 +206,17 @@ Function Custom-Form
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyButtonDeleteItem)
     #Label for 'Delete' button
     $GetPropertyLabelButtonDelete = New-Object System.Windows.Forms.Label
-    $GetPropertyLabelButtonDelete.Location =  New-Object System.Drawing.Point(295,106) #x,y
+    $GetPropertyLabelButtonDelete.Location =  New-Object System.Drawing.Point(295,116) #x,y
     $GetPropertyLabelButtonDelete.Size =  New-Object System.Drawing.Point(203,15) #width,height
     $GetPropertyLabelButtonDelete.Text = "Delete unwanted item from the blacklist"
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyLabelButtonDelete)
     #Button 'Export'
     $GetPropertyButtonExportList = New-Object System.Windows.Forms.Button
-    $GetPropertyButtonExportList.Location = New-Object System.Drawing.Point(235,131) #x,y
+    $GetPropertyButtonExportList.Location = New-Object System.Drawing.Point(235,141) #x,y
     $GetPropertyButtonExportList.Size = New-Object System.Drawing.Point(50,22) #width,height
     $GetPropertyButtonExportList.Text = "Export"
     $GetPropertyButtonExportList.Add_Click({
-        $PathToExportedFile = Export-BlackList
+        $PathToExportedFile = Save-File
         if ($PathToExportedFile -ne $null) {
             If (Test-Path -Path $PathToExportedFile) {Remove-Item -Path $PathToExportedFile -Force}
             $GetPropertyListBoxBlackList.Items | % {Add-Content -Path $PathToExportedFile -Value $_}
@@ -195,17 +225,17 @@ Function Custom-Form
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyButtonExportList)
     #Label for 'Export' button
     $GetPropertyLabelButtonExport = New-Object System.Windows.Forms.Label
-    $GetPropertyLabelButtonExport.Location =  New-Object System.Drawing.Point(295,134) #x,y
+    $GetPropertyLabelButtonExport.Location =  New-Object System.Drawing.Point(295,144) #x,y
     $GetPropertyLabelButtonExport.Size =  New-Object System.Drawing.Point(200,15) #width,height
     $GetPropertyLabelButtonExport.Text = "Export your blacklist for later use"
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyLabelButtonExport)
     #Button 'Import'
     $GetPropertyButtonImportList = New-Object System.Windows.Forms.Button
-    $GetPropertyButtonImportList.Location = New-Object System.Drawing.Point(235,159) #x,y
+    $GetPropertyButtonImportList.Location = New-Object System.Drawing.Point(235,169) #x,y
     $GetPropertyButtonImportList.Size = New-Object System.Drawing.Point(50,22) #width,height
     $GetPropertyButtonImportList.Text = "Import"
     $GetPropertyButtonImportList.Add_Click({
-        $PathToImportedFile = Import-BlackList
+        $PathToImportedFile = Open-File
         Write-Host $PathToImportedFile
             if ($PathToImportedFile -ne $null) {
                 $TxtBlackListContent = @(Get-Content -Path $PathToImportedFile)
@@ -216,13 +246,13 @@ Function Custom-Form
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyButtonImportList)
     #Label for 'Import' button
     $GetPropertyLabelButtonImport = New-Object System.Windows.Forms.Label
-    $GetPropertyLabelButtonImport.Location =  New-Object System.Drawing.Point(295,162) #x,y
+    $GetPropertyLabelButtonImport.Location =  New-Object System.Drawing.Point(295,172) #x,y
     $GetPropertyLabelButtonImport.Size =  New-Object System.Drawing.Point(200,15) #width,height
     $GetPropertyLabelButtonImport.Text = "Import your blacklist"
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyLabelButtonImport)
     #Checkbox 'Get Only Blacklisted Properties'
     $GetPropertyCheckboxTurnIntoWhite = New-Object System.Windows.Forms.CheckBox
-    $GetPropertyCheckboxTurnIntoWhite.Location = New-Object System.Drawing.Point(235,190) #x,y
+    $GetPropertyCheckboxTurnIntoWhite.Location = New-Object System.Drawing.Point(235,200) #x,y
     $GetPropertyCheckboxTurnIntoWhite.Width = 200
     $GetPropertyCheckboxTurnIntoWhite.Text = "Get Only Blacklisted Properties"
     $GetPropertyCheckboxTurnIntoWhite.Add_CheckStateChanged({})
@@ -274,7 +304,7 @@ Function Disable-AllExceptEditing ($BooleanRest, $BooleanEditing)
         $GetPropertyButtonExit.Enabled = $BooleanRest
 }
 
-Function Export-BlackList
+Function Save-File
 { 
     Add-Type -AssemblyName System.Windows.Forms
     $SaveFileDialog = New-Object System.Windows.Forms.SaveFileDialog
@@ -283,13 +313,23 @@ Function Export-BlackList
     if ($DialogResult -eq "OK") {return $SaveFileDialog.FileName} else {return $null}
 }
 
-Function Import-BlackList 
+Function Open-File
 {
     Add-Type -AssemblyName System.Windows.Forms
     $OpenFileDialog = New-Object Windows.Forms.OpenFileDialog
     $OpenFileDialog.Filter = "Text file (*.txt)| *.txt"
     $DialogResult = $OpenFileDialog.ShowDialog()
     if ($DialogResult -eq "OK") {return $OpenFileDialog.FileName} else {return $null}
+}
+
+Function Select-Folder ($Description)
+{
+    Add-Type -AssemblyName System.Windows.Forms
+    $SelectFolderDialog = New-Object System.Windows.Forms.FolderBrowserDialog
+    $SelectFolderDialog.Rootfolder = "Desktop"
+    $SelectFolderDialog.Description = $Description
+    $DialogResult = $SelectFolderDialog.ShowDialog()
+    if ($DialogResult -eq "OK") {return $SelectFolderDialog.SelectedPath} else {return $null}
 }
 
 Custom-Form
