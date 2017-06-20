@@ -91,9 +91,7 @@ Function Custom-Form
     $GetPropertyGroupboxBlacklistSettings.Size = New-Object System.Drawing.Point(500,300) #width,height
     $GetPropertyGroupboxBlacklistSettings.Text = "Blacklist Settings"
     $GetPropertyGroupboxBlacklistSettings.Enabled = $false
-    $GetPropertiesPage.Controls.Add($GetPropertyGroupboxBlacklistSettings)
-    
-    
+    $GetPropertiesPage.Controls.Add($GetPropertyGroupboxBlacklistSettings) 
     #Label for 'Black list' listbox
     $GetPropertyLabelBlacklistListBox = New-Object System.Windows.Forms.Label
     $GetPropertyLabelBlacklistListBox.Location =  New-Object System.Drawing.Point(13,19) #x,y
@@ -101,8 +99,6 @@ Function Custom-Form
     $GetPropertyLabelBlacklistListBox.Height = 13
     $GetPropertyLabelBlacklistListBox.Text = "Properties blacklisted by default:"
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyLabelBlacklistListBox)
-    
-    
     #Listbox 'Black list'
     $DefaultBlackList = @("Last author", "Template", "Security", "Revision number", "Application name", "Last print date", "Number of bytes", "Number of characters (with spaces)", "Number of multimedia clips", "Number of hidden Slides", "Number of notes", "Number of slides", "Number of paragraphs", "Number of lines", "Number of characters", "Number of words", "Number of pages", "Total editing time", "Last save time", "Creation date")
     $GetPropertyListBoxBlackList = New-Object System.Windows.Forms.ListBox
