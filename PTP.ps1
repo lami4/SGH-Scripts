@@ -119,9 +119,13 @@ Function Custom-Form
     $GetPropertyButtonAddItem.Text = "Add"
     $GetPropertyButtonAddItem.Add_Click({
         if ($GetPropertyInputboxAddItem.Text -ne "Type in property name to add it...") {
-            $GetPropertyListBoxBlackList.Items.Insert(0, $GetPropertyInputboxAddItem.Text)
-            $GetPropertyInputboxAddItem.Text = "Type in property name to add it..."
-            $GetPropertyInputboxAddItem.ForeColor = "Gray"
+            if ($GetPropertyListBoxBlackList.Items.Contains($GetPropertyInputboxAddItem.Text)) {
+                Show-MessageBox -Message "The property you are attempting to add ($($GetPropertyInputboxAddItem.Text)) is already on the list."
+            } else {
+                $GetPropertyListBoxBlackList.Items.Insert(0, $GetPropertyInputboxAddItem.Text)
+                $GetPropertyInputboxAddItem.Text = "Type in property name to add it..."
+                $GetPropertyInputboxAddItem.ForeColor = "Gray"
+            }
         }
         })
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyButtonAddItem)
@@ -273,7 +277,6 @@ Function Custom-Form
     $TabControl.Controls.Add($SetPropertiesPage)
     $Form.ShowDialog()
 }
-
 Function Disable-AllExceptEditing ($BooleanRest, $BooleanEditing) 
 {
         $GetPropertyButtonBrowse.Enabled = $BooleanRest
@@ -299,7 +302,6 @@ Function Disable-AllExceptEditing ($BooleanRest, $BooleanEditing)
         $GetPropertyButtonExtract.Enabled = $BooleanRest
         $GetPropertyButtonExit.Enabled = $BooleanRest
 }
-
 Function Save-File
 { 
     Add-Type -AssemblyName System.Windows.Forms
@@ -308,7 +310,6 @@ Function Save-File
     $DialogResult = $SaveFileDialog.ShowDialog()
     if ($DialogResult -eq "OK") {return $SaveFileDialog.FileName} else {return $null}
 }
-
 Function Open-File
 {
     Add-Type -AssemblyName System.Windows.Forms
@@ -317,7 +318,6 @@ Function Open-File
     $DialogResult = $OpenFileDialog.ShowDialog()
     if ($DialogResult -eq "OK") {return $OpenFileDialog.FileName} else {return $null}
 }
-
 Function Select-Folder ($Description)
 {
     Add-Type -AssemblyName System.Windows.Forms
@@ -328,4 +328,9 @@ Function Select-Folder ($Description)
     if ($DialogResult -eq "OK") {return $SelectFolderDialog.SelectedPath} else {return $null}
 }
 
+Function Show-MessageBox ($Message)
+{
+    Add-Type –AssemblyName System.Windows.Forms   
+    [System.Windows.Forms.MessageBox]::Show("$Message")
+}
 Custom-Form
