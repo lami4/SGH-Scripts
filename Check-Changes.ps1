@@ -405,6 +405,30 @@ Add-Content "$PSScriptRoot\Check-Changes Report.html" "<td>
 $script:JSvariable += 1
 }
 
+Function Compare-StringsPlustNotificationEnteredByUser ($FontColor, $DataInDocument, $DataInRegister, $ComparisonResult, $Title, $UserInput) 
+{
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "<td>
+    <font color=""$FontColor"" onclick=""my_f('div_$script:JSvariable')""><b>$ComparisonResult</b></font>
+    <div class=""hide"" id=""div_$script:JSvariable"">
+        <table>
+            <tr>
+            <td id=""indication"">Введенный пользователем:</td>
+            <td id=""indication"">$UserInput</td>
+            </tr>
+            <tr>
+            <td id=""indication"">Документ:</td>
+            <td id=""indication"">$DataInDocument</td>
+            </tr>
+            <tr>
+            <td id=""indication"">$($Title):</td>
+            <td id=""indication"">$DataInRegister</td>
+            </tr>
+        </table>
+    </div>
+</td>" -Encoding UTF8
+$script:JSvariable += 1
+}
+
 Function Add-Error ($MessageInDiv) 
 {
 Add-Content "$PSScriptRoot\Check-Changes Report.html" "<td>
@@ -642,7 +666,7 @@ Add-Content "$PSScriptRoot\Check-Changes Report.html" "</tr>" -Encoding UTF8
                 Compare-Strings -FontColor "Green" -DataInDocument $DocumentData.Notification -DataInRegister $DocumentDataInRegister.Notification -ComparisonResult "Совпадает" -Title "Файл учета"
                 #if they do not match
                 } else {
-                Compare-Strings -FontColor "Red" -DataInDocument $DocumentData.Notification -DataInRegister $DocumentDataInRegister.Notification -ComparisonResult "Не совпадает" -Title "Файл учета"
+                Compare-StringsPlustNotificationEnteredByUser -FontColor "Red" -DataInDocument $DocumentData.Notification -DataInRegister $DocumentDataInRegister.Notification -ComparisonResult "Не совпадает" -Title "Файл учета" -UserInput $script:UserInputNotification
                 }
             }
 #========Statistics========
