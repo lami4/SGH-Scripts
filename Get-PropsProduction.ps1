@@ -13,7 +13,6 @@ $Binding = “System.Reflection.BindingFlags” -as [type]
 $SelectedPath = "C:\Users\Tsedik\Desktop\Новая папка"
 
 Get-ChildItem -Path $SelectedPath | % {
-    Start-Sleep -Seconds 2
     if ($_.Extension -eq ".xlsx") {
         #Starts MS Excel
         $Excel = New-Object -ComObject Excel.Application
@@ -27,6 +26,7 @@ Get-ChildItem -Path $SelectedPath | % {
         $CollectedPropertiesData = Get-FileProperties -BindingFlags $Binding -CollectionOfProperties $FileProperties
         Write-Host $CollectedPropertiesData[0][0]
         Write-Host $CollectedPropertiesData[1][0]
+        #Closes active workbook without saving and quits MS Word
         $Workbook.Close()
         $Excel.Quit()
     }
@@ -43,27 +43,48 @@ Get-ChildItem -Path $SelectedPath | % {
         $CollectedPropertiesData = Get-FileProperties -BindingFlags $Binding -CollectionOfProperties $FileProperties
         Write-Host $CollectedPropertiesData[0][0]
         Write-Host $CollectedPropertiesData[1][0]
+        #Closes active document without saving and quits MS Word
         $Document.Close([ref]0)
         $Word.Quit()
     }
     if ($_.Extension -eq ".vsd") {
         $Visio = New-Object -ComObject Visio.Application
-        $Visio.Visible = $false
+        #$Visio.Visible = $false
+        #read this to open visio in hidden window https://msdn.microsoft.com/ru-ru/library/ms367552.aspx
         $Document = $Visio.Documents.Open("C:\Users\Tsedik\Desktop\Новая папка\Документ Microsoft Visio.vsd")
-        $Document.Subject
+        $Document.Subject #тема
+        $Document.Title   #название
+        $Document.Creator #автор
+        $Document.Manager #специалист
+        $Document.Company #организация
+        $Document.Language #язык
+        $Document.Category #категория
+        $Document.Keywords #тэги
+        $Document.Description #описание
+        $Document.HyperlinkBase #база гиперссылок
         $Document.Close()
         $Visio.Quit()
     }
-    if ($_.Extension -eq ".pptx"){
+    if ($_.Extension -eq ".pptx") {
+        #Add the Office assembly to the current Windows PowerShell session
+        Add-type -AssemblyName Office
+        #Starts MS PowerPoint
         $PowerPoint = New-Object -ComObject PowerPoint.Application
-        #try {$PowerPoint.Visible = [Microsoft.Office.Core.MsoTriState]::msoFalse} catch {"kek"}
-        $Presentation = $PowerPoint.Presentations.Open("C:\Users\Tsedik\Desktop\Новая папка\Презентация Microsoft PowerPoint.pptx")
+        #Opens a presentation and makes it not visible to the user
+        $Presentation = $PowerPoint.Presentations.Open("C:\Users\Tsedik\Desktop\Новая папка\Презентация Microsoft PowerPoint.pptx", $null, $null, [Microsoft.Office.Core.MsoTriState]::msoFalse)
+        #Gets a collection of properties and puts it in $FileProperties
         $FileProperties = $Presentation.BuiltInDocumentProperties
+        #Uses Get-FileProperties function to extract file properties to $CollectedPropertiesData array
         $CollectedPropertiesData = Get-FileProperties -BindingFlags $Binding -CollectionOfProperties $FileProperties
         Write-Host $CollectedPropertiesData[0][0]
         Write-Host $CollectedPropertiesData[1][0]
+        #Closes active presentation without saving, quits PowerPoint, nulls out all variables related to PowerPoint and calls garbage collection
         $Presentation.Close()
         $PowerPoint.Quit()
+        $PowerPoint = $null
+        $Presentation = $null
+        $FileProperties = $null
+        [gc]::collect()
+        [gc]::WaitForPendingFinalizers()
     }
 }
-
