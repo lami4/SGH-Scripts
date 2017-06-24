@@ -27,7 +27,7 @@ Get-ChildItem -Path $SelectedPath | % {
         Write-Host $CollectedPropertiesData[0][0]
         Write-Host $CollectedPropertiesData[1][0]
         #Closes active workbook without saving and quits MS Word
-        $Workbook.Close()
+        $Workbook.Close($false)
         $Excel.Quit()
     }
     if ($_.Extension -eq ".docx") {
@@ -41,27 +41,21 @@ Get-ChildItem -Path $SelectedPath | % {
         $FileProperties = $Document.BuiltInDocumentProperties
         #Uses Get-FileProperties function to extract file properties to $CollectedPropertiesData array
         $CollectedPropertiesData = Get-FileProperties -BindingFlags $Binding -CollectionOfProperties $FileProperties
-        Write-Host $CollectedPropertiesData[0][0]
+        Write-Host $CollectedPropertiesData[0]
         Write-Host $CollectedPropertiesData[1][0]
         #Closes active document without saving and quits MS Word
         $Document.Close([ref]0)
         $Word.Quit()
     }
-    if ($_.Extension -eq ".vsd") {
-        $Visio = New-Object -ComObject Visio.Application
-        #$Visio.Visible = $false
-        #read this to open visio in hidden window https://msdn.microsoft.com/ru-ru/library/ms367552.aspx
+    if ($_.Extension -eq ".vdw") {
+        #Starts MS Visio and makes it invisible
+        $Visio = New-Object -ComObject Visio.InvisibleApp
+        #Opens a document
         $Document = $Visio.Documents.Open("C:\Users\Tsedik\Desktop\Новая папка\Документ Microsoft Visio.vsd")
-        $Document.Subject #тема
-        $Document.Title   #название
-        $Document.Creator #автор
-        $Document.Manager #специалист
-        $Document.Company #организация
-        $Document.Language #язык
-        $Document.Category #категория
-        $Document.Keywords #тэги
-        $Document.Description #описание
-        $Document.HyperlinkBase #база гиперссылок
+        #List of Built In Document Properties
+        $VisioDocumentBuiltInProperties = @("Subject", "Title", "Creator", "Manager", "Company", "Language", "Category", "Keywords", "Description", "HyperlinkBase", "TimeCreated", "TimeEdited", "TimePrinted", "TimeSaved", "Stat", "Version")
+        $VisioDocumentBuiltInProperties | % {$Document.$_}
+        #Closes active document without saving and quits MS Visio
         $Document.Close()
         $Visio.Quit()
     }
