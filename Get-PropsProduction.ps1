@@ -11,7 +11,10 @@ Function Get-FileProperties ($BindingFlags, $CollectionOfProperties) {
 #Stores the BindingFlags enumeration in $Binding
 $Binding = “System.Reflection.BindingFlags” -as [type]
 $SelectedPath = "C:\Users\Tsedik\Desktop\Новая папка"
-
+$ExcelOutput = New-Object -ComObject Excel.Application
+$ExcelOutput.Visible = $true
+$WorkbookOutput = $ExcelOutput.Workbooks.Add()
+$WorksheetOutput = $WorkbookOutput.Worksheets.Item(1)
 Get-ChildItem -Path $SelectedPath | % {
     if ($_.Extension -eq ".xlsx") {
         #Starts MS Excel
