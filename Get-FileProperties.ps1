@@ -1,87 +1,104 @@
-clear
-Function Get-FileProperties ($BindingFlags, $CollectionOfProperties) {
-    foreach ($Property in $CollectionOfProperties) {
-        [array]$PropertyNames += [System.__ComObject].InvokeMember(“name”,$BindingFlags::GetProperty,$null,$Property,$null)
-        trap [system.exception] {continue}
-        [array]$PropertyValues += [System.__ComObject].InvokeMember(“value”,$BindingFlags::GetProperty,$null,$Property,$null)
-    }
-    return $PropertyNames, $PropertyValues
+#functions
+Function Select-Folder ($description)
+{
+    [System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms") | Out-Null     
+    $objForm = New-Object System.Windows.Forms.FolderBrowserDialog
+    $objForm.Rootfolder = "Desktop"
+    $objForm.Description = $description
+    $Show = $objForm.ShowDialog()
+        If ($Show -eq "OK") {
+        Return $objForm.SelectedPath
+        } Else {
+        Exit
+        }
 }
 
-#Stores the BindingFlags enumeration in $Binding
-$Binding = “System.Reflection.BindingFlags” -as [type]
-$SelectedPath = "C:\Users\Tsedik\Desktop\Новая папка"
-$ExcelOutput = New-Object -ComObject Excel.Application
-$ExcelOutput.Visible = $true
-$WorkbookOutput = $ExcelOutput.Workbooks.Add()
-$WorksheetOutput = $WorkbookOutput.Worksheets.Item(1)
-Get-ChildItem -Path $SelectedPath | % {
-    if ($_.Extension -eq ".xlsx") {
-        #Starts MS Excel
-        $Excel = New-Object -ComObject Excel.Application
-        #Makes it not visible to the user
-        $Excel.Visible = $false
-        #Opens the file whose properties are to be extracted
-        $Workbook = $Excel.Workbooks.Open("C:\Users\Tsedik\Desktop\Новая папка\Лист Microsoft Excel.xlsx")
-        #Gets a collection of properties and puts it in $FileProperties
-        $FileProperties = $Workbook.BuiltInDocumentProperties
-        #Uses Get-FileProperties function to extract file properties to $CollectedPropertiesData array
-        $CollectedPropertiesData = Get-FileProperties -BindingFlags $Binding -CollectionOfProperties $FileProperties
-        Write-Host $CollectedPropertiesData[0][0]
-        Write-Host $CollectedPropertiesData[1][0]
-        #Closes active workbook without saving and quits MS Word
-        $Workbook.Close($false)
-        $Excel.Quit()
+$selectedPath = Select-Folder
+$row = 2
+$listOfFiles = 2
+$blacklist= @("Last author", "Template", "Security", "Revision number", "Application name", "Last print date", "Number of bytes", "Number of characters (with spaces)", "Number of multimedia clips", "Number of hidden Slides", "Number of notes", "Number of slides", "Number of paragraphs", "Number of lines", "Number of characters", "Number of words", "Number of pages", "Total editing time", "Last save time", "Creation date")
+#excel
+$excel = New-Object -ComObject Excel.Application
+$excel.Visible = $false
+$workbook = $excel.WorkBooks.Add()
+$worksheet = $workbook.Worksheets.Item(1)
+#word
+$application = New-Object -ComObject word.application
+$application.Visible = $false
+$worksheet.Range("A:A").NumberFormat = "@"
+$worksheet.Range("B:B").NumberFormat = "@"
+$worksheet.Range("C:C").NumberFormat = "@"
+$worksheet.Range("D:D").NumberFormat = "@"
+$worksheet.Range("E:E").NumberFormat = "@"
+$worksheet.Cells.Item(1, 1) = "Property name"
+$worksheet.Cells.Item(1, 2) = "Property value"
+$worksheet.Cells.Item(1, 3) = "Property holder"
+$worksheet.Cells.Item(1, 4) = "Property type"
+$worksheet.Cells.Item(1, 5) = "Processed files"
+Get-ChildItem -Path "$selectedPath\*.*" -Include "*.doc*", "*.dot*" | % {
+Write-Host "Taking properties from" $_.Name
+$document = $application.documents.open($_.FullName)
+$properties = $document.BuiltInDocumentProperties
+$binding = “System.Reflection.BindingFlags” -as [type]
+foreach ($property in $properties) {
+$pn = [System.__ComObject].InvokeMember(“name”,$binding::GetProperty,$null,$property,$null)
+    trap [system.exception]
+    {
+    continue
     }
-    if ($_.Extension -eq ".docx") {
-        #Starts MS Word
-        $Word = New-Object -ComObject Word.Application
-        #Makes it not visible to the user
-        $Word.Visible = $false
-        #Opens the file whose properties are to be extracted
-        $Document = $Word.Documents.Open("C:\Users\Tsedik\Desktop\Новая папка\Документ Microsoft Word.docx")
-        #Gets a collection of properties and puts it in $FileProperties
-        $FileProperties = $Document.BuiltInDocumentProperties
-        #Uses Get-FileProperties function to extract file properties to $CollectedPropertiesData array
-        $CollectedPropertiesData = Get-FileProperties -BindingFlags $Binding -CollectionOfProperties $FileProperties
-        Write-Host $CollectedPropertiesData[0]
-        Write-Host $CollectedPropertiesData[1][0]
-        #Closes active document without saving and quits MS Word
-        $Document.Close([ref]0)
-        $Word.Quit()
-    }
-    if ($_.Extension -eq ".vdw") {
-        #Starts MS Visio and makes it invisible
-        $Visio = New-Object -ComObject Visio.InvisibleApp
-        #Opens a document
-        $Document = $Visio.Documents.Open("C:\Users\Tsedik\Desktop\Новая папка\Документ Microsoft Visio.vsd")
-        #List of Built In Document Properties
-        $VisioDocumentBuiltInProperties = @("Subject", "Title", "Creator", "Manager", "Company", "Language", "Category", "Keywords", "Description", "HyperlinkBase", "TimeCreated", "TimeEdited", "TimePrinted", "TimeSaved", "Stat", "Version")
-        $VisioDocumentBuiltInProperties | % {$Document.$_}
-        #Closes active document without saving and quits MS Visio
-        $Document.Close()
-        $Visio.Quit()
-    }
-    if ($_.Extension -eq ".pptx") {
-        #Add the Office assembly to the current Windows PowerShell session
-        Add-type -AssemblyName Office
-        #Starts MS PowerPoint
-        $PowerPoint = New-Object -ComObject PowerPoint.Application
-        #Opens a presentation and makes it not visible to the user
-        $Presentation = $PowerPoint.Presentations.Open("C:\Users\Tsedik\Desktop\Новая папка\Презентация Microsoft PowerPoint.pptx", $null, $null, [Microsoft.Office.Core.MsoTriState]::msoFalse)
-        #Gets a collection of properties and puts it in $FileProperties
-        $FileProperties = $Presentation.BuiltInDocumentProperties
-        #Uses Get-FileProperties function to extract file properties to $CollectedPropertiesData array
-        $CollectedPropertiesData = Get-FileProperties -BindingFlags $Binding -CollectionOfProperties $FileProperties
-        Write-Host $CollectedPropertiesData[0][0]
-        Write-Host $CollectedPropertiesData[1][0]
-        #Closes active presentation without saving, quits PowerPoint, nulls out all variables related to PowerPoint and calls garbage collection
-        $Presentation.Close()
-        $PowerPoint.Quit()
-        $PowerPoint = $null
-        $Presentation = $null
-        $FileProperties = $null
-        [gc]::collect()
-        [gc]::WaitForPendingFinalizers()
+[string]$propertyValue = [System.__ComObject].InvokeMember(“value”,$binding::GetProperty,$null,$property,$null)
+[string]$propertyName = $pn
+    if ($propertyValue.Length -gt 0 -and $blacklist -notcontains $propertyName) 
+    {
+    Write-Host "$propertyName`: $propertyValue"
+    $worksheet.Cells.Item($row, 1) = "$propertyName"
+    $worksheet.Cells.Item($row, 2) = "$propertyValue"
+    $worksheet.Cells.Item($row, 3) = $document.Name
+    $worksheet.Cells.Item($row, 4) = "B"
+    $row += 1
     }
 }
+$customProperties = $document.CustomDocumentProperties
+foreach($customProperty in $customProperties)
+{
+$pn = [System.__ComObject].InvokeMember(“name”,$binding::GetProperty,$null,$customProperty,$null)
+    trap [system.exception]
+    {
+    continue
+    }
+[string]$propertyValue = [System.__ComObject].InvokeMember(“value”,$binding::GetProperty,$null,$customProperty,$null)
+[string]$propertyName = $pn
+    if ($propertyValue.Length -gt 0 -and $blacklist -notcontains $propertyName) 
+    {
+    Write-Host "$propertyName`: $propertyValue"
+    $worksheet.Cells.Item($row, 1) = "$propertyName"
+    $worksheet.Cells.Item($row, 2) = "$propertyValue"
+    $worksheet.Cells.Item($row, 3) = $document.Name
+    $worksheet.Cells.Item($row, 4) = "C"
+    $row += 1
+    }
+}
+$worksheet.Cells.Item($listOfFiles, 5) = $_.Name
+$listOfFiles += 1
+Write-Host "------End of document-----"
+$document.Close([ref]0)
+}
+$worksheet.Columns.Item("A").ColumnWidth = 20
+$worksheet.Columns.Item("B").ColumnWidth = 60
+$worksheet.Columns.Item("C").ColumnWidth = 40
+$worksheet.Columns.Item("D").ColumnWidth = 40
+$worksheet.Columns.Item("E").ColumnWidth = 20
+$worksheet.Cells.Item(1, 1).Font.Bold = $true
+$worksheet.Cells.Item(1, 2).Font.Bold = $true
+$worksheet.Cells.Item(1, 3).Font.Bold = $true
+$worksheet.Cells.Item(1, 4).Font.Bold = $true
+$worksheet.Cells.Item(1, 5).Font.Bold = $true
+$worksheet.Cells.Item(1, 1).HorizontalAlignment = -4108
+$worksheet.Cells.Item(1, 2).HorizontalAlignment = -4108
+$worksheet.Cells.Item(1, 3).HorizontalAlignment = -4108
+$worksheet.Cells.Item(1, 4).HorizontalAlignment = -4108
+$worksheet.Cells.Item(1, 5).HorizontalAlignment = -4108
+$application.Quit()
+$workbook.SaveAs("$PSScriptRoot\Properties.xlsx")
+$workbook.Close()
+$excel.Quit()
