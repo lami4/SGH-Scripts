@@ -98,7 +98,7 @@ Function Get-FileProperties ($SelectedPath) {
         #if extension of the processed file matches an extension in $ExcelExtensions array, the script will open it and extract its properties using Excel application.
         if ($ExcelExtensions -contains ($_.Extension).ToLower()) {
             #Opens the file whose properties are to be extracted.
-            $Workbook = $Excel.Workbooks.Open("$SelectedPath\Лист Microsoft Excel.xlsx")
+            $Workbook = $Excel.Workbooks.Open($_.FullName)
             #Gets a collection of properties and puts it in $FileProperties.
             $FileProperties = $Workbook.BuiltInDocumentProperties
             #Uses Get-FileProperties function to extract file properties to $CollectedPropertiesData array.
@@ -111,7 +111,7 @@ Function Get-FileProperties ($SelectedPath) {
         #if extension of the processed file matches an extension in $WordExtensionss array, the script will open it and extract its properties using Word application.
         if ($WordExtensions -contains ($_.Extension).ToLower()) {
             #Opens the file whose properties are to be extracted.
-            $Document = $Word.Documents.Open("$SelectedPath\Документ Microsoft Word.docx")
+            $Document = $Word.Documents.Open($_.FullName)
             #Gets a collection of properties and puts it in $FileProperties.
             $FileProperties = $Document.BuiltInDocumentProperties
             #Uses Get-FileProperties function to extract file properties to $CollectedPropertiesData array.
@@ -124,7 +124,7 @@ Function Get-FileProperties ($SelectedPath) {
         #if extension of the processed file matches an extension in $VisioExtensions array, the script will open it and extract its properties using Visio application.
         if ($VisioExtensions -contains ($_.Extension).ToLower()) {
             #Opens a document.
-            $Document = $Visio.Documents.Open("$SelectedPath\Документ Microsoft Visio.vsd")
+            $Document = $Visio.Documents.Open($_.FullName)
             #List of Built In Document Properties.
             $VisioDocumentBuiltInProperties = @("Subject", "Title", "Creator", "Manager", "Company", "Language", "Category", "Keywords", "Description", "HyperlinkBase", "TimeCreated", "TimeEdited", "TimePrinted", "TimeSaved", "Stat", "Version")
             #$VisioDocumentBuiltInProperties | % {$Document.$_}
@@ -134,7 +134,7 @@ Function Get-FileProperties ($SelectedPath) {
         #if extension of the processed file matches an extension in $VisioExtensions array, the script will open it and extract its properties using Visio application.
         if ($PowerPointExtensions -contains ($_.Extension).ToLower()) {
             #Opens a presentation and makes it not visible to the user.
-            $Presentation = $PowerPoint.Presentations.Open("$SelectedPath\Презентация Microsoft PowerPoint.pptx", $null, $null, [Microsoft.Office.Core.MsoTriState]::msoFalse)
+            $Presentation = $PowerPoint.Presentations.Open($_.FullName, $null, $null, [Microsoft.Office.Core.MsoTriState]::msoFalse)
             #Gets a collection of properties and puts it in $FileProperties.
             $FileProperties = $Presentation.BuiltInDocumentProperties
             #Uses Get-FileProperties function to extract file properties to $CollectedPropertiesData array.
