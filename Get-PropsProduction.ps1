@@ -1,5 +1,18 @@
 clear
-Function Get-FileProperties ($BindingFlags, $CollectionOfProperties) {
+Function Run-MSApplication ($AppName, $AppExtensions, $SelectedPath, $Text) {
+   #Gets each file's extension in the folder specified by user
+   $ExtensionsInSelectedFolder = @(Get-ChildItem -Path $SelectedPath | % {$_.Extension})
+   #If a file's extension from the folder specified by user matches an extension in the $AppExtensions array, opens the required application
+   foreach ($Extension in $ExtensionsInSelectedFolder) {
+       if ($AppExtensions -contains $Extension) {
+           Write-Host "$Text Application started"
+           return New-Object -ComObject $AppName
+           break
+       }
+   }
+}
+
+Function Extract-FileProperties ($BindingFlags, $CollectionOfProperties) {
     foreach ($Property in $CollectionOfProperties) {
         [array]$PropertyNames += [System.__ComObject].InvokeMember(“name”,$BindingFlags::GetProperty,$null,$Property,$null)
         trap [system.exception] {continue}
@@ -7,81 +20,89 @@ Function Get-FileProperties ($BindingFlags, $CollectionOfProperties) {
     }
     return $PropertyNames, $PropertyValues
 }
+$SelectedPath = "C:\Users\Tsedik\Desktop\Новая папка"
 
+Function Get-FileProperties ($SelectedPath) {
+#Adds the Office assembly to the current Windows PowerShell session
+Add-type -AssemblyName Office
 #Stores the BindingFlags enumeration in $Binding
 $Binding = “System.Reflection.BindingFlags” -as [type]
-$SelectedPath = "C:\Users\Tsedik\Desktop\Новая папка"
+#Word extensions
+$WordExtensions = @(".doc", ".docx", ".dotm")
+$ExcelExtensions = @(".xlsx", ".xls", ".xltm")
+$VisioExtensions = @(".vdx", ".vsd", ".vdw")
+$PowerPointExtensions = @(".pptx", ".ppt")
+#Starts MS Word if necessary
+$Word = Run-MSApplication -AppName "Word.Application" -AppExtensions $WordExtensions -SelectedPath $SelectedPath -Text "Word" 
+#Starts MS Excel if necessary
+$Excel = Run-MSApplication -AppName "Excel.Application" -AppExtensions $ExcelExtensions -SelectedPath $SelectedPath -Text "Excel"
+#Starts MS Visio if necessary
+$Visio = Run-MSApplication -AppName "Visio.InvisibleApp" -AppExtensions $VisioExtensions -SelectedPath $SelectedPath -Text "Visio"
+#Starts MS PowerPoint if necessary
+$PowerPoint = Run-MSApplication -AppName "PowerPoint.Application" -AppExtensions $PowerPointExtensions -SelectedPath $SelectedPath -Text "PowerPoint"
+#Opens excel worksheet to output data to
+<#
 $ExcelOutput = New-Object -ComObject Excel.Application
 $ExcelOutput.Visible = $true
 $WorkbookOutput = $ExcelOutput.Workbooks.Add()
 $WorksheetOutput = $WorkbookOutput.Worksheets.Item(1)
+#>
 Get-ChildItem -Path $SelectedPath | % {
-    if ($_.Extension -eq ".xlsx") {
-        #Starts MS Excel
-        $Excel = New-Object -ComObject Excel.Application
+    if ($ExcelExtensions -contains ($_.Extension).ToLower()) {
         #Makes it not visible to the user
         $Excel.Visible = $false
         #Opens the file whose properties are to be extracted
-        $Workbook = $Excel.Workbooks.Open("C:\Users\Tsedik\Desktop\Новая папка\Лист Microsoft Excel.xlsx")
+        $Workbook = $Excel.Workbooks.Open("$SelectedPath\Лист Microsoft Excel.xlsx")
         #Gets a collection of properties and puts it in $FileProperties
         $FileProperties = $Workbook.BuiltInDocumentProperties
         #Uses Get-FileProperties function to extract file properties to $CollectedPropertiesData array
-        $CollectedPropertiesData = Get-FileProperties -BindingFlags $Binding -CollectionOfProperties $FileProperties
+        $CollectedPropertiesData = Extract-FileProperties -BindingFlags $Binding -CollectionOfProperties $FileProperties
         Write-Host $CollectedPropertiesData[0][0]
         Write-Host $CollectedPropertiesData[1][0]
         #Closes active workbook without saving and quits MS Word
         $Workbook.Close($false)
-        $Excel.Quit()
     }
-    if ($_.Extension -eq ".docx") {
-        #Starts MS Word
-        $Word = New-Object -ComObject Word.Application
+    if ($WordExtensions -contains ($_.Extension).ToLower()) {
         #Makes it not visible to the user
         $Word.Visible = $false
         #Opens the file whose properties are to be extracted
-        $Document = $Word.Documents.Open("C:\Users\Tsedik\Desktop\Новая папка\Документ Microsoft Word.docx")
+        $Document = $Word.Documents.Open("$SelectedPath\Документ Microsoft Word.docx")
         #Gets a collection of properties and puts it in $FileProperties
         $FileProperties = $Document.BuiltInDocumentProperties
         #Uses Get-FileProperties function to extract file properties to $CollectedPropertiesData array
-        $CollectedPropertiesData = Get-FileProperties -BindingFlags $Binding -CollectionOfProperties $FileProperties
+        $CollectedPropertiesData = Extract-FileProperties -BindingFlags $Binding -CollectionOfProperties $FileProperties
         Write-Host $CollectedPropertiesData[0]
         Write-Host $CollectedPropertiesData[1][0]
         #Closes active document without saving and quits MS Word
         $Document.Close([ref]0)
-        $Word.Quit()
     }
-    if ($_.Extension -eq ".vdw") {
-        #Starts MS Visio and makes it invisible
-        $Visio = New-Object -ComObject Visio.InvisibleApp
+    if ($VisioExtensions -contains ($_.Extension).ToLower()) {
         #Opens a document
-        $Document = $Visio.Documents.Open("C:\Users\Tsedik\Desktop\Новая папка\Документ Microsoft Visio.vsd")
+        $Document = $Visio.Documents.Open("$SelectedPath\Документ Microsoft Visio.vsd")
         #List of Built In Document Properties
         $VisioDocumentBuiltInProperties = @("Subject", "Title", "Creator", "Manager", "Company", "Language", "Category", "Keywords", "Description", "HyperlinkBase", "TimeCreated", "TimeEdited", "TimePrinted", "TimeSaved", "Stat", "Version")
         $VisioDocumentBuiltInProperties | % {$Document.$_}
         #Closes active document without saving and quits MS Visio
         $Document.Close()
-        $Visio.Quit()
     }
-    if ($_.Extension -eq ".pptx") {
-        #Add the Office assembly to the current Windows PowerShell session
-        Add-type -AssemblyName Office
-        #Starts MS PowerPoint
-        $PowerPoint = New-Object -ComObject PowerPoint.Application
+    if ($PowerPointExtensions -contains ($_.Extension).ToLower()) {
         #Opens a presentation and makes it not visible to the user
-        $Presentation = $PowerPoint.Presentations.Open("C:\Users\Tsedik\Desktop\Новая папка\Презентация Microsoft PowerPoint.pptx", $null, $null, [Microsoft.Office.Core.MsoTriState]::msoFalse)
+        $Presentation = $PowerPoint.Presentations.Open("$SelectedPath\Презентация Microsoft PowerPoint.pptx", $null, $null, [Microsoft.Office.Core.MsoTriState]::msoFalse)
         #Gets a collection of properties and puts it in $FileProperties
         $FileProperties = $Presentation.BuiltInDocumentProperties
         #Uses Get-FileProperties function to extract file properties to $CollectedPropertiesData array
-        $CollectedPropertiesData = Get-FileProperties -BindingFlags $Binding -CollectionOfProperties $FileProperties
+        $CollectedPropertiesData = Extract-FileProperties -BindingFlags $Binding -CollectionOfProperties $FileProperties
         Write-Host $CollectedPropertiesData[0][0]
         Write-Host $CollectedPropertiesData[1][0]
         #Closes active presentation without saving, quits PowerPoint, nulls out all variables related to PowerPoint and calls garbage collection
         $Presentation.Close()
-        $PowerPoint.Quit()
-        $PowerPoint = $null
-        $Presentation = $null
-        $FileProperties = $null
-        [gc]::collect()
-        [gc]::WaitForPendingFinalizers()
     }
 }
+Write-Host "Closing opened MS Office applications... It may take up to 30 seconds... Ignore any warning messages if appear..."
+Start-Sleep -Seconds 3
+if ($Excel -ne $null) {$Excel.Quit()}
+if ($Word -ne $null) {$Word.Quit()}
+if ($Visio -ne $null) {$Visio.Quit()}
+if ($PowerPoint -ne $null) {$PowerPoint.Quit(); $PowerPoint = $null; $Presentation = $null; $FileProperties = $null; [gc]::collect(); [gc]::WaitForPendingFinalizers()}
+}
+Get-FileProperties -SelectedPath $SelectedPath
