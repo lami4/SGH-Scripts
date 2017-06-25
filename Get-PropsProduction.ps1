@@ -22,6 +22,10 @@ Function Extract-FileProperties ($BindingFlags, $CollectionOfProperties) {
 }
 $SelectedPath = "C:\Users\Tsedik\Desktop\Новая папка"
 
+Function Output-CollectedPropertiesToExcelTable () {
+
+}
+
 Function Get-FileProperties ($SelectedPath) {
     #Adds the Office assembly to the current Windows PowerShell session
     Add-type -AssemblyName Office
@@ -64,7 +68,7 @@ Function Get-FileProperties ($SelectedPath) {
             Write-Host $CollectedPropertiesData[0][0]
             Write-Host $CollectedPropertiesData[1][0]
             #Closes active workbook without saving it
-            $Workbook.Close($false)
+            $Workbook.Close()
         }
         #if extension of the processed file matches an extension in $WordExtensionss, the script will open it and extract its properties using Word application
         if ($WordExtensions -contains ($_.Extension).ToLower()) {
@@ -77,7 +81,7 @@ Function Get-FileProperties ($SelectedPath) {
             Write-Host $CollectedPropertiesData[0]
             Write-Host $CollectedPropertiesData[1][0]
             #Closes active document without saving it
-            $Document.Close([ref]0)
+            $Document.Close()
         }
         #if extension of the processed file matches an extension in $VisioExtensions, the script will open it and extract its properties using Visio application
         if ($VisioExtensions -contains ($_.Extension).ToLower()) {
@@ -105,7 +109,7 @@ Function Get-FileProperties ($SelectedPath) {
     }
     Write-Host "Closing opened MS Office applications... It may take up to 30 seconds... Ignore any warning messages if appear..."
     Start-Sleep -Seconds 3
-    if ($Excel -ne $null) {$Excel.Quit()}
+    if ($Excel -ne $null) {$Excel.Quit(); $Excel = $null; $Workbook = $null; $FileProperties = $null; [gc]::collect(); [gc]::WaitForPendingFinalizers()}
     if ($Word -ne $null) {$Word.Quit()}
     if ($Visio -ne $null) {$Visio.Quit()}
     if ($PowerPoint -ne $null) {$PowerPoint.Quit(); $PowerPoint = $null; $Presentation = $null; $FileProperties = $null; [gc]::collect(); [gc]::WaitForPendingFinalizers()}
