@@ -1,5 +1,7 @@
 clear
-$SelectedPath = "C:\Users\Tsedik\Desktop\Новая папка"
+$SelectedPath = "C:\Users\Sergey.Selyuto\Desktop\test"
+$GetBuiltInProperties = $true
+$GetCustomProperties = $true
 
 Function Run-MSApplication ($AppName, $AppExtensions, $SelectedPath, $Text) {
    #Gets each file's extension in the folder specified by user.
@@ -36,6 +38,14 @@ Function Output-CollectedPropertiesToExcelTable ($OutputWorksheet, $CollectedPro
     }
 }
 
+Function Format-ExcelTable ($OutputWorksheet, $ColumnLetter, $ColumnNumber, $Width, $Header) {
+    $OutputWorksheet.Range("$ColumnLetter").NumberFormat = "@"
+    $OutputWorksheet.Cells.Item(1, $ColumnNumber) = $Header
+    $OutputWorksheet.Columns.Item("$ColumnLetter").ColumnWidth = $Width
+    $OutputWorksheet.Cells.Item(1, $ColumnNumber).Font.Bold = $true
+    $OutputWorksheet.Cells.Item(1, $ColumnNumber).HorizontalAlignment = -4108
+}
+
 Function Get-FileProperties ($SelectedPath) {
     #Adds the Office assembly to the current Windows PowerShell session.
     Add-type -AssemblyName Office
@@ -43,9 +53,9 @@ Function Get-FileProperties ($SelectedPath) {
     $Binding = “System.Reflection.BindingFlags” -as [type]
     #Extensions that will be processed by the script.
     $WordExtensions = @(".doc", ".docx", ".dotm")
-    $ExcelExtensions = @(".xlsx", ".xls", ".xltm")
+    $ExcelExtensions = @(".xlsx", ".xls", ".xltm", ".xlsm")
     $VisioExtensions = @(".vdx", ".vsd", ".vdw")
-    $PowerPointExtensions = @(".pptx", ".ppt")
+    $PowerPointExtensions = @(".pptx", ".ppt", ".pptm", ".potx")
     #Starts MS Word if necessary.
     $Word = Run-MSApplication -AppName "Word.Application" -AppExtensions $WordExtensions -SelectedPath $SelectedPath -Text "Word" 
     #If MS Word is started, makes it not visible to user.
@@ -63,34 +73,12 @@ Function Get-FileProperties ($SelectedPath) {
     $OutputExcel.Visible = $false
     $OutputWorkbook = $OutputExcel.Workbooks.Add()
     $OutputWorksheet = $OutputWorkbook.Worksheets.Item(1)
-    #Turns 'Text' data type for all columns where the output data will be kept.
-    $OutputWorksheet.Range("A:A").NumberFormat = "@"
-    $OutputWorksheet.Range("B:B").NumberFormat = "@"
-    $OutputWorksheet.Range("C:C").NumberFormat = "@"
-    $OutputWorksheet.Range("D:D").NumberFormat = "@"
-    $OutputWorksheet.Range("E:E").NumberFormat = "@"
-    #Create headers for columns.
-    $OutputWorksheet.Cells.Item(1, 1) = "Property name"
-    $OutputWorksheet.Cells.Item(1, 2) = "Property value"
-    $OutputWorksheet.Cells.Item(1, 3) = "Property holder"
-    $OutputWorksheet.Cells.Item(1, 4) = "Property type"
-    $OutputWorksheet.Cells.Item(1, 5) = "Property holder extension"
-    #Does a bit of formatting :)
-    $OutputWorksheet.Columns.Item("A").ColumnWidth = 60
-    $OutputWorksheet.Columns.Item("B").ColumnWidth = 60
-    $OutputWorksheet.Columns.Item("C").ColumnWidth = 60
-    $OutputWorksheet.Columns.Item("D").ColumnWidth = 20
-    $OutputWorksheet.Columns.Item("E").ColumnWidth = 40
-    $OutputWorksheet.Cells.Item(1, 1).Font.Bold = $true
-    $OutputWorksheet.Cells.Item(1, 2).Font.Bold = $true
-    $OutputWorksheet.Cells.Item(1, 3).Font.Bold = $true
-    $OutputWorksheet.Cells.Item(1, 4).Font.Bold = $true
-    $OutputWorksheet.Cells.Item(1, 5).Font.Bold = $true
-    $OutputWorksheet.Cells.Item(1, 1).HorizontalAlignment = -4108
-    $OutputWorksheet.Cells.Item(1, 2).HorizontalAlignment = -4108
-    $OutputWorksheet.Cells.Item(1, 3).HorizontalAlignment = -4108
-    $OutputWorksheet.Cells.Item(1, 4).HorizontalAlignment = -4108
-    $OutputWorksheet.Cells.Item(1, 5).HorizontalAlignment = -4108
+    #Turns 'Text' data type for all columns where the output data will be kept and does a bit of formatting :)
+    Format-ExcelTable -OutputWorksheet $OutputWorksheet -ColumnLetter "A:A" -ColumnNumber 1 -Width 40 -Header "Property name"
+    Format-ExcelTable -OutputWorksheet $OutputWorksheet -ColumnLetter "B:B" -ColumnNumber 2 -Width 70 -Header "Property value"
+    Format-ExcelTable -OutputWorksheet $OutputWorksheet -ColumnLetter "C:C" -ColumnNumber 3 -Width 60 -Header "Property holder"
+    Format-ExcelTable -OutputWorksheet $OutputWorksheet -ColumnLetter "D:D" -ColumnNumber 4 -Width 20 -Header "Property type"
+    Format-ExcelTable -OutputWorksheet $OutputWorksheet -ColumnLetter "E:E" -ColumnNumber 5 -Width 40 -Header "Property holder extension"
     #All the data will be written into the table starting from this row (first row contains the column headers).
     $script:RowOutputExcel = 2 
     #Starts looping through each file in the folder specified by user.
@@ -99,12 +87,24 @@ Function Get-FileProperties ($SelectedPath) {
         if ($ExcelExtensions -contains ($_.Extension).ToLower()) {
             #Opens the file whose properties are to be extracted.
             $Workbook = $Excel.Workbooks.Open($_.FullName)
-            #Gets a collection of properties and puts it in $FileProperties.
-            $FileProperties = $Workbook.BuiltInDocumentProperties
-            #Uses Get-FileProperties function to extract file properties to $CollectedPropertiesData array.
-            $CollectedPropertiesData = Extract-FileProperties -BindingFlags $Binding -CollectionOfProperties $FileProperties
-            #Outputs data kept in $CollectedPropertiesData array to the Excel file
-            Output-CollectedPropertiesToExcelTable -OutputWorksheet $OutputWorksheet -CollectedPropertiesData $CollectedPropertiesData -PropertyHolder $_.Name -PropertyType "B" -PropertyHolderExtension $_.Extension
+            #Extracts built-in properties if required
+            if ($GetBuiltInProperties -eq $true) {
+                #Gets a collection of built-in properties and puts it in $FileProperties.
+                $FileProperties = $Workbook.BuiltInDocumentProperties
+                #Uses Get-FileProperties function to extract file properties to $CollectedPropertiesData array.
+                $CollectedPropertiesData = Extract-FileProperties -BindingFlags $Binding -CollectionOfProperties $FileProperties
+                #Outputs data kept in $CollectedPropertiesData array to the Excel file
+                Output-CollectedPropertiesToExcelTable -OutputWorksheet $OutputWorksheet -CollectedPropertiesData $CollectedPropertiesData -PropertyHolder $_.Name -PropertyType "B" -PropertyHolderExtension $_.Extension
+            }
+            #Extracts custom properties if required
+            if ($GetCustomProperties -eq $true) {
+                #Gets a collection of custom properties and puts it in $FileProperties.
+                $FileProperties = $Workbook.CustomDocumentProperties
+                #Uses Get-FileProperties function to extract file properties to $CollectedPropertiesData array.
+                $CollectedPropertiesData = Extract-FileProperties -BindingFlags $Binding -CollectionOfProperties $FileProperties
+                #Outputs data kept in $CollectedPropertiesData array to the Excel file
+                Output-CollectedPropertiesToExcelTable -OutputWorksheet $OutputWorksheet -CollectedPropertiesData $CollectedPropertiesData -PropertyHolder $_.Name -PropertyType "C" -PropertyHolderExtension $_.Extension
+            }
             #Closes active workbook without saving it.
             $Workbook.Close()
         }
@@ -112,12 +112,24 @@ Function Get-FileProperties ($SelectedPath) {
         if ($WordExtensions -contains ($_.Extension).ToLower()) {
             #Opens the file whose properties are to be extracted.
             $Document = $Word.Documents.Open($_.FullName)
-            #Gets a collection of properties and puts it in $FileProperties.
-            $FileProperties = $Document.BuiltInDocumentProperties
-            #Uses Get-FileProperties function to extract file properties to $CollectedPropertiesData array.
-            $CollectedPropertiesData = Extract-FileProperties -BindingFlags $Binding -CollectionOfProperties $FileProperties
-            #Outputs data kept in $CollectedPropertiesData array to the Excel file
-            Output-CollectedPropertiesToExcelTable -OutputWorksheet $OutputWorksheet -CollectedPropertiesData $CollectedPropertiesData -PropertyHolder $_.Name -PropertyType "B" -PropertyHolderExtension $_.Extension
+            #Extracts built-in properties if required
+            if ($GetBuiltInProperties -eq $true) {
+                #Gets a collection of built-in properties and puts it in $FileProperties.
+                $FileProperties = $Document.BuiltInDocumentProperties
+                #Uses Get-FileProperties function to extract file properties to $CollectedPropertiesData array.
+                $CollectedPropertiesData = Extract-FileProperties -BindingFlags $Binding -CollectionOfProperties $FileProperties
+                #Outputs data kept in $CollectedPropertiesData array to the Excel file
+                Output-CollectedPropertiesToExcelTable -OutputWorksheet $OutputWorksheet -CollectedPropertiesData $CollectedPropertiesData -PropertyHolder $_.Name -PropertyType "B" -PropertyHolderExtension $_.Extension
+            }
+            #Extracts custom properties if required
+            if ($GetCustomProperties -eq $true) {
+                #Gets a collection of custom properties and puts it in $FileProperties.
+                $FileProperties = $Document.CustomDocumentProperties
+                #Uses Get-FileProperties function to extract file properties to $CollectedPropertiesData array.
+                $CollectedPropertiesData = Extract-FileProperties -BindingFlags $Binding -CollectionOfProperties $FileProperties
+                #Outputs data kept in $CollectedPropertiesData array to the Excel file
+                Output-CollectedPropertiesToExcelTable -OutputWorksheet $OutputWorksheet -CollectedPropertiesData $CollectedPropertiesData -PropertyHolder $_.Name -PropertyType "C" -PropertyHolderExtension $_.Extension
+            }
             #Closes active document without saving it.
             $Document.Close()
         }
@@ -126,8 +138,10 @@ Function Get-FileProperties ($SelectedPath) {
             #Opens a document.
             $Document = $Visio.Documents.Open($_.FullName)
             #List of Built In Document Properties.
+            $CollectedPropertiesData = @(), @()
             $VisioDocumentBuiltInProperties = @("Subject", "Title", "Creator", "Manager", "Company", "Language", "Category", "Keywords", "Description", "HyperlinkBase", "TimeCreated", "TimeEdited", "TimePrinted", "TimeSaved", "Stat", "Version")
-            #$VisioDocumentBuiltInProperties | % {$Document.$_}
+            $VisioDocumentBuiltInProperties | % {$CollectedPropertiesData[0] += $_; $CollectedPropertiesData[1] += $Document.$_}
+            Output-CollectedPropertiesToExcelTable -OutputWorksheet $OutputWorksheet -CollectedPropertiesData $CollectedPropertiesData -PropertyHolder $_.Name -PropertyType "B" -PropertyHolderExtension $_.Extension
             #Closes active document without saving.
             $Document.Close()
         }
@@ -135,12 +149,24 @@ Function Get-FileProperties ($SelectedPath) {
         if ($PowerPointExtensions -contains ($_.Extension).ToLower()) {
             #Opens a presentation and makes it not visible to the user.
             $Presentation = $PowerPoint.Presentations.Open($_.FullName, $null, $null, [Microsoft.Office.Core.MsoTriState]::msoFalse)
-            #Gets a collection of properties and puts it in $FileProperties.
-            $FileProperties = $Presentation.BuiltInDocumentProperties
-            #Uses Get-FileProperties function to extract file properties to $CollectedPropertiesData array.
-            $CollectedPropertiesData = Extract-FileProperties -BindingFlags $Binding -CollectionOfProperties $FileProperties
-            #Outputs data kept in $CollectedPropertiesData array to the Excel file
-            Output-CollectedPropertiesToExcelTable -OutputWorksheet $OutputWorksheet -CollectedPropertiesData $CollectedPropertiesData -PropertyHolder $_.Name -PropertyType "B" -PropertyHolderExtension $_.Extension
+            #Extracts built-in properties if required
+            if ($GetBuiltInProperties -eq $true) {
+                #Gets a collection of properties and puts it in $FileProperties.
+                $FileProperties = $Presentation.BuiltInDocumentProperties
+                #Uses Get-FileProperties function to extract file properties to $CollectedPropertiesData array.
+                $CollectedPropertiesData = Extract-FileProperties -BindingFlags $Binding -CollectionOfProperties $FileProperties
+                #Outputs data kept in $CollectedPropertiesData array to the Excel file
+                Output-CollectedPropertiesToExcelTable -OutputWorksheet $OutputWorksheet -CollectedPropertiesData $CollectedPropertiesData -PropertyHolder $_.Name -PropertyType "B" -PropertyHolderExtension $_.Extension
+            }
+            #Extracts custom properties if required
+            if ($GetCustomProperties -eq $true) {
+                #Gets a collection of custom properties and puts it in $FileProperties.
+                $FileProperties = $Presentation.CustomDocumentProperties
+                #Uses Get-FileProperties function to extract file properties to $CollectedPropertiesData array.
+                $CollectedPropertiesData = Extract-FileProperties -BindingFlags $Binding -CollectionOfProperties $FileProperties
+                #Outputs data kept in $CollectedPropertiesData array to the Excel file
+                Output-CollectedPropertiesToExcelTable -OutputWorksheet $OutputWorksheet -CollectedPropertiesData $CollectedPropertiesData -PropertyHolder $_.Name -PropertyType "C" -PropertyHolderExtension $_.Extension
+            }
             #Closes active presentation without saving it.
             $Presentation.Close()
         }
