@@ -1,7 +1,8 @@
 clear
-$SelectedPath = "C:\Users\Sergey.Selyuto\Desktop\test"
-$GetBuiltInProperties = $true
-$GetCustomProperties = $true
+$SelectedPath = "C:\Users\Tsedik\Desktop\Новая папка"
+$script:GetBuiltInProperties = $true
+$script:GetCustomProperties = $true
+$script:IgnorePropertiesWithNoValue = $true
 
 Function Run-MSApplication ($AppName, $AppExtensions, $SelectedPath, $Text) {
    #Gets each file's extension in the folder specified by user.
@@ -17,10 +18,19 @@ Function Run-MSApplication ($AppName, $AppExtensions, $SelectedPath, $Text) {
 }
 
 Function Extract-FileProperties ($BindingFlags, $CollectionOfProperties) {
-    foreach ($Property in $CollectionOfProperties) {
-        [array]$PropertyNames += [System.__ComObject].InvokeMember(“name”,$BindingFlags::GetProperty,$null,$Property,$null)
-        trap [system.exception] {continue}
-        [array]$PropertyValues += [System.__ComObject].InvokeMember(“value”,$BindingFlags::GetProperty,$null,$Property,$null)
+    if ($script:IgnorePropertiesWithNoValue -eq $true) {
+        foreach ($Property in $CollectionOfProperties) {
+            $PropertyName = [System.__ComObject].InvokeMember(“name”,$BindingFlags::GetProperty,$null,$Property,$null)
+            trap [system.exception] {continue}
+            $PropertyValue = [System.__ComObject].InvokeMember(“value”,$BindingFlags::GetProperty,$null,$Property,$null)
+            if ($PropertyValue -ne "" -and $PropertyValue -ne $null) {[array]$PropertyNames += $PropertyName; [array]$PropertyValues += $PropertyValue}
+        }
+    } else {
+        foreach ($Property in $CollectionOfProperties) {
+            [array]$PropertyNames += [System.__ComObject].InvokeMember(“name”,$BindingFlags::GetProperty,$null,$Property,$null)
+            trap [system.exception] {continue}
+            [array]$PropertyValues += [System.__ComObject].InvokeMember(“value”,$BindingFlags::GetProperty,$null,$Property,$null)
+        }
     }
     return $PropertyNames, $PropertyValues
 }
@@ -29,6 +39,7 @@ Function Extract-FileProperties ($BindingFlags, $CollectionOfProperties) {
 Function Output-CollectedPropertiesToExcelTable ($OutputWorksheet, $CollectedPropertiesData, $PropertyHolder, $PropertyType, $PropertyHolderExtension) {
     Write-Host "Processing $PropertyHolder..."
     for ($i = 0; $i -lt $CollectedPropertiesData[0].Length; $i++) {
+        #if ($script:IgnorePropertiesWithNoValue -eq $true -and ($CollectedPropertiesData[1][$i] -eq "" -or $CollectedPropertiesData[1][$i] -eq $null)) {continue}
         $OutputWorksheet.Cells.Item($script:RowOutputExcel, 1) = $CollectedPropertiesData[0][$i]
         $OutputWorksheet.Cells.Item($script:RowOutputExcel, 2) = $CollectedPropertiesData[1][$i]
         $OutputWorksheet.Cells.Item($script:RowOutputExcel, 3) = $PropertyHolder
@@ -70,7 +81,7 @@ Function Get-FileProperties ($SelectedPath) {
     $PowerPoint = Run-MSApplication -AppName "PowerPoint.Application" -AppExtensions $PowerPointExtensions -SelectedPath $SelectedPath -Text "PowerPoint" 
     #Opens another instance of Excel application, creates a workbook and activates the first sheet to output data to.
     $OutputExcel = New-Object -ComObject Excel.Application
-    $OutputExcel.Visible = $false
+    $OutputExcel.Visible = $true
     $OutputWorkbook = $OutputExcel.Workbooks.Add()
     $OutputWorksheet = $OutputWorkbook.Worksheets.Item(1)
     #Turns 'Text' data type for all columns where the output data will be kept and does a bit of formatting :)
@@ -88,7 +99,7 @@ Function Get-FileProperties ($SelectedPath) {
             #Opens the file whose properties are to be extracted.
             $Workbook = $Excel.Workbooks.Open($_.FullName)
             #Extracts built-in properties if required
-            if ($GetBuiltInProperties -eq $true) {
+            if ($script:GetBuiltInProperties -eq $true) {
                 #Gets a collection of built-in properties and puts it in $FileProperties.
                 $FileProperties = $Workbook.BuiltInDocumentProperties
                 #Uses Get-FileProperties function to extract file properties to $CollectedPropertiesData array.
@@ -97,7 +108,7 @@ Function Get-FileProperties ($SelectedPath) {
                 Output-CollectedPropertiesToExcelTable -OutputWorksheet $OutputWorksheet -CollectedPropertiesData $CollectedPropertiesData -PropertyHolder $_.Name -PropertyType "B" -PropertyHolderExtension $_.Extension
             }
             #Extracts custom properties if required
-            if ($GetCustomProperties -eq $true) {
+            if ($script:GetCustomProperties -eq $true) {
                 #Gets a collection of custom properties and puts it in $FileProperties.
                 $FileProperties = $Workbook.CustomDocumentProperties
                 #Uses Get-FileProperties function to extract file properties to $CollectedPropertiesData array.
@@ -113,7 +124,7 @@ Function Get-FileProperties ($SelectedPath) {
             #Opens the file whose properties are to be extracted.
             $Document = $Word.Documents.Open($_.FullName)
             #Extracts built-in properties if required
-            if ($GetBuiltInProperties -eq $true) {
+            if ($script:GetBuiltInProperties -eq $true) {
                 #Gets a collection of built-in properties and puts it in $FileProperties.
                 $FileProperties = $Document.BuiltInDocumentProperties
                 #Uses Get-FileProperties function to extract file properties to $CollectedPropertiesData array.
@@ -122,7 +133,7 @@ Function Get-FileProperties ($SelectedPath) {
                 Output-CollectedPropertiesToExcelTable -OutputWorksheet $OutputWorksheet -CollectedPropertiesData $CollectedPropertiesData -PropertyHolder $_.Name -PropertyType "B" -PropertyHolderExtension $_.Extension
             }
             #Extracts custom properties if required
-            if ($GetCustomProperties -eq $true) {
+            if ($script:GetCustomProperties -eq $true) {
                 #Gets a collection of custom properties and puts it in $FileProperties.
                 $FileProperties = $Document.CustomDocumentProperties
                 #Uses Get-FileProperties function to extract file properties to $CollectedPropertiesData array.
@@ -150,7 +161,7 @@ Function Get-FileProperties ($SelectedPath) {
             #Opens a presentation and makes it not visible to the user.
             $Presentation = $PowerPoint.Presentations.Open($_.FullName, $null, $null, [Microsoft.Office.Core.MsoTriState]::msoFalse)
             #Extracts built-in properties if required
-            if ($GetBuiltInProperties -eq $true) {
+            if ($script:GetBuiltInProperties -eq $true) {
                 #Gets a collection of properties and puts it in $FileProperties.
                 $FileProperties = $Presentation.BuiltInDocumentProperties
                 #Uses Get-FileProperties function to extract file properties to $CollectedPropertiesData array.
@@ -159,7 +170,7 @@ Function Get-FileProperties ($SelectedPath) {
                 Output-CollectedPropertiesToExcelTable -OutputWorksheet $OutputWorksheet -CollectedPropertiesData $CollectedPropertiesData -PropertyHolder $_.Name -PropertyType "B" -PropertyHolderExtension $_.Extension
             }
             #Extracts custom properties if required
-            if ($GetCustomProperties -eq $true) {
+            if ($script:GetCustomProperties -eq $true) {
                 #Gets a collection of custom properties and puts it in $FileProperties.
                 $FileProperties = $Presentation.CustomDocumentProperties
                 #Uses Get-FileProperties function to extract file properties to $CollectedPropertiesData array.
