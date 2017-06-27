@@ -2,9 +2,9 @@ clear
 $SelectedPath = "C:\Users\Tsedik\Desktop\Новая папка"
 $script:GetBuiltInProperties = $true
 $script:GetCustomProperties = $true
-$script:IgnorePropertiesWithNoValue = $false
+$script:IgnorePropertiesWithNoValue = $true
 $script:UseBlacklist = $true
-$script:WhitelistEnabled = $false
+$script:WhitelistEnabled = $true
 $script:Blacklist = @("Author", "Subject", "Creation date")
 Function Run-MSApplication ($AppName, $AppExtensions, $SelectedPath, $Text) {
    #Gets each file's extension in the folder specified by user.
@@ -24,10 +24,22 @@ Function Extract-FileProperties ($BindingFlags, $CollectionOfProperties) {
             $PropertyName = [System.__ComObject].InvokeMember(“name”,$BindingFlags::GetProperty,$null,$Property,$null)
             trap [system.exception] {continue}
             $PropertyValue = [System.__ComObject].InvokeMember(“value”,$BindingFlags::GetProperty,$null,$Property,$null)
-            if ($script:UseBlacklist -eq $true -and $script:WhitelistEnabled -eq $false -and $script:Blacklist -contains $PropertyName) {continue}  
-            if ($script:IgnorePropertiesWithNoValue -eq $true -and ($PropertyValue -eq "" -or $PropertyValue -eq $null)) {continue}
-            [array]$PropertyNames += $PropertyName
-            [array]$PropertyValues += $PropertyValue
+            if ($PropertyValue -eq $null) {$PropertyValue = ""}
+            if ($script:UseBlacklist -eq $true -and $script:WhitelistEnabled -eq $true) {
+                if ($Blacklist -contains $PropertyName) {
+                    if ($script:IgnorePropertiesWithNoValue -eq $true -and $PropertyValue -eq "") {continue}
+                    [array]$PropertyNames += $PropertyName 
+                    [array]$PropertyValues += $PropertyValue 
+                    continue  
+                } else {
+                    continue
+                }
+            } else {
+                if ($script:UseBlacklist -eq $true -and $script:Blacklist -contains $PropertyName) {continue}  
+                if ($script:IgnorePropertiesWithNoValue -eq $true -and $PropertyValue -eq "") {continue}
+                [array]$PropertyNames += $PropertyName
+                [array]$PropertyValues += $PropertyValue
+            }
     }
     return $PropertyNames, $PropertyValues
 }
