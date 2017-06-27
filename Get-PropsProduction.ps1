@@ -2,8 +2,10 @@ clear
 $SelectedPath = "C:\Users\Tsedik\Desktop\Новая папка"
 $script:GetBuiltInProperties = $true
 $script:GetCustomProperties = $true
-$script:IgnorePropertiesWithNoValue = $true
-
+$script:IgnorePropertiesWithNoValue = $false
+$script:UseBlacklist = $true
+$script:WhitelistEnabled = $false
+$script:Blacklist = @("Author", "Subject", "Creation date")
 Function Run-MSApplication ($AppName, $AppExtensions, $SelectedPath, $Text) {
    #Gets each file's extension in the folder specified by user.
    $ExtensionsInSelectedFolder = @(Get-ChildItem -Path $SelectedPath | % {$_.Extension})
@@ -18,19 +20,14 @@ Function Run-MSApplication ($AppName, $AppExtensions, $SelectedPath, $Text) {
 }
 
 Function Extract-FileProperties ($BindingFlags, $CollectionOfProperties) {
-    if ($script:IgnorePropertiesWithNoValue -eq $true) {
-        foreach ($Property in $CollectionOfProperties) {
+    foreach ($Property in $CollectionOfProperties) {
             $PropertyName = [System.__ComObject].InvokeMember(“name”,$BindingFlags::GetProperty,$null,$Property,$null)
             trap [system.exception] {continue}
             $PropertyValue = [System.__ComObject].InvokeMember(“value”,$BindingFlags::GetProperty,$null,$Property,$null)
-            if ($PropertyValue -ne "" -and $PropertyValue -ne $null) {[array]$PropertyNames += $PropertyName; [array]$PropertyValues += $PropertyValue}
-        }
-    } else {
-        foreach ($Property in $CollectionOfProperties) {
-            [array]$PropertyNames += [System.__ComObject].InvokeMember(“name”,$BindingFlags::GetProperty,$null,$Property,$null)
-            trap [system.exception] {continue}
-            [array]$PropertyValues += [System.__ComObject].InvokeMember(“value”,$BindingFlags::GetProperty,$null,$Property,$null)
-        }
+            if ($script:UseBlacklist -eq $true -and $script:WhitelistEnabled -eq $false -and $script:Blacklist -contains $PropertyName) {continue}  
+            if ($script:IgnorePropertiesWithNoValue -eq $true -and ($PropertyValue -eq "" -or $PropertyValue -eq $null)) {continue}
+            [array]$PropertyNames += $PropertyName
+            [array]$PropertyValues += $PropertyValue
     }
     return $PropertyNames, $PropertyValues
 }
@@ -39,7 +36,6 @@ Function Extract-FileProperties ($BindingFlags, $CollectionOfProperties) {
 Function Output-CollectedPropertiesToExcelTable ($OutputWorksheet, $CollectedPropertiesData, $PropertyHolder, $PropertyType, $PropertyHolderExtension) {
     Write-Host "Processing $PropertyHolder..."
     for ($i = 0; $i -lt $CollectedPropertiesData[0].Length; $i++) {
-        #if ($script:IgnorePropertiesWithNoValue -eq $true -and ($CollectedPropertiesData[1][$i] -eq "" -or $CollectedPropertiesData[1][$i] -eq $null)) {continue}
         $OutputWorksheet.Cells.Item($script:RowOutputExcel, 1) = $CollectedPropertiesData[0][$i]
         $OutputWorksheet.Cells.Item($script:RowOutputExcel, 2) = $CollectedPropertiesData[1][$i]
         $OutputWorksheet.Cells.Item($script:RowOutputExcel, 3) = $PropertyHolder
