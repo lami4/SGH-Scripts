@@ -2,10 +2,10 @@ clear
 $SelectedPath = "C:\Users\Tsedik\Desktop\Новая папка"
 $script:GetBuiltInProperties = $true
 $script:GetCustomProperties = $true
-$script:IgnorePropertiesWithNoValue = $true
+$script:IgnorePropertiesWithNoValue = $false
 $script:UseBlacklist = $true
 $script:WhitelistEnabled = $true
-$script:Blacklist = @("Author", "Subject", "Creation date")
+$script:Blacklist = @("Title", "Author", "Subject", "Creation date")
 Function Run-MSApplication ($AppName, $AppExtensions, $SelectedPath, $Text) {
    #Gets each file's extension in the folder specified by user.
    $ExtensionsInSelectedFolder = @(Get-ChildItem -Path $SelectedPath | % {$_.Extension})
@@ -26,7 +26,7 @@ Function Extract-FileProperties ($BindingFlags, $CollectionOfProperties) {
             $PropertyValue = [System.__ComObject].InvokeMember(“value”,$BindingFlags::GetProperty,$null,$Property,$null)
             if ($PropertyValue -eq $null) {$PropertyValue = ""}
             if ($script:UseBlacklist -eq $true -and $script:WhitelistEnabled -eq $true) {
-                if ($Blacklist -contains $PropertyName) {
+                if ($script:Blacklist -contains $PropertyName) {
                     if ($script:IgnorePropertiesWithNoValue -eq $true -and $PropertyValue -eq "") {continue}
                     [array]$PropertyNames += $PropertyName 
                     [array]$PropertyValues += $PropertyValue 
@@ -158,8 +158,24 @@ Function Get-FileProperties ($SelectedPath) {
             $Document = $Visio.Documents.Open($_.FullName)
             #List of Built In Document Properties.
             $CollectedPropertiesData = @(), @()
-            $VisioDocumentBuiltInProperties = @("Subject", "Title", "Creator", "Manager", "Company", "Language", "Category", "Keywords", "Description", "HyperlinkBase", "TimeCreated", "TimeEdited", "TimePrinted", "TimeSaved", "Stat", "Version")
-            $VisioDocumentBuiltInProperties | % {$CollectedPropertiesData[0] += $_; $CollectedPropertiesData[1] += $Document.$_}
+            $VisioDocumentBuiltInPropertyNames = @("Subject", "Title", "Creator", "Manager", "Company", "Language", "Category", "Keywords", "Description", "HyperlinkBase", "TimeCreated", "TimeEdited", "TimePrinted", "TimeSaved", "Stat", "Version")
+            foreach ($VisioPropertyName in $VisioDocumentBuiltInPropertyNames) {
+                if ($script:UseBlacklist -eq $true -and $script:WhitelistEnabled -eq $true) {
+                    if ($script:Blacklist -contains $VisioPropertyName) {
+                        if ($script:IgnorePropertiesWithNoValue -eq $true -and $Document.$VisioPropertyName -eq "") {continue}
+                        $CollectedPropertiesData[0] += $VisioPropertyName 
+                        $CollectedPropertiesData[1] += $Document.$VisioPropertyName 
+                        continue  
+                    } else {
+                        continue
+                    }
+                } else {
+                    if ($script:UseBlacklist -eq $true -and $script:Blacklist -contains $VisioPropertyName) {continue}  
+                    if ($script:IgnorePropertiesWithNoValue -eq $true -and $Document.$VisioPropertyName -eq "") {continue}
+                        $CollectedPropertiesData[0] += $VisioPropertyName 
+                        $CollectedPropertiesData[1] += $Document.$VisioPropertyName 
+                }  
+            }
             Output-CollectedPropertiesToExcelTable -OutputWorksheet $OutputWorksheet -CollectedPropertiesData $CollectedPropertiesData -PropertyHolder $_.Name -PropertyType "B" -PropertyHolderExtension $_.Extension
             #Closes active document without saving.
             $Document.Close()
