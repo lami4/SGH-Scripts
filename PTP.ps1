@@ -293,11 +293,12 @@ Function Custom-Form
         if ($GetPropertyCheckboxGetCustomProperties.Checked -eq $true) {$script:GetCustomProperties = $true} else {$script:GetCustomProperties = $false}
         if ($GetPropertyCheckboxIgnorePropertiesWithNoValue.Checked -eq $true) {$script:IgnorePropertiesWithNoValue = $true} else {$script:IgnorePropertiesWithNoValue = $false}
         if ($GetPropertyCheckboxUseBlacklist.Checked -eq $true) {
-        $script:UseBlacklist = $true
-        $script:GetPropertiesBlacklist = @()
-        $GetPropertyListBoxBlackList.Items | % {$script:GetPropertiesBlacklist += $_}
-        Write-Host $script:GetPropertiesBlacklist
-        } else {$script:UseBlacklist = $false}
+            $script:UseBlacklist = $true
+            $script:GetPropertiesBlacklist = @()
+            $GetPropertyListBoxBlackList.Items | % {$script:GetPropertiesBlacklist += $_}
+        } else {
+            $script:UseBlacklist = $false
+        }
         if ($GetPropertyCheckboxTurnIntoWhite.Checked -eq $true) {$script:WhitelistEnabled = $true} else {$script:WhitelistEnabled = $false}
         Get-FileProperties
     })
