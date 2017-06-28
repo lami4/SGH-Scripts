@@ -1,5 +1,7 @@
-Function Custom-Form 
+Function Custom-Form
 {
+    #variables
+    $script:GetPropertyPathToSelectedFolder = $null
     Add-Type -AssemblyName System.Windows.Forms
     #FORM
     $Form = New-Object System.Windows.Forms.Form
@@ -29,19 +31,20 @@ Function Custom-Form
     $GetPropertyButtonBrowse.Size = New-Object System.Drawing.Point(80,30)
     $GetPropertyButtonBrowse.Text = "Browse..."
     $GetPropertyButtonBrowse.Add_Click({
-        $PathToSelectedFolder = Select-Folder -Description "Select folder with files whose properties will be extracted"
-        if ($PathToSelectedFolder -ne $null) {
-            if ($PathToSelectedFolder.Length -gt 85) {
-                #$ToolTip.RemoveAll()
+        $script:GetPropertyPathToSelectedFolder = Select-Folder -Description "Select folder with files whose properties will be extracted"
+        if ($script:GetPropertyPathToSelectedFolder -ne $null) {
+            if ($script:GetPropertyPathToSelectedFolder.Length -gt 85) {
                 $GetPropertyLabelButtonBrowse.Text = "Specified directory's name is too long to display it here. Hover to see the full path."
-                #Tooltip for label of 'Browse...' button
-                #$ToolTip = New-Object System.Windows.Forms.ToolTip
-                $ToolTip.SetToolTip($GetPropertyLabelButtonBrowse, "$PathToSelectedFolder")
+                $ToolTip.SetToolTip($GetPropertyLabelButtonBrowse, "$script:GetPropertyPathToSelectedFolder")
             } else {
-                #$ToolTip.RemoveAll()
-                $GetPropertyLabelButtonBrowse.Text = "Specified directory: '$(Split-Path -Path $PathToSelectedFolder -Leaf)'. Hover to see the full path."
-                $ToolTip.SetToolTip($GetPropertyLabelButtonBrowse, "$PathToSelectedFolder")
+                $GetPropertyLabelButtonBrowse.Text = "Specified directory: '$(Split-Path -Path $script:GetPropertyPathToSelectedFolder -Leaf)'. Hover to see the full path."
+                $ToolTip.SetToolTip($GetPropertyLabelButtonBrowse, "$script:GetPropertyPathToSelectedFolder")
             }
+        }
+        if ($script:GetPropertyPathToSelectedFolder -ne $null -and ($GetPropertyCheckboxGetBuiltInProperties.Checked -eq $true -or $GetPropertyCheckboxGetCustomProperties.Checked -eq $true)) {
+            $GetPropertyButtonExtract.Enabled = $true
+        } else {
+            $GetPropertyButtonExtract.Enabled = $false
         }
         })
     $GetPropertiesPage.Controls.Add($GetPropertyButtonBrowse)
@@ -60,14 +63,34 @@ Function Custom-Form
     $GetPropertyCheckboxGetBuiltInProperties.Location = New-Object System.Drawing.Point(25,65)
     $GetPropertyCheckboxGetBuiltInProperties.Width = 300
     $GetPropertyCheckboxGetBuiltInProperties.Text = "Get Built-In Properties"
-    $GetPropertyCheckboxGetBuiltInProperties.Add_CheckStateChanged({})
+    $GetPropertyCheckboxGetBuiltInProperties.Add_CheckStateChanged({
+        if ($GetPropertyCheckboxGetBuiltInProperties.Checked -eq $true -and $script:GetPropertyPathToSelectedFolder -ne $null -and $GetPropertyCheckboxGetCustomProperties.Checked -eq $false) {
+            $GetPropertyButtonExtract.Enabled = $true
+        } elseif ($GetPropertyCheckboxGetBuiltInProperties.Checked -eq $false -and $script:GetPropertyPathToSelectedFolder -ne $null -and $GetPropertyCheckboxGetCustomProperties.Checked -eq $true) {
+            $GetPropertyButtonExtract.Enabled = $true
+        } elseif ($GetPropertyCheckboxGetBuiltInProperties.Checked -eq $true -and $script:GetPropertyPathToSelectedFolder -ne $null -and $GetPropertyCheckboxGetCustomProperties.Checked -eq $true) {
+            $GetPropertyButtonExtract.Enabled = $true
+        } else {
+            $GetPropertyButtonExtract.Enabled = $false
+        }
+        })
     $GetPropertiesPage.Controls.Add($GetPropertyCheckboxGetBuiltInProperties)
     #Checkbox 'Get Custom Properties'
     $GetPropertyCheckboxGetCustomProperties = New-Object System.Windows.Forms.CheckBox
     $GetPropertyCheckboxGetCustomProperties.Location = New-Object System.Drawing.Point(25,90)
     $GetPropertyCheckboxGetCustomProperties.Width = 300
     $GetPropertyCheckboxGetCustomProperties.Text = "Get Custom Properties"
-    $GetPropertyCheckboxGetCustomProperties.Add_CheckStateChanged({})
+    $GetPropertyCheckboxGetCustomProperties.Add_CheckStateChanged({
+        if ($GetPropertyCheckboxGetCustomProperties.Checked -eq $true -and $script:GetPropertyPathToSelectedFolder -ne $null -and $GetPropertyCheckboxGetBuiltInProperties.Checked -eq $false) {
+            $GetPropertyButtonExtract.Enabled = $true
+        } elseif ($GetPropertyCheckboxGetCustomProperties.Checked -eq $false -and $script:GetPropertyPathToSelectedFolder -ne $null -and $GetPropertyCheckboxGetBuiltInProperties.Checked -eq $true) {
+            $GetPropertyButtonExtract.Enabled = $true
+        } elseif ($GetPropertyCheckboxGetCustomProperties.Checked -eq $true -and $script:GetPropertyPathToSelectedFolder -ne $null -and $GetPropertyCheckboxGetBuiltInProperties.Checked -eq $true) {
+            $GetPropertyButtonExtract.Enabled = $true
+        } else {
+            $GetPropertyButtonExtract.Enabled = $false
+        }
+        })
     $GetPropertiesPage.Controls.Add($GetPropertyCheckboxGetCustomProperties)
     #Checkbox 'Ignore Properties That Have No Value'
     $GetPropertyCheckboxIgnorePropertiesWithNoValue = New-Object System.Windows.Forms.CheckBox
@@ -261,15 +284,32 @@ Function Custom-Form
     $GetPropertyButtonExtract = New-Object System.Windows.Forms.Button
     $GetPropertyButtonExtract.Location = New-Object System.Drawing.Point(25,480) #x,y
     $GetPropertyButtonExtract.Size = New-Object System.Drawing.Point(80,30)
-    $GetPropertyButtonExtract.Text = "Run"
-    $GetPropertyButtonExtract.Add_Click({})
+    $GetPropertyButtonExtract.Text = "Extract"
+    $GetPropertyButtonExtract.Enabled = $false
+    $GetPropertyButtonExtract.Add_Click({
+        Show-MessageBox "The script will close the following applications: Excel, Word, PowerPoint, Visio.$([System.Environment]::NewLine)So, before clicking 'OK', make sure you have saved and closed any documents opened in the listed applications."
+        Kill -Name VISIO, POWERPNT, EXCEL, WINWORD -ErrorAction SilentlyContinue
+        if ($GetPropertyCheckboxGetBuiltInProperties.Checked -eq $true) {$script:GetBuiltInProperties = $true} else {$script:GetBuiltInProperties = $false}
+        if ($GetPropertyCheckboxGetCustomProperties.Checked -eq $true) {$script:GetCustomProperties = $true} else {$script:GetCustomProperties = $false}
+        if ($GetPropertyCheckboxIgnorePropertiesWithNoValue.Checked -eq $true) {$script:IgnorePropertiesWithNoValue = $true} else {$script:IgnorePropertiesWithNoValue = $false}
+        if ($GetPropertyCheckboxUseBlacklist.Checked -eq $true) {
+        $script:UseBlacklist = $true
+        $script:GetPropertiesBlacklist = @()
+        $GetPropertyListBoxBlackList.Items | % {$script:GetPropertiesBlacklist += $_}
+        Write-Host $script:GetPropertiesBlacklist
+        } else {$script:UseBlacklist = $false}
+        if ($GetPropertyCheckboxTurnIntoWhite.Checked -eq $true) {$script:WhitelistEnabled = $true} else {$script:WhitelistEnabled = $false}
+        Get-FileProperties
+    })
     $GetPropertiesPage.Controls.Add($GetPropertyButtonExtract)
     #Button 'Exit'
     $GetPropertyButtonExit = New-Object System.Windows.Forms.Button
     $GetPropertyButtonExit.Location = New-Object System.Drawing.Point(115,480) #x,y
     $GetPropertyButtonExit.Size = New-Object System.Drawing.Point(80,30)
     $GetPropertyButtonExit.Text = "Exit"
-    $GetPropertyButtonExit.Add_Click({})
+    $GetPropertyButtonExit.Add_Click({
+    $Form.Close();
+    })
     $GetPropertiesPage.Controls.Add($GetPropertyButtonExit)
     #SET PROPERTIES PAGE
     $SetPropertiesPage = New-Object System.Windows.Forms.TabPage
