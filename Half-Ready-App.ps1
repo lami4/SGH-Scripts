@@ -14,32 +14,44 @@ Function Run-MSApplication ($AppName, $AppExtensions, $Text) {
 
 Function Extract-FileProperties ($BindingFlags, $CollectionOfProperties) {
     foreach ($Property in $CollectionOfProperties) {
-            $PropertyName = [System.__ComObject].InvokeMember(“name”,$BindingFlags::GetProperty,$null,$Property,$null)
-            trap [system.exception] {continue}
-            $PropertyValue = [System.__ComObject].InvokeMember(“value”,$BindingFlags::GetProperty,$null,$Property,$null)
-            if ($PropertyValue -eq $null) {$PropertyValue = ""}
-            if ($script:UseBlacklist -eq $true -and $script:WhitelistEnabled -eq $true) {
-                if ($script:GetPropertiesBlacklist -contains $PropertyName) {
-                    if ($script:IgnorePropertiesWithNoValue -eq $true -and $PropertyValue -eq "") {continue}
-                    [array]$PropertyNames += $PropertyName 
-                    [array]$PropertyValues += $PropertyValue 
-                    continue  
-                } else {
-                    continue
-                }
-            } else {
-                if ($script:UseBlacklist -eq $true -and $script:GetPropertiesBlacklist -contains $PropertyName) {continue}  
+        #Gets property name and its value
+        $PropertyName = [System.__ComObject].InvokeMember(“name”,$BindingFlags::GetProperty,$null,$Property,$null)
+        trap [system.exception] {continue}
+        $PropertyValue = [System.__ComObject].InvokeMember(“value”,$BindingFlags::GetProperty,$null,$Property,$null)
+        #If the propery value has a $null value, converts it into an empty string
+        if ($PropertyValue -eq $null) {$PropertyValue = ""}
+        #Goes to this scenario, if user has enabled the whitelist
+        if ($script:UseBlacklist -eq $true -and $script:WhitelistEnabled -eq $true) {
+            #Checks if the current property name is on the whitelist
+            if ($script:GetPropertiesBlacklist -contains $PropertyName) {
+                #If this checkout enabled, checks if the property value is empty. If the value is an empty string, moves on to the next item in $CollectionOfProperties.
                 if ($script:IgnorePropertiesWithNoValue -eq $true -and $PropertyValue -eq "") {continue}
-                [array]$PropertyNames += $PropertyName
+                #Adds property name and value to arrays
+                [array]$PropertyNames += $PropertyName 
                 [array]$PropertyValues += $PropertyValue
+                #Moves on to the next item in $CollectionOfProperties
+                continue  
+            } else {
+                #If the current property name is not on the whitelist, moves on to the next item in $CollectionOfProperties
+                continue
             }
+        #Goes to this scenario, if user has enabled the blacklist
+        } else {
+            #Checks if the current property name is on the blacklist
+            if ($script:UseBlacklist -eq $true -and $script:GetPropertiesBlacklist -contains $PropertyName) {continue}  
+            #If this checkout enabled, checks if the property value is empty. If the value is an empty string, moves on to the next item in $CollectionOfProperties.
+            if ($script:IgnorePropertiesWithNoValue -eq $true -and $PropertyValue -eq "") {continue}
+            #Adds property name and value to arrays
+            [array]$PropertyNames += $PropertyName
+            [array]$PropertyValues += $PropertyValue
+        }
     }
+    #Returns collected data
     return $PropertyNames, $PropertyValues
 }
 
 
 Function Output-CollectedPropertiesToExcelTable ($OutputWorksheet, $CollectedPropertiesData, $PropertyHolder, $PropertyType, $PropertyHolderExtension) {
-    Write-Host "Processing $PropertyHolder..."
     for ($i = 0; $i -lt $CollectedPropertiesData[0].Length; $i++) {
         $OutputWorksheet.Cells.Item($script:RowOutputExcel, 1) = $CollectedPropertiesData[0][$i]
         $OutputWorksheet.Cells.Item($script:RowOutputExcel, 2) = $CollectedPropertiesData[1][$i]
@@ -95,6 +107,7 @@ Function Get-FileProperties {
     $script:RowOutputExcel = 2 
     #Starts looping through each file in the folder specified by user.
     Get-ChildItem -Path $script:GetPropertyPathToSelectedFolder | % {
+        Write-Host "Processing $($_.Name)..."
         #if extension of the processed file matches an extension in $ExcelExtensions array, the script will open it and extract its properties using Excel application.
         if ($ExcelExtensions -contains ($_.Extension).ToLower()) {
             #Opens the file whose properties are to be extracted.
@@ -165,8 +178,8 @@ Function Get-FileProperties {
                 } else {
                     if ($script:UseBlacklist -eq $true -and $script:GetPropertiesBlacklist -contains $VisioPropertyName) {continue}  
                     if ($script:IgnorePropertiesWithNoValue -eq $true -and $Document.$VisioPropertyName -eq "") {continue}
-                        $CollectedPropertiesData[0] += $VisioPropertyName 
-                        $CollectedPropertiesData[1] += $Document.$VisioPropertyName 
+                    $CollectedPropertiesData[0] += $VisioPropertyName 
+                    $CollectedPropertiesData[1] += $Document.$VisioPropertyName 
                 }  
             }
             Output-CollectedPropertiesToExcelTable -OutputWorksheet $OutputWorksheet -CollectedPropertiesData $CollectedPropertiesData -PropertyHolder $_.Name -PropertyType "B" -PropertyHolderExtension $_.Extension
@@ -257,7 +270,7 @@ Function Custom-Form
         } else {
             $GetPropertyButtonExtract.Enabled = $false
         }
-        })
+    })
     $GetPropertiesPage.Controls.Add($GetPropertyButtonBrowse)
     #Label for 'Browse...' button
     $GetPropertyLabelButtonBrowse = New-Object System.Windows.Forms.Label
@@ -579,7 +592,6 @@ Function Select-Folder ($Description)
     $DialogResult = $SelectFolderDialog.ShowDialog()
     if ($DialogResult -eq "OK") {return $SelectFolderDialog.SelectedPath} else {return $null}
 }
-
 Function Show-MessageBox ($Message)
 {
     Add-Type –AssemblyName System.Windows.Forms   
