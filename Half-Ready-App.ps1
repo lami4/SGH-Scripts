@@ -107,7 +107,7 @@ Function Get-FileProperties {
     $script:RowOutputExcel = 2 
     #Starts looping through each file in the folder specified by user.
     Get-ChildItem -Path $script:GetPropertyPathToSelectedFolder | % {
-        Write-Host "Processing $($_.Name)..."
+        Write-Host "Extracting properties from $($_.Name)..."
         #if extension of the processed file matches an extension in $ExcelExtensions array, the script will open it and extract its properties using Excel application.
         if ($ExcelExtensions -contains ($_.Extension).ToLower()) {
             #Opens the file whose properties are to be extracted.
@@ -351,10 +351,10 @@ Function Custom-Form
     $GetPropertyListBoxBlackList = New-Object System.Windows.Forms.ListBox
     $GetPropertyListBoxBlackList.Location = New-Object System.Drawing.Point(15,35) #x,y
     $GetPropertyListBoxBlackList.Size = New-Object System.Drawing.Point(210,260) #width,height
-    $DefaultBlackList | % {$GetPropertyListBoxBlackList.Items.Add($_)}
+    $DefaultBlackList | % {$GetPropertyListBoxBlackList.Items.Add($_)} | Out-Null
     $GetPropertyListBoxBlackList.Add_SelectedIndexChanged({
         if ($GetPropertyListBoxBlackList.SelectedIndex -ne -1) {
-            Write-Host "$($GetPropertyListBoxBlackList.SelectedIndex)"
+            #Write-Host "$($GetPropertyListBoxBlackList.SelectedIndex)"
             $GetPropertyInputboxEditItem.Text = $GetPropertyListBoxBlackList.SelectedItem
         }
         })
@@ -544,28 +544,28 @@ Function Custom-Form
 }
 Function Disable-AllExceptEditing ($BooleanRest, $BooleanEditing) 
 {
-        $GetPropertyButtonBrowse.Enabled = $BooleanRest
-        $GetPropertyLabelButtonBrowse.Enabled = $BooleanRest
-        $GetPropertyCheckboxGetBuiltInProperties.Enabled = $BooleanRest
-        $GetPropertyCheckboxGetCustomProperties.Enabled = $BooleanRest
-        $GetPropertyCheckboxIgnorePropertiesWithNoValue.Enabled = $BooleanRest
-        $GetPropertyCheckboxUseBlacklist.Enabled = $BooleanRest
-        $GetPropertyListBoxBlackList.Enabled = $BooleanRest
-        $GetPropertyButtonAddItem.Enabled = $BooleanRest
-        $GetPropertyInputboxAddItem.Enabled = $BooleanRest
-        $GetPropertyButtonDeleteItem.Enabled = $BooleanRest
-        $GetPropertyLabelButtonDelete.Enabled = $BooleanRest
-        $GetPropertyButtonExportList.Enabled = $BooleanRest
-        $GetPropertyLabelButtonExport.Enabled = $BooleanRest
-        $GetPropertyButtonImportList.Enabled = $BooleanRest
-        $GetPropertyLabelButtonImport.Enabled = $BooleanRest
-        $GetPropertyInputboxEditItem.Enabled = $BooleanEditing
-        $GetPropertyButtonApplyItem.Enabled = $BooleanEditing
-        $GetPropertyButtonCancelItem.Enabled = $BooleanEditing
-        $GetPropertyButtonEditItem.Enabled = $BooleanRest
-        $GetPropertyCheckboxTurnIntoWhite.Enabled = $BooleanRest
-        $GetPropertyButtonExtract.Enabled = $BooleanRest
-        $GetPropertyButtonExit.Enabled = $BooleanRest
+    $GetPropertyButtonBrowse.Enabled = $BooleanRest
+    $GetPropertyLabelButtonBrowse.Enabled = $BooleanRest
+    $GetPropertyCheckboxGetBuiltInProperties.Enabled = $BooleanRest
+    $GetPropertyCheckboxGetCustomProperties.Enabled = $BooleanRest
+    $GetPropertyCheckboxIgnorePropertiesWithNoValue.Enabled = $BooleanRest
+    $GetPropertyCheckboxUseBlacklist.Enabled = $BooleanRest
+    $GetPropertyListBoxBlackList.Enabled = $BooleanRest
+    $GetPropertyButtonAddItem.Enabled = $BooleanRest
+    $GetPropertyInputboxAddItem.Enabled = $BooleanRest
+    $GetPropertyButtonDeleteItem.Enabled = $BooleanRest
+    $GetPropertyLabelButtonDelete.Enabled = $BooleanRest
+    $GetPropertyButtonExportList.Enabled = $BooleanRest
+    $GetPropertyLabelButtonExport.Enabled = $BooleanRest
+    $GetPropertyButtonImportList.Enabled = $BooleanRest
+    $GetPropertyLabelButtonImport.Enabled = $BooleanRest
+    $GetPropertyInputboxEditItem.Enabled = $BooleanEditing
+    $GetPropertyButtonApplyItem.Enabled = $BooleanEditing
+    $GetPropertyButtonCancelItem.Enabled = $BooleanEditing
+    $GetPropertyButtonEditItem.Enabled = $BooleanRest
+    $GetPropertyCheckboxTurnIntoWhite.Enabled = $BooleanRest
+    $GetPropertyButtonExtract.Enabled = $BooleanRest
+    $GetPropertyButtonExit.Enabled = $BooleanRest
 }
 Function Save-File
 { 
