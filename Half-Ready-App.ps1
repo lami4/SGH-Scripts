@@ -94,7 +94,7 @@ Function Get-FileProperties {
     $PowerPoint = Run-MSApplication -AppName "PowerPoint.Application" -AppExtensions $PowerPointExtensions -Text "PowerPoint" 
     #Opens another instance of Excel application, creates a workbook and activates the first sheet to output data to.
     $OutputExcel = New-Object -ComObject Excel.Application
-    $OutputExcel.Visible = $true
+    $OutputExcel.Visible = $false
     $OutputWorkbook = $OutputExcel.Workbooks.Add()
     $OutputWorksheet = $OutputWorkbook.Worksheets.Item(1)
     #Turns 'Text' data type for all columns where the output data will be kept and does a bit of formatting :)
