@@ -1,7 +1,7 @@
 ###GET FILE PROPERTIES FUNCTIONS###
-Function Run-MSApplication ($AppName, $AppExtensions, $Text) {
+Function Run-MSApplication ($AppName, $AppExtensions, $Text, $PathToFolder) {
    #Gets each file's extension in the folder specified by user.
-   $ExtensionsInSelectedFolder = @(Get-ChildItem -Path $script:GetPropertyPathToSelectedFolder | % {$_.Extension})
+   $ExtensionsInSelectedFolder = @(Get-ChildItem -Path $PathToFolder | % {$_.Extension})
    #If a file's extension from the folder specified by user matches an extension in the $AppExtensions array, opens the required application.
    foreach ($Extension in $ExtensionsInSelectedFolder) {
        if ($AppExtensions -contains $Extension) {
@@ -81,18 +81,18 @@ Function Get-FileProperties {
     $VisioExtensions = @(".vdx", ".vsd", ".vdw")
     $PowerPointExtensions = @(".pptx", ".ppt", ".pptm", ".potx")
     #Starts MS Word if necessary.
-    $Word = Run-MSApplication -AppName "Word.Application" -AppExtensions $WordExtensions -Text "Word" 
+    $Word = Run-MSApplication -AppName "Word.Application" -AppExtensions $WordExtensions -Text "Word" -PathToFolder $script:GetPropertyPathToSelectedFolder
     #If MS Word is started, makes it not visible to user.
     if ($Word -ne $null) {$Word.Visible = $false}
     #Starts MS Excel if necessary
-    $Excel = Run-MSApplication -AppName "Excel.Application" -AppExtensions $ExcelExtensions -Text "Excel"
+    $Excel = Run-MSApplication -AppName "Excel.Application" -AppExtensions $ExcelExtensions -Text "Excel" -PathToFolder $script:GetPropertyPathToSelectedFolder
     #If MS Excel is started, makes it not visible to user.
     if ($Excel -ne $null) {$Excel.Visible = $false}
     #Starts MS Visio if necessary and makes it not visible to user.
-    $Visio = Run-MSApplication -AppName "Visio.InvisibleApp" -AppExtensions $VisioExtensions -Text "Visio"
+    $Visio = Run-MSApplication -AppName "Visio.InvisibleApp" -AppExtensions $VisioExtensions -Text "Visio" -PathToFolder $script:GetPropertyPathToSelectedFolder
     #Starts MS PowerPoint if necessary. Invisibility is enabled when opening a presentation.
-    $PowerPoint = Run-MSApplication -AppName "PowerPoint.Application" -AppExtensions $PowerPointExtensions -Text "PowerPoint" 
-    #Opens another instance of Excel application, creates a workbook and activates the first sheet to output data to.
+    $PowerPoint = Run-MSApplication -AppName "PowerPoint.Application" -AppExtensions $PowerPointExtensions -Text "PowerPoint" -PathToFolder $script:GetPropertyPathToSelectedFolder
+    #Creates another instance of Excel application, adds a workbook and activates the first sheet to output data to.
     $OutputExcel = New-Object -ComObject Excel.Application
     $OutputExcel.Visible = $false
     $OutputWorkbook = $OutputExcel.Workbooks.Add()
@@ -540,6 +540,46 @@ Function Custom-Form
     $SetPropertiesPage = New-Object System.Windows.Forms.TabPage
     $SetPropertiesPage.Text = "Set Properties”
     $TabControl.Controls.Add($SetPropertiesPage)
+    #SET PROPERTIES PAGE ELEMENTS
+    
+    #Button 'Browse...' (for file)
+    $SetPropertyButtonBrowseFile = New-Object System.Windows.Forms.Button
+    $SetPropertyButtonBrowseFile.Location = New-Object System.Drawing.Point(25,25)
+    $SetPropertyButtonBrowseFile.Size = New-Object System.Drawing.Point(80,30)
+    $SetPropertyButtonBrowseFile.Text = "Browse..."
+    $SetPropertyButtonBrowseFile.Add_Click({})
+    $SetPropertiesPage.Controls.Add($SetPropertyButtonBrowseFile)
+    #Label for 'Browse...' (for file) button 
+    $SetPropertyLabelButtonBrowseFile = New-Object System.Windows.Forms.Label
+    $SetPropertyLabelButtonBrowseFile.Location =  New-Object System.Drawing.Point(110,32)
+    $SetPropertyLabelButtonBrowseFile.Width = 400
+    $SetPropertyLabelButtonBrowseFile.Text = "Specify *.xlsx that contains properties you want to insert"
+    $SetPropertyLabelButtonBrowseFile.AutoSize = $true
+    $SetPropertyLabelButtonBrowseFile.MaximumSize = New-Object System.Drawing.Point(430,38)
+    $SetPropertiesPage.Controls.Add($SetPropertyLabelButtonBrowseFile)
+    
+    #Button 'Browse...' (for folder)
+    $SetPropertyButtonBrowseFolder = New-Object System.Windows.Forms.Button
+    $SetPropertyButtonBrowseFolder.Location = New-Object System.Drawing.Point(25,65)
+    $SetPropertyButtonBrowseFolder.Size = New-Object System.Drawing.Point(80,30)
+    $SetPropertyButtonBrowseFolder.Text = "Browse..."
+    $SetPropertyButtonBrowseFolder.Add_Click({})
+    $SetPropertiesPage.Controls.Add($SetPropertyButtonBrowseFolder)
+    #Label for 'Browse...' (for folder) button 
+    $SetPropertyLabelButtonBrowseFolder = New-Object System.Windows.Forms.Label
+    $SetPropertyLabelButtonBrowseFolder.Location =  New-Object System.Drawing.Point(110,72)
+    $SetPropertyLabelButtonBrowseFolder.Width = 400
+    $SetPropertyLabelButtonBrowseFolder.Text = "Specify folder with documents whose properties will be updated"
+    $SetPropertyLabelButtonBrowseFolder.AutoSize = $true
+    $SetPropertyLabelButtonBrowseFolder.MaximumSize = New-Object System.Drawing.Point(430,38)
+    $SetPropertiesPage.Controls.Add($SetPropertyLabelButtonBrowseFolder)
+    #Checkbox 'Do Not Clear Filtering'
+    $SetPropertyCheckboxDoNotClearFiltering = New-Object System.Windows.Forms.CheckBox
+    $SetPropertyCheckboxDoNotClearFiltering.Location = New-Object System.Drawing.Point(25,105)
+    $SetPropertyCheckboxDoNotClearFiltering.Width = 300
+    $SetPropertyCheckboxDoNotClearFiltering.Text = "Do Not Clear Filtering"
+    $SetPropertyCheckboxDoNotClearFiltering.Add_CheckStateChanged({})
+    $SetPropertiesPage.Controls.Add($SetPropertyCheckboxDoNotClearFiltering)
     $Form.ShowDialog()
 }
 Function Disable-AllExceptEditing ($BooleanRest, $BooleanEditing) 
