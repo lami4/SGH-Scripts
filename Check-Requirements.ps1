@@ -1,7 +1,7 @@
 clear
 #Global variables
 $script:JSvariable = 0
-$script:BlackList = @("BTLJ", "KYUP", "MTCH", "BAXXJ", "BTKZ", "SLTJ", "TL6J", "SPL", "RBCT")
+$script:BlackList = @("BTLJ", "KYUP", "MTCH", "BAXXJ", "BTKZ", "SLTJ", "TL6J", "SPL", "RBCT", "WTS")
 $script:yesNoUserInput = 0
 #Functions
 Function Input-YesOrNo ($Question, $BoxTitle) {
