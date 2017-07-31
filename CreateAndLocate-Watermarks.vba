@@ -76,10 +76,20 @@ Function SetWatermarkProperties(RelativeVerticalPosition, TopCoordinate, ByVal S
     ShapeObject.Top = CentimetersToPoints(TopCoordinate)
     ShapeObject.Height = CentimetersToPoints(0.8)
     ShapeObject.Width = CentimetersToPoints(8.5)
+    ShapeObject.TextFrame.TextRange.Font.Name = "Arial"
     ShapeObject.TextFrame.TextRange.Font.Size = 14
+    ShapeObject.Fill.Visible = msoFalse
+    ShapeObject.Line.Weight = 1
+    ShapeObject.Line.Visible = msoFalse
+    ShapeObject.TextFrame.MarginBottom = CentimetersToPoints(0)
+    ShapeObject.TextFrame.MarginLeft = CentimetersToPoints(0)
+    ShapeObject.TextFrame.MarginRight = CentimetersToPoints(0.1)
+    ShapeObject.TextFrame.MarginTop = CentimetersToPoints(0.1)
     ShapeObject.TextFrame.TextRange.ParagraphFormat.Alignment = wdAlignParagraphRight
     ShapeObject.TextFrame.TextRange.Font.ColorIndex = wdBlack
+
 End Function
+
 Function SetupHeadersFooters(ByVal SectionObject As Object)
     'Проверяет включен ли параметр "Особый колонтитул для первой страницы" в текущем разделе
     DifferentFirstPageHedaerFooter = SectionObject.PageSetup.DifferentFirstPageHeaderFooter
