@@ -57,6 +57,12 @@ Function Filter-PropertiesByType ($FoundProperties, $RequiredPropertyType) {
     return $FilteredNames, $FilteredValues
 }
 
+Function Close-SavedDocument ($DocumentObject) {
+$DocumentObject.Saved = $false
+$DocumentObject.Save()
+$DocumentObject.Close()
+}
+
 Function Set-FileProperties () {
     #Stores the BindingFlags enumeration in $Binding.
     $Binding = “System.Reflection.BindingFlags” -as [type]
@@ -91,6 +97,7 @@ Function Set-FileProperties () {
         $FoundProperties = Find-PropertiesForFile -LastNonEmptyCell $LastNonemptyCellInColumn -WorksheetWithProperties $WorksheetWithProperties -FileName $_.Name
         #If $WorksheetWithProperties contains any properties (i.e. $FoundProperties is not equal to $null) for the file being processed, the script will go on to update them. Otherwise, the script will move to the next document.
         if ($FoundProperties -ne $null) {
+                #if extension of the file being processed matches an extension in $ExcelExtensions array, the script will open it and update avaiable properties using Excel application
                 if ($ExcelExtensions -contains ($_.Extension).ToLower()) {
                     #Opens the file whose properties are to be updated.
                     $Workbook = $Excel.Workbooks.Open($_.FullName)
@@ -121,11 +128,9 @@ Function Set-FileProperties () {
                             Update-PropertiesInFile -CollectionOfProperties $Workbook.CustomDocumentProperties -PropertiesToBeUpdated $FoundCustomInProperties -Binding $Binding
                         }
                     }
-                    $Workbook.Saved = $false
-                    $Workbook.Save()
-                    $Workbook.Close()
+                    Close-SavedDocument -DocumentObject $Workbook
                 }
-            #If the file being processed is a MS WORD file
+            #if extension of the file being processed matches an extension in $WordExtensions array, the script will open it and update avaiable properties using Word application
             if ($WordExtensions -contains ($_.Extension).ToLower()) {
                 #Opens the file whose properties are to be updated
                 $Document = $Word.Documents.Open($_.FullName)
@@ -155,10 +160,9 @@ Function Set-FileProperties () {
                         Update-PropertiesInFile -CollectionOfProperties $Document.CustomDocumentProperties -PropertiesToBeUpdated $FoundCustomInProperties -Binding $Binding
                     }
                 }
-                $Document.Saved = $false
-                $Document.Save()
-                $Document.Close()
+                Close-SavedDocument -DocumentObject $Document
             }
+            #if extension of the file being processed matches an extension in $VisioExtensions array, the script will open it and update avaiable properties using Visio application
             if ($VisioExtensions -contains ($_.Extension).ToLower()) {
                 #Opens the file whose properties are to be updated
                 $DocumentVisio = $Visio.Documents.Open($_.FullName)
@@ -169,10 +173,39 @@ Function Set-FileProperties () {
                     $DocumentVisio.$VisioPropertyName = $VisioPropertyNewValue
                     Write-Host "Updated property: $VisioPropertyName." "New value: $VisioPropertyNewValue" -ForegroundColor DarkGreen
                 }
-                #Closes active document without saving
-                $DocumentVisio.Saved = $false
-                $DocumentVisio.Save() | Out-Null
-                $DocumentVisio.Close()
+                Close-SavedDocument -DocumentObject $DocumentVisio   
+            }
+            #if extension of the file being processed matches an extension in $PowerPointExtensions array, the script will open it and update avaiable properties using PowerPoint application
+            if ($PowerPointExtensions -contains ($_.Extension).ToLower()) {
+            #Opens a presentation and makes it not visible to the user
+            $Presentation = $PowerPoint.Presentations.Open($_.FullName, $null, $null, [Microsoft.Office.Core.MsoTriState]::msoFalse)
+                #Updates built-in properties if required
+                if ($script:SetBuiltInProperties -eq $true) {
+                    Write-Host "Updating built-in properties..."
+                    #Filters $FoundProperties array to get only B (abbreviation for BuiltInProperties) type properties
+                    [array]$FoundBuiltInProperties = Filter-PropertiesByType -FoundProperties $FoundProperties -RequiredPropertyType "B"
+                    #If no BuiltInProperties were found, the script simply moves on to update CustomProperties
+                    if ($FoundBuiltInProperties -eq $null) {
+                        Write-Host "No built-in properties for this file" -ForegroundColor Red
+                    } else {
+                        #If some BuiltInProperties were found, the script will update them
+                        Update-PropertiesInFile -CollectionOfProperties $Presentation.BuiltInDocumentProperties -PropertiesToBeUpdated $FoundBuiltInProperties -Binding $Binding
+                    }
+                }
+                #Updates custom properties if required
+                if ($script:SetCustomProperties -eq $true) {
+                    Write-Host "Updating custom properties..."
+                    #Filters $FoundProperties array to get only C (abbreviation for CustomProperties) type properties
+                    [array]$FoundCustomInProperties = Filter-PropertiesByType -FoundProperties $FoundProperties -RequiredPropertyType "C"
+                    #If no CustomProperties were found, the script simply moves on to update properties in the next document
+                    if ($FoundCustomInProperties -eq $null) {
+                        Write-Host "No custom properties for this file" -ForegroundColor Red
+                    } else {
+                        #If some BuiltInProperties were found, the script will update them
+                        Update-PropertiesInFile -CollectionOfProperties $Presentation.CustomDocumentProperties -PropertiesToBeUpdated $FoundCustomInProperties -Binding $Binding
+                    }
+                }
+                Close-SavedDocument -DocumentObject $Presentation
             }
         }   
     Write-Host "=============================================================="
