@@ -1,3 +1,4 @@
+clear
 ###GET FILE PROPERTIES FUNCTIONS###
 Function Run-MSApplication ($AppName, $AppExtensions, $Text, $PathToFolder) {
    #Gets each file's extension in the folder specified by user.
@@ -161,30 +162,30 @@ Function Get-FileProperties {
         #if extension of the processed file matches an extension in $VisioExtensions array, the script will open it and extract its properties using Visio application.
         if ($VisioExtensions -contains ($_.Extension).ToLower()) {
             #Opens a document.
-            $Document = $Visio.Documents.Open($_.FullName)
+            $DocumentVisio = $Visio.Documents.Open($_.FullName)
             #List of Built In Document Properties.
             $CollectedPropertiesData = @(), @()
             $VisioDocumentBuiltInPropertyNames = @("Subject", "Title", "Creator", "Manager", "Company", "Language", "Category", "Keywords", "Description", "HyperlinkBase", "TimeCreated", "TimeEdited", "TimePrinted", "TimeSaved", "Stat", "Version")
             foreach ($VisioPropertyName in $VisioDocumentBuiltInPropertyNames) {
                 if ($script:UseBlacklist -eq $true -and $script:WhitelistEnabled -eq $true) {
                     if ($script:GetPropertiesBlacklist -contains $VisioPropertyName) {
-                        if ($script:IgnorePropertiesWithNoValue -eq $true -and $Document.$VisioPropertyName -eq "") {continue}
+                        if ($script:IgnorePropertiesWithNoValue -eq $true -and $DocumentVisio.$VisioPropertyName -eq "") {continue}
                         $CollectedPropertiesData[0] += $VisioPropertyName 
-                        $CollectedPropertiesData[1] += $Document.$VisioPropertyName 
+                        $CollectedPropertiesData[1] += $DocumentVisio.$VisioPropertyName 
                         continue  
                     } else {
                         continue
                     }
                 } else {
                     if ($script:UseBlacklist -eq $true -and $script:GetPropertiesBlacklist -contains $VisioPropertyName) {continue}  
-                    if ($script:IgnorePropertiesWithNoValue -eq $true -and $Document.$VisioPropertyName -eq "") {continue}
+                    if ($script:IgnorePropertiesWithNoValue -eq $true -and $DocumentVisio.$VisioPropertyName -eq "") {continue}
                     $CollectedPropertiesData[0] += $VisioPropertyName 
-                    $CollectedPropertiesData[1] += $Document.$VisioPropertyName 
+                    $CollectedPropertiesData[1] += $DocumentVisio.$VisioPropertyName 
                 }  
             }
             Output-CollectedPropertiesToExcelTable -OutputWorksheet $OutputWorksheet -CollectedPropertiesData $CollectedPropertiesData -PropertyHolder $_.Name -PropertyType "B" -PropertyHolderExtension $_.Extension
             #Closes active document without saving.
-            $Document.Close()
+            $DocumentVisio.Close()
         }
         #if extension of the processed file matches an extension in $VisioExtensions array, the script will open it and extract its properties using Visio application.
         if ($PowerPointExtensions -contains ($_.Extension).ToLower()) {
@@ -221,11 +222,212 @@ Function Get-FileProperties {
 }
 ###GET FILE PROPERTIES FUNCTIONS###
 
+###SET FILE PROPERTIES FUNCTIONS###
+Function Find-PropertiesForFile ($LastNonEmptyCell, $WorksheetWithProperties, $FileName) {
+    $RangeToSearchThrough = $WorksheetWithProperties.Range("C2:C$LastNonEmptyCell")
+    $Target = $RangeToSearchThrough.Find($FileName, [Type]::Missing, [Type]::Missing, 1)
+        if ($Target -eq $null) {
+        Write-Host "Properties.xlsx has no properties for $FileName. Moving on to the next document..."
+        return $null
+        } else {
+            $FirstMatch = $Target
+            Do {
+            $CurrentAddress = $Target.AddressLocal($false, $false) -replace "C", ""
+            [array]$PropertyNames += $WorksheetWithProperties.Cells.Item($CurrentAddress, "A").Value()
+            [array]$PropertyValues += $WorksheetWithProperties.Cells.Item($CurrentAddress, "B").Value()
+            [array]$PropertyTypes += $WorksheetWithProperties.Cells.Item($CurrentAddress, "D").Value()
+            $Target = $RangeToSearchThrough.FindNext($Target)
+            } While ($Target.AddressLocal() -ne $FirstMatch.AddressLocal())
+        }
+    Write-Host "Properties.xlsx has property(ies) for $FileName."
+    return $PropertyNames, $PropertyValues, $PropertyTypes
+}
+
+Function Update-PropertiesInFile ($CollectionOfProperties, $PropertiesToBeUpdated, $Binding) {
+    for ($t = 0; $t -lt $PropertiesToBeUpdated[0].Length; $t++) {
+        $PropertyToBeUpdated = @{Name = $PropertiesToBeUpdated[0][$t]; Value = $PropertiesToBeUpdated[1][$t]}
+        $InvokedProperty = [System.__ComObject].InvokeMember(“item”,$Binding::GetProperty,$null,$CollectionOfProperties,$PropertyToBeUpdated.Name)
+        [System.__ComObject].InvokeMember(“value”,$Binding::SetProperty,$null,$InvokedProperty,$PropertyToBeUpdated.Value)
+        Write-Host "Updated property: $($PropertyToBeUpdated.Name)." "New value: $($PropertyToBeUpdated.Value)" -ForegroundColor DarkGreen
+    }
+}
+
+Function Filter-PropertiesByType ($FoundProperties, $RequiredPropertyType) {
+    for ($t = 0; $t -lt $FoundProperties[2].Length; $t++) {
+        if ($FoundProperties[2][$t] -eq "$RequiredPropertyType") {
+        [array]$FilteredNames += $FoundProperties[0][$t]
+        [array]$FilteredValues += $FoundProperties[1][$t]
+        }
+    }
+    return $FilteredNames, $FilteredValues
+}
+
+Function Close-SavedDocument ($DocumentObject) {
+$DocumentObject.Saved = $false
+$DocumentObject.Save()
+$DocumentObject.Close()
+}
+
+Function Set-FileProperties () {
+    #Stores the BindingFlags enumeration in $Binding.
+    $Binding = “System.Reflection.BindingFlags” -as [type]
+    #Extensions that will be processed by the script.
+    $WordExtensions = @(".doc", ".docx", ".dotm")
+    $ExcelExtensions = @(".xlsx", ".xls", ".xltm", ".xlsm")
+    $VisioExtensions = @(".vdx", ".vsd", ".vdw")
+    $PowerPointExtensions = @(".pptx", ".ppt", ".pptm", ".potx")
+    #Starts MS Word if necessary.
+    $Word = Run-MSApplication -AppName "Word.Application" -AppExtensions $WordExtensions -Text "Word" -PathToFolder $script:SetPropertyPathToSelectedFolder
+    #If MS Word is started, makes it not visible to user.
+    if ($Word -ne $null) {$Word.Visible = $false}
+    #Starts MS Excel if necessary
+    $Excel = Run-MSApplication -AppName "Excel.Application" -AppExtensions $ExcelExtensions -Text "Excel" -PathToFolder $script:SetPropertyPathToSelectedFolder
+    #If MS Excel is started, makes it not visible to user.
+    if ($Excel -ne $null) {$Excel.Visible = $false}
+    #Starts MS Visio if necessary and makes it not visible to user.
+    $Visio = Run-MSApplication -AppName "Visio.InvisibleApp" -AppExtensions $VisioExtensions -Text "Visio" -PathToFolder $script:SetPropertyPathToSelectedFolder
+    #Starts MS PowerPoint if necessary. Invisibility is enabled when opening a presentation.
+    $PowerPoint = Run-MSApplication -AppName "PowerPoint.Application" -AppExtensions $PowerPointExtensions -Text "PowerPoint" -PathToFolder $script:SetPropertyPathToSelectedFolder
+    #Creates another instance of Excel application, opens Excel file that contains the properties and activates the first sheet.
+    $ExcelWithProperties = New-Object -ComObject Excel.Application
+    $ExcelWithProperties.Visible = $false
+    $WorkbookWithProperties = $ExcelWithProperties.WorkBooks.Open($script:SetPropertyPathToSelectedFile)
+    $WorksheetWithProperties = $WorkbookWithProperties.Worksheets.Item(1)
+    #Finds last non empty cell in column C. This value will be used later to create a search range in Excel.
+    $LastNonemptyCellInColumn = $WorksheetWithProperties.Range("C:C").End(-4121).Row
+    Write-Host "Getting ready..."
+    Start-Sleep -Seconds 2
+    Get-ChildItem -Path $script:SetPropertyPathToSelectedFolder | % {
+        #Finds properties for the file being processed and puts them into array
+        $FoundProperties = Find-PropertiesForFile -LastNonEmptyCell $LastNonemptyCellInColumn -WorksheetWithProperties $WorksheetWithProperties -FileName $_.Name
+        #If $WorksheetWithProperties contains any properties (i.e. $FoundProperties is not equal to $null) for the file being processed, the script will go on to update them. Otherwise, the script will move to the next document.
+        if ($FoundProperties -ne $null) {
+                #if extension of the file being processed matches an extension in $ExcelExtensions array, the script will open it and update avaiable properties using Excel application
+                if ($ExcelExtensions -contains ($_.Extension).ToLower()) {
+                    #Opens the file whose properties are to be updated.
+                    $Workbook = $Excel.Workbooks.Open($_.FullName)
+                    #Updates built-in properties if required
+                    if ($script:SetBuiltInProperties -eq $true) {
+                        Write-Host "Updating built-in properties..."
+                        #Filters $FoundProperties array to get only B (abbreviation for BuiltInProperties) type properties
+                        [array]$FoundBuiltInProperties = Filter-PropertiesByType -FoundProperties $FoundProperties -RequiredPropertyType "B"
+                        Write-Host $FoundBuiltInProperties
+                        #If no BuiltInProperties were found, the script simply moves on to update CustomProperties
+                        if ($FoundBuiltInProperties -eq $null) {
+                            Write-Host "No built-in properties for this file" -ForegroundColor Red
+                        } else {
+                            #If some BuiltInProperties were found, the script will update them
+                            Update-PropertiesInFile -CollectionOfProperties $Workbook.BuiltInDocumentProperties -PropertiesToBeUpdated $FoundBuiltInProperties -Binding $Binding
+                        } 
+                    }
+                    #Updates custom properties if required
+                    if ($script:SetCustomProperties -eq $true) {
+                        Write-Host "Updating custom properties..."
+                        #Filters $FoundProperties array to get only C (abbreviation for CustomProperties) type properties
+                        [array]$FoundCustomInProperties = Filter-PropertiesByType -FoundProperties $FoundProperties -RequiredPropertyType "C"
+                        #If no CustomProperties were found, the script simply moves on to update properties in the next document
+                        if ($FoundCustomInProperties -eq $null) {
+                            Write-Host "No custom properties for this file" -ForegroundColor Red
+                        } else {
+                            #If some BuiltInProperties were found, the script will update them
+                            Update-PropertiesInFile -CollectionOfProperties $Workbook.CustomDocumentProperties -PropertiesToBeUpdated $FoundCustomInProperties -Binding $Binding
+                        }
+                    }
+                    Close-SavedDocument -DocumentObject $Workbook
+                }
+            #if extension of the file being processed matches an extension in $WordExtensions array, the script will open it and update avaiable properties using Word application
+            if ($WordExtensions -contains ($_.Extension).ToLower()) {
+                #Opens the file whose properties are to be updated
+                $Document = $Word.Documents.Open($_.FullName)
+                #Updates built-in properties if required
+                if ($script:SetBuiltInProperties -eq $true) {
+                    Write-Host "Updating built-in properties..."
+                    #Filters $FoundProperties array to get only B (abbreviation for BuiltInProperties) type properties
+                    [array]$FoundBuiltInProperties = Filter-PropertiesByType -FoundProperties $FoundProperties -RequiredPropertyType "B"
+                    #If no BuiltInProperties were found, the script simply moves on to update CustomProperties
+                    if ($FoundBuiltInProperties -eq $null) {
+                        Write-Host "No built-in properties for this file" -ForegroundColor Red
+                    } else {
+                        #If some BuiltInProperties were found, the script will update them
+                        Update-PropertiesInFile -CollectionOfProperties $Document.BuiltInDocumentProperties -PropertiesToBeUpdated $FoundBuiltInProperties -Binding $Binding
+                    }
+                }
+                #Updates custom properties if required
+                if ($script:SetCustomProperties -eq $true) {
+                    Write-Host "Updating custom properties..."
+                    #Filters $FoundProperties array to get only C (abbreviation for CustomProperties) type properties
+                    [array]$FoundCustomInProperties = Filter-PropertiesByType -FoundProperties $FoundProperties -RequiredPropertyType "C"
+                    #If no CustomProperties were found, the script simply moves on to update properties in the next document
+                    if ($FoundCustomInProperties -eq $null) {
+                        Write-Host "No custom properties for this file" -ForegroundColor Red
+                    } else {
+                        #If some BuiltInProperties were found, the script will update them
+                        Update-PropertiesInFile -CollectionOfProperties $Document.CustomDocumentProperties -PropertiesToBeUpdated $FoundCustomInProperties -Binding $Binding
+                    }
+                }
+                Close-SavedDocument -DocumentObject $Document
+            }
+            #if extension of the file being processed matches an extension in $VisioExtensions array, the script will open it and update avaiable properties using Visio application
+            if ($VisioExtensions -contains ($_.Extension).ToLower()) {
+                #Opens the file whose properties are to be updated
+                $DocumentVisio = $Visio.Documents.Open($_.FullName)
+                Write-Host "Updating built-in properties..."
+                for ($t = 0; $t -lt $FoundProperties[0].Length; $t++) {
+                    $VisioPropertyName = $FoundProperties[0][$t]
+                    $VisioPropertyNewValue = $FoundProperties[1][$t]
+                    $DocumentVisio.$VisioPropertyName = $VisioPropertyNewValue
+                    Write-Host "Updated property: $VisioPropertyName." "New value: $VisioPropertyNewValue" -ForegroundColor DarkGreen
+                }
+                Close-SavedDocument -DocumentObject $DocumentVisio   
+            }
+            #if extension of the file being processed matches an extension in $PowerPointExtensions array, the script will open it and update avaiable properties using PowerPoint application
+            if ($PowerPointExtensions -contains ($_.Extension).ToLower()) {
+            #Opens a presentation and makes it not visible to the user
+            $Presentation = $PowerPoint.Presentations.Open($_.FullName, $null, $null, [Microsoft.Office.Core.MsoTriState]::msoFalse)
+                #Updates built-in properties if required
+                if ($script:SetBuiltInProperties -eq $true) {
+                    Write-Host "Updating built-in properties..."
+                    #Filters $FoundProperties array to get only B (abbreviation for BuiltInProperties) type properties
+                    [array]$FoundBuiltInProperties = Filter-PropertiesByType -FoundProperties $FoundProperties -RequiredPropertyType "B"
+                    #If no BuiltInProperties were found, the script simply moves on to update CustomProperties
+                    if ($FoundBuiltInProperties -eq $null) {
+                        Write-Host "No built-in properties for this file" -ForegroundColor Red
+                    } else {
+                        #If some BuiltInProperties were found, the script will update them
+                        Update-PropertiesInFile -CollectionOfProperties $Presentation.BuiltInDocumentProperties -PropertiesToBeUpdated $FoundBuiltInProperties -Binding $Binding
+                    }
+                }
+                #Updates custom properties if required
+                if ($script:SetCustomProperties -eq $true) {
+                    Write-Host "Updating custom properties..."
+                    #Filters $FoundProperties array to get only C (abbreviation for CustomProperties) type properties
+                    [array]$FoundCustomInProperties = Filter-PropertiesByType -FoundProperties $FoundProperties -RequiredPropertyType "C"
+                    #If no CustomProperties were found, the script simply moves on to update properties in the next document
+                    if ($FoundCustomInProperties -eq $null) {
+                        Write-Host "No custom properties for this file" -ForegroundColor Red
+                    } else {
+                        #If some BuiltInProperties were found, the script will update them
+                        Update-PropertiesInFile -CollectionOfProperties $Presentation.CustomDocumentProperties -PropertiesToBeUpdated $FoundCustomInProperties -Binding $Binding
+                    }
+                }
+                Close-SavedDocument -DocumentObject $Presentation
+            }
+        }   
+    Write-Host "==========DOCUMENT PROPERTIES UPDATE COMPLETE========="
+    }
+    $WorkbookWithProperties.Close()
+    Start-Sleep -Seconds 3
+    Kill -Name VISIO, POWERPNT, EXCEL, WINWORD -ErrorAction SilentlyContinue
+}
+###SET FILE PROPERTIES FUNCTIONS###
+
 ###UI###
 Function Custom-Form
 {
     #variables
     $script:GetPropertyPathToSelectedFolder = $null
+    $script:SetPropertyPathToSelectedFolder = $null
+    $script:SetPropertyPathToSelectedFile = $null
     Add-Type -AssemblyName System.Windows.Forms
     #FORM
     $Form = New-Object System.Windows.Forms.Form
@@ -239,6 +441,8 @@ Function Custom-Form
     $Form.StartPosition = "CenterScreen"
     $Form.MinimizeBox = $false
     $Form.MaximizeBox = $false
+    #TOOLTIP
+    $ToolTip = New-Object System.Windows.Forms.ToolTip
     #TAB CONTROL
     $TabControl = New-object System.Windows.Forms.TabControl
     $TabControl.Location = New-Object System.Drawing.Size(5,5)
@@ -274,14 +478,12 @@ Function Custom-Form
     $GetPropertiesPage.Controls.Add($GetPropertyButtonBrowse)
     #Label for 'Browse...' button
     $GetPropertyLabelButtonBrowse = New-Object System.Windows.Forms.Label
-    $GetPropertyLabelButtonBrowse.Location =  New-Object System.Drawing.Point(110,32)
+    $GetPropertyLabelButtonBrowse.Location = New-Object System.Drawing.Point(110,32)
     $GetPropertyLabelButtonBrowse.Width = 400
     $GetPropertyLabelButtonBrowse.Text = "Specify folder with documents whose properties will be extracted"
     $GetPropertyLabelButtonBrowse.AutoSize = $true
     $GetPropertyLabelButtonBrowse.MaximumSize = New-Object System.Drawing.Point(430,38)
     $GetPropertiesPage.Controls.Add($GetPropertyLabelButtonBrowse)
-    #Tooltip for label of 'Browse...' button
-    $ToolTip = New-Object System.Windows.Forms.ToolTip
     #Checkbox 'Get Built-In Properties'
     $GetPropertyCheckboxGetBuiltInProperties = New-Object System.Windows.Forms.CheckBox
     $GetPropertyCheckboxGetBuiltInProperties.Location = New-Object System.Drawing.Point(25,65)
@@ -367,7 +569,7 @@ Function Custom-Form
     $GetPropertyButtonAddItem.Add_Click({
         if ($GetPropertyInputboxAddItem.Text -ne "Type in property name to add it...") {
             if ($GetPropertyListBoxBlackList.Items.Contains($GetPropertyInputboxAddItem.Text)) {
-                Show-MessageBox -Message "The property you are attempting to add ($($GetPropertyInputboxAddItem.Text)) is already on the list."
+                Show-MessageBox -Title "Item already exists" -Type OK -Message "The property you are attempting to add ($($GetPropertyInputboxAddItem.Text)) is already on the list."
             } else {
                 $GetPropertyListBoxBlackList.Items.Insert(0, $GetPropertyInputboxAddItem.Text)
                 $GetPropertyInputboxAddItem.Text = "Type in property name to add it..."
@@ -482,7 +684,7 @@ Function Custom-Form
     $GetPropertyButtonImportList.Size = New-Object System.Drawing.Point(50,22) #width,height
     $GetPropertyButtonImportList.Text = "Import"
     $GetPropertyButtonImportList.Add_Click({
-        $PathToImportedFile = Open-File
+        $PathToImportedFile = Open-File -Filter "Text file (*.txt)| *.txt"
         Write-Host $PathToImportedFile
             if ($PathToImportedFile -ne $null) {
                 $TxtBlackListContent = @(Get-Content -Path $PathToImportedFile)
@@ -511,20 +713,25 @@ Function Custom-Form
     $GetPropertyButtonExtract.Text = "Extract"
     $GetPropertyButtonExtract.Enabled = $false
     $GetPropertyButtonExtract.Add_Click({
-        Show-MessageBox "The script will close the following applications: Excel, Word, PowerPoint, Visio.$([System.Environment]::NewLine)So, before clicking 'OK', make sure you have saved and closed any documents opened in the listed applications."
-        Kill -Name VISIO, POWERPNT, EXCEL, WINWORD -ErrorAction SilentlyContinue
-        if ($GetPropertyCheckboxGetBuiltInProperties.Checked -eq $true) {$script:GetBuiltInProperties = $true} else {$script:GetBuiltInProperties = $false}
-        if ($GetPropertyCheckboxGetCustomProperties.Checked -eq $true) {$script:GetCustomProperties = $true} else {$script:GetCustomProperties = $false}
-        if ($GetPropertyCheckboxIgnorePropertiesWithNoValue.Checked -eq $true) {$script:IgnorePropertiesWithNoValue = $true} else {$script:IgnorePropertiesWithNoValue = $false}
-        if ($GetPropertyCheckboxUseBlacklist.Checked -eq $true) {
-            $script:UseBlacklist = $true
-            $script:GetPropertiesBlacklist = @()
-            $GetPropertyListBoxBlackList.Items | % {$script:GetPropertiesBlacklist += $_}
+        $ClickResult = Show-MessageBox -Title "Warning" -Type OKCancel -Message "The script will close the following applications: Excel, Word, PowerPoint, Visio.$([System.Environment]::NewLine)To prevent data loss, make sure you have saved and closed any documents opened in the listed applications before clicking 'OK'."
+        if ($ClickResult -eq "OK") {
+            Write-Host "Script started"
+            Kill -Name VISIO, POWERPNT, EXCEL, WINWORD -ErrorAction SilentlyContinue
+            if ($GetPropertyCheckboxGetBuiltInProperties.Checked -eq $true) {$script:GetBuiltInProperties = $true} else {$script:GetBuiltInProperties = $false}
+            if ($GetPropertyCheckboxGetCustomProperties.Checked -eq $true) {$script:GetCustomProperties = $true} else {$script:GetCustomProperties = $false}
+            if ($GetPropertyCheckboxIgnorePropertiesWithNoValue.Checked -eq $true) {$script:IgnorePropertiesWithNoValue = $true} else {$script:IgnorePropertiesWithNoValue = $false}
+            if ($GetPropertyCheckboxUseBlacklist.Checked -eq $true) {
+                $script:UseBlacklist = $true
+                $script:GetPropertiesBlacklist = @()
+                $GetPropertyListBoxBlackList.Items | % {$script:GetPropertiesBlacklist += $_}
+            } else {
+                $script:UseBlacklist = $false
+            }
+            if ($GetPropertyCheckboxTurnIntoWhite.Checked -eq $true) {$script:WhitelistEnabled = $true} else {$script:WhitelistEnabled = $false}
+            Get-FileProperties
         } else {
-            $script:UseBlacklist = $false
+            Write-Host "Script not started"
         }
-        if ($GetPropertyCheckboxTurnIntoWhite.Checked -eq $true) {$script:WhitelistEnabled = $true} else {$script:WhitelistEnabled = $false}
-        Get-FileProperties
     })
     $GetPropertiesPage.Controls.Add($GetPropertyButtonExtract)
     #Button 'Exit'
@@ -544,42 +751,136 @@ Function Custom-Form
     
     #Button 'Browse...' (for file)
     $SetPropertyButtonBrowseFile = New-Object System.Windows.Forms.Button
-    $SetPropertyButtonBrowseFile.Location = New-Object System.Drawing.Point(25,25)
+    $SetPropertyButtonBrowseFile.Location = New-Object System.Drawing.Point(25,25) #x,y
     $SetPropertyButtonBrowseFile.Size = New-Object System.Drawing.Point(80,30)
     $SetPropertyButtonBrowseFile.Text = "Browse..."
-    $SetPropertyButtonBrowseFile.Add_Click({})
+    $SetPropertyButtonBrowseFile.Add_Click({
+        $script:SetPropertyPathToSelectedFile = Open-File -Filter "Excel file (*.xlsx)| *.xlsx"
+        Write-Host $script:SetPropertyPathToSelectedFile
+        if ($script:SetPropertyPathToSelectedFile -ne $null) {
+            if ($script:SetPropertyPathToSelectedFile.Length -gt 85) {
+                $SetPropertyLabelButtonBrowseFile.Text = "Specified files's name is too long to display it here. Hover to see the full path."
+                $ToolTip.SetToolTip($SetPropertyLabelButtonBrowseFile, "$script:SetPropertyPathToSelectedFile")
+            } else {
+                $SetPropertyLabelButtonBrowseFile.Text = "Specified file: '$(Split-Path -Path $script:SetPropertyPathToSelectedFile -Leaf)'. Hover to see the full path."
+                $ToolTip.SetToolTip($SetPropertyLabelButtonBrowseFile, "$script:SetPropertyPathToSelectedFile")
+            }
+        }
+        if ($script:SetPropertyPathToSelectedFolder -ne $null -and ($SetPropertyCheckboxSetBProperties.Checked -eq $true -or $SetPropertyCheckboxSetCProperties.Checked -eq $true)) {
+            $SetPropertyButtonSet.Enabled = $true
+        }
+    })
     $SetPropertiesPage.Controls.Add($SetPropertyButtonBrowseFile)
     #Label for 'Browse...' (for file) button 
     $SetPropertyLabelButtonBrowseFile = New-Object System.Windows.Forms.Label
-    $SetPropertyLabelButtonBrowseFile.Location =  New-Object System.Drawing.Point(110,32)
+    $SetPropertyLabelButtonBrowseFile.Location =  New-Object System.Drawing.Point(110,32) #x,y
     $SetPropertyLabelButtonBrowseFile.Width = 400
     $SetPropertyLabelButtonBrowseFile.Text = "Specify *.xlsx that contains properties you want to insert"
     $SetPropertyLabelButtonBrowseFile.AutoSize = $true
     $SetPropertyLabelButtonBrowseFile.MaximumSize = New-Object System.Drawing.Point(430,38)
     $SetPropertiesPage.Controls.Add($SetPropertyLabelButtonBrowseFile)
-    
+    #Checkbox 'Do Not Clear Filtering'
+    $SetPropertyCheckboxDoNotClearFiltering = New-Object System.Windows.Forms.CheckBox
+    $SetPropertyCheckboxDoNotClearFiltering.Location = New-Object System.Drawing.Point(25,65) #x,y
+    $SetPropertyCheckboxDoNotClearFiltering.Width = 500
+    $SetPropertyCheckboxDoNotClearFiltering.Text = "Do Not Clear Applied Filtering"
+    $SetPropertyCheckboxDoNotClearFiltering.Add_CheckStateChanged({})
+    $SetPropertiesPage.Controls.Add($SetPropertyCheckboxDoNotClearFiltering)
     #Button 'Browse...' (for folder)
     $SetPropertyButtonBrowseFolder = New-Object System.Windows.Forms.Button
-    $SetPropertyButtonBrowseFolder.Location = New-Object System.Drawing.Point(25,65)
+    $SetPropertyButtonBrowseFolder.Location = New-Object System.Drawing.Point(25,97) #x,y
     $SetPropertyButtonBrowseFolder.Size = New-Object System.Drawing.Point(80,30)
     $SetPropertyButtonBrowseFolder.Text = "Browse..."
-    $SetPropertyButtonBrowseFolder.Add_Click({})
+    $SetPropertyButtonBrowseFolder.Add_Click({
+    $script:SetPropertyPathToSelectedFolder = Select-Folder -Description "Select folder with files whose properties will be extracted"
+        Write-Host $script:SetPropertyPathToSelectedFolder
+        if ($script:SetPropertyPathToSelectedFolder -ne $null) {
+            if ($script:SetPropertyPathToSelectedFolder.Length -gt 85) {
+                $SetPropertyLabelButtonBrowseFolder.Text = "Specified directory's name is too long to display it here. Hover to see the full path."
+                $ToolTip.SetToolTip($SetPropertyLabelButtonBrowseFolder, "$script:SetPropertyPathToSelectedFolder")
+            } else {
+                $SetPropertyLabelButtonBrowseFolder.Text = "Specified directory: '$(Split-Path -Path $script:SetPropertyPathToSelectedFolder -Leaf)'. Hover to see the full path."
+                $ToolTip.SetToolTip($SetPropertyLabelButtonBrowseFolder, "$script:SetPropertyPathToSelectedFolder")
+            }
+        }
+        if ($script:SetPropertyPathToSelectedFile -ne $null -and ($SetPropertyCheckboxSetBProperties.Checked -eq $true -or $SetPropertyCheckboxSetCProperties.Checked -eq $true)) {
+            $SetPropertyButtonSet.Enabled = $true
+        }
+    })
     $SetPropertiesPage.Controls.Add($SetPropertyButtonBrowseFolder)
     #Label for 'Browse...' (for folder) button 
     $SetPropertyLabelButtonBrowseFolder = New-Object System.Windows.Forms.Label
-    $SetPropertyLabelButtonBrowseFolder.Location =  New-Object System.Drawing.Point(110,72)
+    $SetPropertyLabelButtonBrowseFolder.Location =  New-Object System.Drawing.Point(110,105) #x,y
     $SetPropertyLabelButtonBrowseFolder.Width = 400
     $SetPropertyLabelButtonBrowseFolder.Text = "Specify folder with documents whose properties will be updated"
     $SetPropertyLabelButtonBrowseFolder.AutoSize = $true
     $SetPropertyLabelButtonBrowseFolder.MaximumSize = New-Object System.Drawing.Point(430,38)
     $SetPropertiesPage.Controls.Add($SetPropertyLabelButtonBrowseFolder)
-    #Checkbox 'Do Not Clear Filtering'
-    $SetPropertyCheckboxDoNotClearFiltering = New-Object System.Windows.Forms.CheckBox
-    $SetPropertyCheckboxDoNotClearFiltering.Location = New-Object System.Drawing.Point(25,105)
-    $SetPropertyCheckboxDoNotClearFiltering.Width = 300
-    $SetPropertyCheckboxDoNotClearFiltering.Text = "Do Not Clear Filtering"
-    $SetPropertyCheckboxDoNotClearFiltering.Add_CheckStateChanged({})
-    $SetPropertiesPage.Controls.Add($SetPropertyCheckboxDoNotClearFiltering)
+    #Checkbox 'Set Built-In Properties'
+    $SetPropertyCheckboxSetBProperties = New-Object System.Windows.Forms.CheckBox
+    $SetPropertyCheckboxSetBProperties.Location = New-Object System.Drawing.Point(25,137) #x,y
+    $SetPropertyCheckboxSetBProperties.Width = 500
+    $SetPropertyCheckboxSetBProperties.Text = "Set Built-In Properties"
+    $SetPropertyCheckboxSetBProperties.Checked = $true
+    $SetPropertyCheckboxSetBProperties.Add_CheckStateChanged({
+        if ($SetPropertyCheckboxSetBProperties.Checked -eq $true -and $script:SetPropertyPathToSelectedFile -ne $null -and $script:SetPropertyPathToSelectedFolder -ne $null -and $SetPropertyCheckboxSetCProperties.Checked -eq $false) {
+            $SetPropertyButtonSet.Enabled = $true
+        } elseif ($SetPropertyCheckboxSetBProperties.Checked -eq $false -and $script:SetPropertyPathToSelectedFile -ne $null -and $script:SetPropertyPathToSelectedFolder -ne $null -and $SetPropertyCheckboxSetCProperties.Checked -eq $true) {
+            $SetPropertyButtonSet.Enabled = $true
+        } elseif ($SetPropertyCheckboxSetBProperties.Checked -eq $true -and $script:SetPropertyPathToSelectedFile -ne $null -and $script:SetPropertyPathToSelectedFolder -ne $null -and $SetPropertyCheckboxSetCProperties.Checked -eq $true) {
+            $SetPropertyButtonSet.Enabled = $true
+        } else {
+            $SetPropertyButtonSet.Enabled = $false
+        }
+    })
+    $SetPropertiesPage.Controls.Add($SetPropertyCheckboxSetBProperties)
+    #Checkbox 'Set Custom Properties'
+    $SetPropertyCheckboxSetCProperties = New-Object System.Windows.Forms.CheckBox
+    $SetPropertyCheckboxSetCProperties.Location = New-Object System.Drawing.Point(25,162) #x,y
+    $SetPropertyCheckboxSetCProperties.Width = 500
+    $SetPropertyCheckboxSetCProperties.Text = "Set Custom Properties"
+    $SetPropertyCheckboxSetCProperties.Checked = $true
+    $SetPropertiesPage.Controls.Add($SetPropertyCheckboxSetCProperties)
+    $SetPropertyCheckboxSetCProperties.Add_CheckStateChanged({
+        if ($SetPropertyCheckboxSetBProperties.Checked -eq $false -and $script:SetPropertyPathToSelectedFile -ne $null -and $script:SetPropertyPathToSelectedFolder -ne $null -and $SetPropertyCheckboxSetCProperties.Checked -eq $true) {
+            $SetPropertyButtonSet.Enabled = $true
+        } elseif ($SetPropertyCheckboxSetBProperties.Checked -eq $true -and $script:SetPropertyPathToSelectedFile -ne $null -and $script:SetPropertyPathToSelectedFolder -ne $null -and $SetPropertyCheckboxSetCProperties.Checked -eq $false) {
+            $SetPropertyButtonSet.Enabled = $true
+        } elseif ($SetPropertyCheckboxSetBProperties.Checked -eq $true -and $script:SetPropertyPathToSelectedFile -ne $null -and $script:SetPropertyPathToSelectedFolder -ne $null -and $SetPropertyCheckboxSetCProperties.Checked -eq $true) {
+            $SetPropertyButtonSet.Enabled = $true
+        } else {
+            $SetPropertyButtonSet.Enabled = $false
+        }
+    })
+    #Button 'Set'
+    $SetPropertyButtonSet = New-Object System.Windows.Forms.Button
+    $SetPropertyButtonSet.Location = New-Object System.Drawing.Point(25,480) #x,y
+    $SetPropertyButtonSet.Size = New-Object System.Drawing.Point(80,30)
+    $SetPropertyButtonSet.Text = "Update"
+    $SetPropertyButtonSet.Enabled = $false
+    $SetPropertyButtonSet.Add_Click({
+    $ClickResult = Show-MessageBox -Title "Warning" -Type OKCancel -Message "The script will close the following applications: Excel, Word, PowerPoint, Visio.$([System.Environment]::NewLine)To prevent data loss, make sure you have saved and closed any documents opened in the listed applications before clicking 'OK'."
+    if ($ClickResult -eq "OK") {
+        Kill -Name VISIO, POWERPNT, EXCEL, WINWORD -ErrorAction SilentlyContinue
+        if ($SetPropertyCheckboxDoNotClearFiltering.Checked -eq $true) {$script:DoNotClearAppliedFiltering = $true} else {$script:DoNotClearAppliedFiltering = $false}
+        if ($SetPropertyCheckboxSetBProperties.Checked -eq $true) {$script:SetBuiltInProperties = $true} else {$script:SetBuiltInProperties = $false}
+        if ($SetPropertyCheckboxSetCProperties.Checked -eq $true) {$script:SetCustomProperties = $true} else {$script:SetCustomProperties = $false}
+        Set-FileProperties
+        Write-Host "Script started"
+    } else {
+        Write-Host "Script not started"
+    }
+    })
+    $SetPropertiesPage.Controls.Add($SetPropertyButtonSet)
+    #Button 'Exit'
+    $SetPropertyButtonExit = New-Object System.Windows.Forms.Button
+    $SetPropertyButtonExit.Location = New-Object System.Drawing.Point(115,480) #x,y
+    $SetPropertyButtonExit.Size = New-Object System.Drawing.Point(80,30)
+    $SetPropertyButtonExit.Text = "Exit"
+    $SetPropertyButtonExit.Add_Click({
+        $Form.Close();
+    })
+    $SetPropertiesPage.Controls.Add($SetPropertyButtonExit)
     $Form.ShowDialog()
 }
 Function Disable-AllExceptEditing ($BooleanRest, $BooleanEditing) 
@@ -615,11 +916,11 @@ Function Save-File
     $DialogResult = $SaveFileDialog.ShowDialog()
     if ($DialogResult -eq "OK") {return $SaveFileDialog.FileName} else {return $null}
 }
-Function Open-File
+Function Open-File ($Filter)
 {
     Add-Type -AssemblyName System.Windows.Forms
     $OpenFileDialog = New-Object Windows.Forms.OpenFileDialog
-    $OpenFileDialog.Filter = "Text file (*.txt)| *.txt"
+    $OpenFileDialog.Filter = $Filter
     $DialogResult = $OpenFileDialog.ShowDialog()
     if ($DialogResult -eq "OK") {return $OpenFileDialog.FileName} else {return $null}
 }
@@ -632,10 +933,12 @@ Function Select-Folder ($Description)
     $DialogResult = $SelectFolderDialog.ShowDialog()
     if ($DialogResult -eq "OK") {return $SelectFolderDialog.SelectedPath} else {return $null}
 }
-Function Show-MessageBox ($Message)
-{
-    Add-Type –AssemblyName System.Windows.Forms   
-    [System.Windows.Forms.MessageBox]::Show("$Message")
+Function Show-MessageBox 
+{ 
+    param($Message, $Title, [ValidateSet("OK", "OKCancel")]$Type)
+    Add-Type –AssemblyName System.Windows.Forms 
+    if ($Type -eq "OK") {[System.Windows.Forms.MessageBox]::Show("$Message","$Title")}  
+    if ($Type -eq "OKCancel") {[System.Windows.Forms.MessageBox]::Show("$Message","$Title",[System.Windows.Forms.MessageBoxButtons]::OKCancel)}
 }
 Custom-Form
 ###UI###
