@@ -314,7 +314,7 @@ Function Set-FileProperties () {
                         Write-Host $FoundBuiltInProperties
                         #If no BuiltInProperties were found, the script simply moves on to update CustomProperties
                         if ($FoundBuiltInProperties -eq $null) {
-                            Write-Host "No built-in properties for this file" -ForegroundColor Red
+                            Write-Host "No built-in properties for this file" -ForegroundColor DarkMagenta
                         } else {
                             #If some BuiltInProperties were found, the script will update them
                             Update-PropertiesInFile -CollectionOfProperties $Workbook.BuiltInDocumentProperties -PropertiesToBeUpdated $FoundBuiltInProperties -Binding $Binding
@@ -327,7 +327,7 @@ Function Set-FileProperties () {
                         [array]$FoundCustomInProperties = Filter-PropertiesByType -FoundProperties $FoundProperties -RequiredPropertyType "C"
                         #If no CustomProperties were found, the script simply moves on to update properties in the next document
                         if ($FoundCustomInProperties -eq $null) {
-                            Write-Host "No custom properties for this file" -ForegroundColor Red
+                            Write-Host "No custom properties for this file" -ForegroundColor DarkMagenta
                         } else {
                             #If some BuiltInProperties were found, the script will update them
                             Update-PropertiesInFile -CollectionOfProperties $Workbook.CustomDocumentProperties -PropertiesToBeUpdated $FoundCustomInProperties -Binding $Binding
@@ -346,7 +346,7 @@ Function Set-FileProperties () {
                     [array]$FoundBuiltInProperties = Filter-PropertiesByType -FoundProperties $FoundProperties -RequiredPropertyType "B"
                     #If no BuiltInProperties were found, the script simply moves on to update CustomProperties
                     if ($FoundBuiltInProperties -eq $null) {
-                        Write-Host "No built-in properties for this file" -ForegroundColor Red
+                        Write-Host "No built-in properties for this file" -ForegroundColor DarkMagenta
                     } else {
                         #If some BuiltInProperties were found, the script will update them
                         Update-PropertiesInFile -CollectionOfProperties $Document.BuiltInDocumentProperties -PropertiesToBeUpdated $FoundBuiltInProperties -Binding $Binding
@@ -359,7 +359,7 @@ Function Set-FileProperties () {
                     [array]$FoundCustomInProperties = Filter-PropertiesByType -FoundProperties $FoundProperties -RequiredPropertyType "C"
                     #If no CustomProperties were found, the script simply moves on to update properties in the next document
                     if ($FoundCustomInProperties -eq $null) {
-                        Write-Host "No custom properties for this file" -ForegroundColor Red
+                        Write-Host "No custom properties for this file" -ForegroundColor DarkMagenta
                     } else {
                         #If some BuiltInProperties were found, the script will update them
                         Update-PropertiesInFile -CollectionOfProperties $Document.CustomDocumentProperties -PropertiesToBeUpdated $FoundCustomInProperties -Binding $Binding
@@ -372,8 +372,11 @@ Function Set-FileProperties () {
                 #Opens the file whose properties are to be updated
                 $DocumentVisio = $Visio.Documents.Open($_.FullName)
                 Write-Host "Updating built-in properties..."
+                #See https://msdn.microsoft.com/en-us/vba/office-shared-vba/articles/msolanguageid-enumeration-office
+                $VisioReadOnlyProperties = @("TimeCreated", "TimeEdited", "TimePrinted", "TimeSaved", "Version")
                 for ($t = 0; $t -lt $FoundProperties[0].Length; $t++) {
                     $VisioPropertyName = $FoundProperties[0][$t]
+                    if ($VisioReadOnlyProperties -contains $VisioPropertyName) {Write-Host "$VisioPropertyName is a read-only property and cannot be changed." -ForegroundColor DarkMagenta; continue}
                     $VisioPropertyNewValue = $FoundProperties[1][$t]
                     $DocumentVisio.$VisioPropertyName = $VisioPropertyNewValue
                     Write-Host "Updated property: $VisioPropertyName." "New value: $VisioPropertyNewValue" -ForegroundColor DarkGreen
@@ -391,7 +394,7 @@ Function Set-FileProperties () {
                     [array]$FoundBuiltInProperties = Filter-PropertiesByType -FoundProperties $FoundProperties -RequiredPropertyType "B"
                     #If no BuiltInProperties were found, the script simply moves on to update CustomProperties
                     if ($FoundBuiltInProperties -eq $null) {
-                        Write-Host "No built-in properties for this file" -ForegroundColor Red
+                        Write-Host "No built-in properties for this file" -ForegroundColor DarkMagenta
                     } else {
                         #If some BuiltInProperties were found, the script will update them
                         Update-PropertiesInFile -CollectionOfProperties $Presentation.BuiltInDocumentProperties -PropertiesToBeUpdated $FoundBuiltInProperties -Binding $Binding
@@ -404,7 +407,7 @@ Function Set-FileProperties () {
                     [array]$FoundCustomInProperties = Filter-PropertiesByType -FoundProperties $FoundProperties -RequiredPropertyType "C"
                     #If no CustomProperties were found, the script simply moves on to update properties in the next document
                     if ($FoundCustomInProperties -eq $null) {
-                        Write-Host "No custom properties for this file" -ForegroundColor Red
+                        Write-Host "No custom properties for this file" -ForegroundColor DarkMagenta
                     } else {
                         #If some BuiltInProperties were found, the script will update them
                         Update-PropertiesInFile -CollectionOfProperties $Presentation.CustomDocumentProperties -PropertiesToBeUpdated $FoundCustomInProperties -Binding $Binding
@@ -685,7 +688,6 @@ Function Custom-Form
     $GetPropertyButtonImportList.Text = "Import"
     $GetPropertyButtonImportList.Add_Click({
         $PathToImportedFile = Open-File -Filter "Text file (*.txt)| *.txt"
-        Write-Host $PathToImportedFile
             if ($PathToImportedFile -ne $null) {
                 $TxtBlackListContent = @(Get-Content -Path $PathToImportedFile)
                 $GetPropertyListBoxBlackList.Items.Clear()
@@ -756,7 +758,6 @@ Function Custom-Form
     $SetPropertyButtonBrowseFile.Text = "Browse..."
     $SetPropertyButtonBrowseFile.Add_Click({
         $script:SetPropertyPathToSelectedFile = Open-File -Filter "Excel file (*.xlsx)| *.xlsx"
-        Write-Host $script:SetPropertyPathToSelectedFile
         if ($script:SetPropertyPathToSelectedFile -ne $null) {
             if ($script:SetPropertyPathToSelectedFile.Length -gt 85) {
                 $SetPropertyLabelButtonBrowseFile.Text = "Specified files's name is too long to display it here. Hover to see the full path."
@@ -793,7 +794,6 @@ Function Custom-Form
     $SetPropertyButtonBrowseFolder.Text = "Browse..."
     $SetPropertyButtonBrowseFolder.Add_Click({
     $script:SetPropertyPathToSelectedFolder = Select-Folder -Description "Select folder with files whose properties will be extracted"
-        Write-Host $script:SetPropertyPathToSelectedFolder
         if ($script:SetPropertyPathToSelectedFolder -ne $null) {
             if ($script:SetPropertyPathToSelectedFolder.Length -gt 85) {
                 $SetPropertyLabelButtonBrowseFolder.Text = "Specified directory's name is too long to display it here. Hover to see the full path."
