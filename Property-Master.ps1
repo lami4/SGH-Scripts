@@ -78,7 +78,7 @@ Function Get-FileProperties {
     $Binding = “System.Reflection.BindingFlags” -as [type]
     #Extensions that will be processed by the script.
     $WordExtensions = @(".doc", ".docx", ".dotm")
-    $ExcelExtensions = @(".xlsx", ".xls", ".xltm", ".xlsm")
+    $ExcelExtensions = @(".xlsx", ".xls", ".xlsm")
     $VisioExtensions = @(".vdx", ".vsd", ".vdw")
     $PowerPointExtensions = @(".pptx", ".ppt", ".pptm", ".potx")
     #Starts MS Word if necessary.
@@ -273,7 +273,7 @@ Function Set-FileProperties () {
     $Binding = “System.Reflection.BindingFlags” -as [type]
     #Extensions that will be processed by the script.
     $WordExtensions = @(".doc", ".docx", ".dotm")
-    $ExcelExtensions = @(".xlsx", ".xls", ".xltm", ".xlsm")
+    $ExcelExtensions = @(".xlsx", ".xls", ".xlsm")
     $VisioExtensions = @(".vdx", ".vsd", ".vdw")
     $PowerPointExtensions = @(".pptx", ".ppt", ".pptm", ".potx")
     #Starts MS Word if necessary.
@@ -662,9 +662,25 @@ Function Custom-Form
     $GetPropertyLabelButtonDelete.Size =  New-Object System.Drawing.Point(203,15) #width,height
     $GetPropertyLabelButtonDelete.Text = "Delete unwanted item from the blacklist"
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyLabelButtonDelete)
+    #Button 'Clear'
+    $GetPropertyButtonClear = New-Object System.Windows.Forms.Button
+    $GetPropertyButtonClear.Location = New-Object System.Drawing.Point(235,141) #x,y
+    $GetPropertyButtonClear.Size = New-Object System.Drawing.Point(50,22) #width,height
+    $GetPropertyButtonClear.Text = "Clear"
+    $GetPropertyButtonClear.Add_Click({
+        $ClickResult = Show-MessageBox -Title "Confirm your action" -Type YesNo -Message "Are you sure you want to delete all items from the blacklist?"
+        if ($ClickResult -eq "Yes") {$GetPropertyListBoxBlackList.Items.Clear()}
+    })
+    $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyButtonClear)
+    #Label for 'Clear' button
+    $GetPropertyLabelButtonClear = New-Object System.Windows.Forms.Label
+    $GetPropertyLabelButtonClear.Location =  New-Object System.Drawing.Point(295,144) #x,y
+    $GetPropertyLabelButtonClear.Size =  New-Object System.Drawing.Point(203,15) #width,height
+    $GetPropertyLabelButtonClear.Text = "Clear the blacklist"
+    $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyLabelButtonClear)
     #Button 'Export'
     $GetPropertyButtonExportList = New-Object System.Windows.Forms.Button
-    $GetPropertyButtonExportList.Location = New-Object System.Drawing.Point(235,141) #x,y
+    $GetPropertyButtonExportList.Location = New-Object System.Drawing.Point(235,169) #x,y
     $GetPropertyButtonExportList.Size = New-Object System.Drawing.Point(50,22) #width,height
     $GetPropertyButtonExportList.Text = "Export"
     $GetPropertyButtonExportList.Add_Click({
@@ -677,13 +693,13 @@ Function Custom-Form
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyButtonExportList)
     #Label for 'Export' button
     $GetPropertyLabelButtonExport = New-Object System.Windows.Forms.Label
-    $GetPropertyLabelButtonExport.Location =  New-Object System.Drawing.Point(295,144) #x,y
+    $GetPropertyLabelButtonExport.Location =  New-Object System.Drawing.Point(295,172) #x,y
     $GetPropertyLabelButtonExport.Size =  New-Object System.Drawing.Point(200,15) #width,height
-    $GetPropertyLabelButtonExport.Text = "Export your blacklist for later use"
+    $GetPropertyLabelButtonExport.Text = "Export blacklist for later use"
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyLabelButtonExport)
     #Button 'Import'
     $GetPropertyButtonImportList = New-Object System.Windows.Forms.Button
-    $GetPropertyButtonImportList.Location = New-Object System.Drawing.Point(235,169) #x,y
+    $GetPropertyButtonImportList.Location = New-Object System.Drawing.Point(235,197) #x,y
     $GetPropertyButtonImportList.Size = New-Object System.Drawing.Point(50,22) #width,height
     $GetPropertyButtonImportList.Text = "Import"
     $GetPropertyButtonImportList.Add_Click({
@@ -697,13 +713,13 @@ Function Custom-Form
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyButtonImportList)
     #Label for 'Import' button
     $GetPropertyLabelButtonImport = New-Object System.Windows.Forms.Label
-    $GetPropertyLabelButtonImport.Location =  New-Object System.Drawing.Point(295,172) #x,y
+    $GetPropertyLabelButtonImport.Location =  New-Object System.Drawing.Point(295,200) #x,y
     $GetPropertyLabelButtonImport.Size =  New-Object System.Drawing.Point(200,15) #width,height
-    $GetPropertyLabelButtonImport.Text = "Import your blacklist"
+    $GetPropertyLabelButtonImport.Text = "Import blacklist"
     $GetPropertyGroupboxBlacklistSettings.Controls.Add($GetPropertyLabelButtonImport)
     #Checkbox 'Get Only Blacklisted Properties'
     $GetPropertyCheckboxTurnIntoWhite = New-Object System.Windows.Forms.CheckBox
-    $GetPropertyCheckboxTurnIntoWhite.Location = New-Object System.Drawing.Point(235,200) #x,y
+    $GetPropertyCheckboxTurnIntoWhite.Location = New-Object System.Drawing.Point(235,228) #x,y
     $GetPropertyCheckboxTurnIntoWhite.Width = 200
     $GetPropertyCheckboxTurnIntoWhite.Text = "Get Only Blacklisted Properties"
     $GetPropertyCheckboxTurnIntoWhite.Add_CheckStateChanged({})
@@ -904,6 +920,8 @@ Function Disable-AllExceptEditing ($BooleanRest, $BooleanEditing)
     $GetPropertyButtonApplyItem.Enabled = $BooleanEditing
     $GetPropertyButtonCancelItem.Enabled = $BooleanEditing
     $GetPropertyButtonEditItem.Enabled = $BooleanRest
+    $GetPropertyButtonClear.Enabled = $BooleanRest
+    $GetPropertyLabelButtonClear.Enabled = $BooleanRest
     $GetPropertyCheckboxTurnIntoWhite.Enabled = $BooleanRest
     $GetPropertyButtonExtract.Enabled = $BooleanRest
     $GetPropertyButtonExit.Enabled = $BooleanRest
@@ -935,10 +953,11 @@ Function Select-Folder ($Description)
 }
 Function Show-MessageBox 
 { 
-    param($Message, $Title, [ValidateSet("OK", "OKCancel")]$Type)
+    param($Message, $Title, [ValidateSet("OK", "OKCancel", "YesNo")]$Type)
     Add-Type –AssemblyName System.Windows.Forms 
     if ($Type -eq "OK") {[System.Windows.Forms.MessageBox]::Show("$Message","$Title")}  
     if ($Type -eq "OKCancel") {[System.Windows.Forms.MessageBox]::Show("$Message","$Title",[System.Windows.Forms.MessageBoxButtons]::OKCancel)}
+    if ($Type -eq "YesNo") {[System.Windows.Forms.MessageBox]::Show("$Message","$Title",[System.Windows.Forms.MessageBoxButtons]::YesNo)}
 }
 Custom-Form
 ###UI###
