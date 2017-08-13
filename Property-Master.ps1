@@ -1,4 +1,10 @@
-clear
+#GLOBAL VARIABLES
+#Extensions that will be processed by the script.
+$script:WordExtensions = @(".doc", ".docx", ".dotm")
+$script:ExcelExtensions = @(".xlsx", ".xls", ".xlsm")
+$script:VisioExtensions = @(".vdx", ".vsd", ".vdw")
+$script:PowerPointExtensions = @(".pptx", ".ppt", ".pptm", ".potx")
+
 ###GET FILE PROPERTIES FUNCTIONS###
 Function Run-MSApplication ($AppName, $AppExtensions, $Text, $PathToFolder) {
    #Gets each file's extension in the folder specified by user.
@@ -76,23 +82,18 @@ Function Get-FileProperties {
     Add-type -AssemblyName Office
     #Stores the BindingFlags enumeration in $Binding.
     $Binding = “System.Reflection.BindingFlags” -as [type]
-    #Extensions that will be processed by the script.
-    $WordExtensions = @(".doc", ".docx", ".dotm")
-    $ExcelExtensions = @(".xlsx", ".xls", ".xlsm")
-    $VisioExtensions = @(".vdx", ".vsd", ".vdw")
-    $PowerPointExtensions = @(".pptx", ".ppt", ".pptm", ".potx")
     #Starts MS Word if necessary.
-    $Word = Run-MSApplication -AppName "Word.Application" -AppExtensions $WordExtensions -Text "Word" -PathToFolder $script:GetPropertyPathToSelectedFolder
+    $Word = Run-MSApplication -AppName "Word.Application" -AppExtensions $script:WordExtensions -Text "Word" -PathToFolder $script:GetPropertyPathToSelectedFolder
     #If MS Word is started, makes it not visible to user.
     if ($Word -ne $null) {$Word.Visible = $false}
     #Starts MS Excel if necessary
-    $Excel = Run-MSApplication -AppName "Excel.Application" -AppExtensions $ExcelExtensions -Text "Excel" -PathToFolder $script:GetPropertyPathToSelectedFolder
+    $Excel = Run-MSApplication -AppName "Excel.Application" -AppExtensions $script:ExcelExtensions -Text "Excel" -PathToFolder $script:GetPropertyPathToSelectedFolder
     #If MS Excel is started, makes it not visible to user.
     if ($Excel -ne $null) {$Excel.Visible = $false}
     #Starts MS Visio if necessary and makes it not visible to user.
-    $Visio = Run-MSApplication -AppName "Visio.InvisibleApp" -AppExtensions $VisioExtensions -Text "Visio" -PathToFolder $script:GetPropertyPathToSelectedFolder
+    $Visio = Run-MSApplication -AppName "Visio.InvisibleApp" -AppExtensions $script:VisioExtensions -Text "Visio" -PathToFolder $script:GetPropertyPathToSelectedFolder
     #Starts MS PowerPoint if necessary. Invisibility is enabled when opening a presentation.
-    $PowerPoint = Run-MSApplication -AppName "PowerPoint.Application" -AppExtensions $PowerPointExtensions -Text "PowerPoint" -PathToFolder $script:GetPropertyPathToSelectedFolder
+    $PowerPoint = Run-MSApplication -AppName "PowerPoint.Application" -AppExtensions $script:PowerPointExtensions -Text "PowerPoint" -PathToFolder $script:GetPropertyPathToSelectedFolder
     #Creates another instance of Excel application, adds a workbook and activates the first sheet to output data to.
     $OutputExcel = New-Object -ComObject Excel.Application
     $OutputExcel.Visible = $false
@@ -110,7 +111,7 @@ Function Get-FileProperties {
     Get-ChildItem -Path $script:GetPropertyPathToSelectedFolder | % {
         Write-Host "Extracting properties from $($_.Name)..."
         #if extension of the processed file matches an extension in $ExcelExtensions array, the script will open it and extract its properties using Excel application.
-        if ($ExcelExtensions -contains ($_.Extension).ToLower()) {
+        if ($script:ExcelExtensions -contains ($_.Extension).ToLower()) {
             #Opens the file whose properties are to be extracted.
             $Workbook = $Excel.Workbooks.Open($_.FullName)
             #Extracts built-in properties if required
@@ -134,8 +135,8 @@ Function Get-FileProperties {
             #Closes active workbook without saving it.
             $Workbook.Close()
         }
-        #if extension of the processed file matches an extension in $WordExtensionss array, the script will open it and extract its properties using Word application.
-        if ($WordExtensions -contains ($_.Extension).ToLower()) {
+        #if extension of the processed file matches an extension in $WordExtensions array, the script will open it and extract its properties using Word application.
+        if ($script:WordExtensions -contains ($_.Extension).ToLower()) {
             #Opens the file whose properties are to be extracted.
             $Document = $Word.Documents.Open($_.FullName)
             #Extracts built-in properties if required
@@ -160,7 +161,7 @@ Function Get-FileProperties {
             $Document.Close()
         }
         #if extension of the processed file matches an extension in $VisioExtensions array, the script will open it and extract its properties using Visio application.
-        if ($VisioExtensions -contains ($_.Extension).ToLower()) {
+        if ($script:VisioExtensions -contains ($_.Extension).ToLower()) {
             #Opens a document.
             $DocumentVisio = $Visio.Documents.Open($_.FullName)
             #List of Built In Document Properties.
@@ -188,7 +189,7 @@ Function Get-FileProperties {
             $DocumentVisio.Close()
         }
         #if extension of the processed file matches an extension in $VisioExtensions array, the script will open it and extract its properties using Visio application.
-        if ($PowerPointExtensions -contains ($_.Extension).ToLower()) {
+        if ($script:PowerPointExtensions -contains ($_.Extension).ToLower()) {
             #Opens a presentation and makes it not visible to the user.
             $Presentation = $PowerPoint.Presentations.Open($_.FullName, $null, $null, [Microsoft.Office.Core.MsoTriState]::msoFalse)
             #Extracts built-in properties if required
@@ -271,23 +272,18 @@ $DocumentObject.Close()
 Function Set-FileProperties () {
     #Stores the BindingFlags enumeration in $Binding.
     $Binding = “System.Reflection.BindingFlags” -as [type]
-    #Extensions that will be processed by the script.
-    $WordExtensions = @(".doc", ".docx", ".dotm")
-    $ExcelExtensions = @(".xlsx", ".xls", ".xlsm")
-    $VisioExtensions = @(".vdx", ".vsd", ".vdw")
-    $PowerPointExtensions = @(".pptx", ".ppt", ".pptm", ".potx")
     #Starts MS Word if necessary.
-    $Word = Run-MSApplication -AppName "Word.Application" -AppExtensions $WordExtensions -Text "Word" -PathToFolder $script:SetPropertyPathToSelectedFolder
+    $Word = Run-MSApplication -AppName "Word.Application" -AppExtensions $script:WordExtensions -Text "Word" -PathToFolder $script:SetPropertyPathToSelectedFolder
     #If MS Word is started, makes it not visible to user.
     if ($Word -ne $null) {$Word.Visible = $false}
     #Starts MS Excel if necessary
-    $Excel = Run-MSApplication -AppName "Excel.Application" -AppExtensions $ExcelExtensions -Text "Excel" -PathToFolder $script:SetPropertyPathToSelectedFolder
+    $Excel = Run-MSApplication -AppName "Excel.Application" -AppExtensions $script:ExcelExtensions -Text "Excel" -PathToFolder $script:SetPropertyPathToSelectedFolder
     #If MS Excel is started, makes it not visible to user.
     if ($Excel -ne $null) {$Excel.Visible = $false}
     #Starts MS Visio if necessary and makes it not visible to user.
-    $Visio = Run-MSApplication -AppName "Visio.InvisibleApp" -AppExtensions $VisioExtensions -Text "Visio" -PathToFolder $script:SetPropertyPathToSelectedFolder
+    $Visio = Run-MSApplication -AppName "Visio.InvisibleApp" -AppExtensions $script:VisioExtensions -Text "Visio" -PathToFolder $script:SetPropertyPathToSelectedFolder
     #Starts MS PowerPoint if necessary. Invisibility is enabled when opening a presentation.
-    $PowerPoint = Run-MSApplication -AppName "PowerPoint.Application" -AppExtensions $PowerPointExtensions -Text "PowerPoint" -PathToFolder $script:SetPropertyPathToSelectedFolder
+    $PowerPoint = Run-MSApplication -AppName "PowerPoint.Application" -AppExtensions $script:PowerPointExtensions -Text "PowerPoint" -PathToFolder $script:SetPropertyPathToSelectedFolder
     #Creates another instance of Excel application, opens Excel file that contains the properties and activates the first sheet.
     $ExcelWithProperties = New-Object -ComObject Excel.Application
     $ExcelWithProperties.Visible = $false
@@ -303,7 +299,7 @@ Function Set-FileProperties () {
         #If $WorksheetWithProperties contains any properties (i.e. $FoundProperties is not equal to $null) for the file being processed, the script will go on to update them. Otherwise, the script will move to the next document.
         if ($FoundProperties -ne $null) {
                 #if extension of the file being processed matches an extension in $ExcelExtensions array, the script will open it and update avaiable properties using Excel application
-                if ($ExcelExtensions -contains ($_.Extension).ToLower()) {
+                if ($script:ExcelExtensions -contains ($_.Extension).ToLower()) {
                     #Opens the file whose properties are to be updated.
                     $Workbook = $Excel.Workbooks.Open($_.FullName)
                     #Updates built-in properties if required
@@ -336,7 +332,7 @@ Function Set-FileProperties () {
                     Close-SavedDocument -DocumentObject $Workbook
                 }
             #if extension of the file being processed matches an extension in $WordExtensions array, the script will open it and update avaiable properties using Word application
-            if ($WordExtensions -contains ($_.Extension).ToLower()) {
+            if ($script:WordExtensions -contains ($_.Extension).ToLower()) {
                 #Opens the file whose properties are to be updated
                 $Document = $Word.Documents.Open($_.FullName)
                 #Updates built-in properties if required
@@ -368,7 +364,7 @@ Function Set-FileProperties () {
                 Close-SavedDocument -DocumentObject $Document
             }
             #if extension of the file being processed matches an extension in $VisioExtensions array, the script will open it and update avaiable properties using Visio application
-            if ($VisioExtensions -contains ($_.Extension).ToLower()) {
+            if ($script:VisioExtensions -contains ($_.Extension).ToLower()) {
                 #Opens the file whose properties are to be updated
                 $DocumentVisio = $Visio.Documents.Open($_.FullName)
                 Write-Host "Updating built-in properties..."
@@ -384,7 +380,7 @@ Function Set-FileProperties () {
                 Close-SavedDocument -DocumentObject $DocumentVisio   
             }
             #if extension of the file being processed matches an extension in $PowerPointExtensions array, the script will open it and update avaiable properties using PowerPoint application
-            if ($PowerPointExtensions -contains ($_.Extension).ToLower()) {
+            if ($script:PowerPointExtensions -contains ($_.Extension).ToLower()) {
             #Opens a presentation and makes it not visible to the user
             $Presentation = $PowerPoint.Presentations.Open($_.FullName, $null, $null, [Microsoft.Office.Core.MsoTriState]::msoFalse)
                 #Updates built-in properties if required
@@ -877,12 +873,12 @@ Function Custom-Form
     $SetPropertyButtonSet.Add_Click({
     $ClickResult = Show-MessageBox -Title "Warning" -Type OKCancel -Message "The script will close the following applications: Excel, Word, PowerPoint, Visio.$([System.Environment]::NewLine)To prevent data loss, make sure you have saved and closed any documents opened in the listed applications before clicking 'OK'."
     if ($ClickResult -eq "OK") {
+        Write-Host "Script started"
         Kill -Name VISIO, POWERPNT, EXCEL, WINWORD -ErrorAction SilentlyContinue
         if ($SetPropertyCheckboxDoNotClearFiltering.Checked -eq $true) {$script:DoNotClearAppliedFiltering = $true} else {$script:DoNotClearAppliedFiltering = $false}
         if ($SetPropertyCheckboxSetBProperties.Checked -eq $true) {$script:SetBuiltInProperties = $true} else {$script:SetBuiltInProperties = $false}
         if ($SetPropertyCheckboxSetCProperties.Checked -eq $true) {$script:SetCustomProperties = $true} else {$script:SetCustomProperties = $false}
         Set-FileProperties
-        Write-Host "Script started"
     } else {
         Write-Host "Script not started"
     }
