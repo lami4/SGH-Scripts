@@ -109,9 +109,9 @@ Function Get-FileProperties {
     $script:RowOutputExcel = 2 
     #Starts looping through each file in the folder specified by user.
     Get-ChildItem -Path $script:GetPropertyPathToSelectedFolder | % {
-        Write-Host "Extracting properties from $($_.Name)..."
         #if extension of the processed file matches an extension in $ExcelExtensions array, the script will open it and extract its properties using Excel application.
         if ($script:ExcelExtensions -contains ($_.Extension).ToLower()) {
+            Write-Host "Extracting properties from $($_.Name)..."
             #Opens the file whose properties are to be extracted.
             $Workbook = $Excel.Workbooks.Open($_.FullName)
             #Extracts built-in properties if required
@@ -137,6 +137,7 @@ Function Get-FileProperties {
         }
         #if extension of the processed file matches an extension in $WordExtensions array, the script will open it and extract its properties using Word application.
         if ($script:WordExtensions -contains ($_.Extension).ToLower()) {
+            Write-Host "Extracting properties from $($_.Name)..."
             #Opens the file whose properties are to be extracted.
             $Document = $Word.Documents.Open($_.FullName)
             #Extracts built-in properties if required
@@ -162,6 +163,7 @@ Function Get-FileProperties {
         }
         #if extension of the processed file matches an extension in $VisioExtensions array, the script will open it and extract its properties using Visio application.
         if ($script:VisioExtensions -contains ($_.Extension).ToLower()) {
+            Write-Host "Extracting properties from $($_.Name)..."
             #Opens a document.
             $DocumentVisio = $Visio.Documents.Open($_.FullName)
             #List of Built In Document Properties.
@@ -190,6 +192,7 @@ Function Get-FileProperties {
         }
         #if extension of the processed file matches an extension in $VisioExtensions array, the script will open it and extract its properties using Visio application.
         if ($script:PowerPointExtensions -contains ($_.Extension).ToLower()) {
+            Write-Host "Extracting properties from $($_.Name)..."
             #Opens a presentation and makes it not visible to the user.
             $Presentation = $PowerPoint.Presentations.Open($_.FullName, $null, $null, [Microsoft.Office.Core.MsoTriState]::msoFalse)
             #Extracts built-in properties if required
@@ -216,6 +219,10 @@ Function Get-FileProperties {
     }
     #Saves the Excel file that keeps the output data and kills all started MS Office processes
     Write-Host "Closing opened MS Office applications... It may take some time..."
+    $OutputWorksheet.Activate()
+    $OutputWorksheet.Rows.Item(2).Select()
+    $OutputExcel.ActiveWindow.FreezePanes = $true
+    $OutputWorksheet.Range("A1").AutoFilter(1)
     $OutputWorkbook.SaveAs("$PSScriptRoot\Properties.xlsx")
     $OutputWorkbook.Close()
     Start-Sleep -Seconds 3
@@ -225,7 +232,7 @@ Function Get-FileProperties {
 
 ###SET FILE PROPERTIES FUNCTIONS###
 Function Find-PropertiesForFile ($LastNonEmptyCell, $WorksheetWithProperties, $FileName) {
-    $RangeToSearchThrough = $WorksheetWithProperties.Range("C2:C$LastNonEmptyCell")
+    $RangeToSearchThrough = $WorksheetWithProperties.Range("C1:C$LastNonEmptyCell")
     $Target = $RangeToSearchThrough.Find($FileName, [Type]::Missing, [Type]::Missing, 1)
         if ($Target -eq $null) {
         Write-Host "Properties.xlsx has no properties for $FileName. Moving on to the next document..."
@@ -289,6 +296,8 @@ Function Set-FileProperties () {
     $ExcelWithProperties.Visible = $false
     $WorkbookWithProperties = $ExcelWithProperties.WorkBooks.Open($script:SetPropertyPathToSelectedFile)
     $WorksheetWithProperties = $WorkbookWithProperties.Worksheets.Item(1)
+    #Clears filtering if the 'DoNotClearAppliedFiltering' checkbox was not checked off
+    if ($script:DoNotClearAppliedFiltering -eq $false) {if ($WorksheetWithProperties.AutoFilterMode -eq $true) {$WorksheetWithProperties.ShowAllData()}}
     #Finds last non empty cell in column C. This value will be used later to create a search range in Excel.
     $LastNonemptyCellInColumn = $WorksheetWithProperties.Range("C:C").End(-4121).Row
     Write-Host "Getting ready..."
@@ -414,7 +423,7 @@ Function Set-FileProperties () {
         }   
     Write-Host "==========DOCUMENT PROPERTIES UPDATE COMPLETE========="
     }
-    $WorkbookWithProperties.Close()
+    $WorkbookWithProperties.Close($false)
     Start-Sleep -Seconds 3
     Kill -Name VISIO, POWERPNT, EXCEL, WINWORD -ErrorAction SilentlyContinue
 }
