@@ -55,7 +55,9 @@
     $CreatePropertiesPageButtonExportList.Location = New-Object System.Drawing.Point(362,230) #x,y
     $CreatePropertiesPageButtonExportList.Size = New-Object System.Drawing.Point(70,22) #width,height
     $CreatePropertiesPageButtonExportList.Text = "Export list"
-    $CreatePropertiesPageButtonExportList.Add_Click({})
+    $CreatePropertiesPageButtonExportList.Add_Click({
+    $CreatePropertyListView.Items[0].SubItems | % {Write-Host $_}
+    })
     $CreatePropertiesPageListSettings.Controls.Add($CreatePropertiesPageButtonExportList)
     #Button 'Import'
     $CreatePropertiesPageButtonImportList = New-Object System.Windows.Forms.Button
@@ -64,30 +66,9 @@
     $CreatePropertiesPageButtonImportList.Text = "Import list"
     $CreatePropertiesPageButtonImportList.Add_Click({})
     $CreatePropertiesPageListSettings.Controls.Add($CreatePropertiesPageButtonImportList)
-    #Test button
-    $CreatePropertyTest = New-Object System.Windows.Forms.Button
-    $CreatePropertyTest.Location = New-Object System.Drawing.Point(400,400) #x,y
-    $CreatePropertyTest.Size = New-Object System.Drawing.Point(80,30)
-    $CreatePropertyTest.Text = "Click me!"
-    $CreatePropertyTest.Add_Click({
-    $itemAdd = New-Object System.Windows.Forms.ListViewItem('keksome')
-    $itemAdd.SubItems.Add('FUck')
-    $itemAdd.SubItems.Add('You')
-    $CreatePropertyListView.Items.Add($itemAdd)
-    #Add_SelectedIndexChanged
-    #$CreatePropertyListView.SelectedIndices.
-    #$index = $CreatePropertyListView.FocusedItem.Index
-    #if ($index -eq $null) {return}
-    #Show-MessageBox -Message "$index" -Title "lol" -Type OK
-    #$CreatePropertyListView.Items.Remove($CreatePropertyListView.FocusedItem)
-    #if ($CreatePropertyListView.Items[$index].Selected -eq $true) {Write-Host "kek"}
-    #$CreatePropertyListView.HideSelection = $false
-    #$CreatePropertyListView.SelectedItems.Remove()
-    #Write-Host $CreatePropertyListView.Focused
-    })
     $CreatePropertiesPage.Controls.Add($CreatePropertyTest)
     
-    Function Add-ItemToList () {
+Function Add-ItemToList () {
     $ItemForm = New-Object System.Windows.Forms.Form
     $ItemForm.ShowIcon = $false
     $ItemForm.AutoSize = $true
@@ -136,17 +117,17 @@
     $ItemFormPropertyValueInput = New-Object System.Windows.Forms.TextBox 
     $ItemFormPropertyValueInput.Location = New-Object System.Drawing.Size(95,43) #x,y
     $ItemFormPropertyValueInput.Width = 190
-    $ItemFormPropertyValueInput.Text = "Type in property name..."
+    $ItemFormPropertyValueInput.Text = "Type in property value..."
     $ItemFormPropertyValueInput.ForeColor = "Gray"
     $ItemFormPropertyValueInput.Add_GotFocus({
-        if ($ItemFormPropertyValueInput.Text -eq "Type in property name...") {
+        if ($ItemFormPropertyValueInput.Text -eq "Type in property value...") {
             $ItemFormPropertyValueInput.Text = ""
             $ItemFormPropertyValueInput.ForeColor = "Black"
         }
         })
     $ItemFormPropertyValueInput.Add_LostFocus({
         if ($ItemFormPropertyValueInput.Text -eq "") {
-            $ItemFormPropertyValueInput.Text = "Type in property name..."
+            $ItemFormPropertyValueInput.Text = "Type in property value..."
             $ItemFormPropertyValueInput.ForeColor = "Gray"
         }
         })
@@ -171,7 +152,14 @@
     $ItemFormAddButton.Location = New-Object System.Drawing.Point(10,115) #x,y
     $ItemFormAddButton.Size = New-Object System.Drawing.Point(70,22) #width,height
     $ItemFormAddButton.Text = "Add"
-    $ItemFormAddButton.Add_Click({})
+    $ItemFormAddButton.Add_Click({
+        $ItemToAdd = New-Object System.Windows.Forms.ListViewItem("$($ItemFormPropertyNameInput.Text)")
+        $ItemToAdd.SubItems.Add("$($ItemFormPropertyValueInput.Text)")
+        $ItemToAdd.SubItems.Add("$($ItemFormPropertyTypeCombobox.SelectedItem)")
+        $CreatePropertyListView.Items.Add($ItemToAdd)
+        Write-Host $ItemFormPropertyTypeCombobox.SelectedItem
+        $ItemForm.Close()
+    })
     $ItemForm.Controls.Add($ItemFormAddButton)
     #Buttom 'Cancel'
     $ItemFormCancelButton = New-Object System.Windows.Forms.Button
@@ -179,7 +167,9 @@
     $ItemFormCancelButton.Size = New-Object System.Drawing.Point(70,22) #width,height
     $ItemFormCancelButton.Text = "Cancel"
     $ItemFormCancelButton.Margin = New-Object System.Windows.Forms.Padding(0,0,10,10)
-    $ItemFormCancelButton.Add_Click({})
+    $ItemFormCancelButton.Add_Click({
+        $ItemForm.Close()
+    })
     $ItemForm.Controls.Add($ItemFormCancelButton)
     $ItemForm.ActiveControl = $ItemFormPropertyTypeLabel
     $ItemForm.ShowDialog()
