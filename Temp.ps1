@@ -181,3 +181,9 @@ $ColumnHeader.Text = $HeaderText
 $ColumnHeader.Width = $Width
 $ListView.Columns.Add($ColumnHeader)
 }
+
+    $PathToExportedList = Save-File
+            if ($PathToExportedList -ne $null) {
+            if (Test-Path -Path $PathToExportedList) {Remove-Item -Path $PathToExportedList -Force}
+            $CreatePropertyListView.Items | % {$ExportedString = ""; $_.SubItems | % {$ExportedString += "$($_.Text);"}; $ExportedString = $ExportedString.TrimEnd(";"); Add-Content -Path $PathToExportedList -Value $ExportedString}
+        }
