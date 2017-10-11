@@ -68,11 +68,11 @@
     $CreatePropertiesPageListSettings.Controls.Add($CreatePropertiesPageButtonImportList)
     $CreatePropertiesPage.Controls.Add($CreatePropertyTest)
     
-Function Add-ItemToList () {
+Function AddApply-ItemToList ($FormName, $ButtonName, [ValidateSet("Add", "Apply")]$Type) {
     $ItemForm = New-Object System.Windows.Forms.Form
     $ItemForm.ShowIcon = $false
     $ItemForm.AutoSize = $true
-    $ItemForm.Text = "Add item"
+    $ItemForm.Text = $FormName
     $ItemForm.AutoSizeMode = "GrowAndShrink"
     $ItemForm.WindowState = "Normal"
     $ItemForm.SizeGripStyle = "Hide"
@@ -91,8 +91,8 @@ Function Add-ItemToList () {
     $ItemFormPropertyNameInput = New-Object System.Windows.Forms.TextBox 
     $ItemFormPropertyNameInput.Location = New-Object System.Drawing.Size(95,13) #x,y
     $ItemFormPropertyNameInput.Width = 190
-    $ItemFormPropertyNameInput.Text = "Type in property name..."
-    $ItemFormPropertyNameInput.ForeColor = "Gray"
+    if ($Type -eq "Add") {$ItemFormPropertyNameInput.Text = "Type in property name..."; $ItemFormPropertyNameInput.ForeColor = "Gray"}
+    if ($Type -eq "Apply") {$ItemFormPropertyNameInput.Text = $CreatePropertyListView.Items[$CreatePropertyListView.FocusedItem.Index].SubItems[0].Text; $ItemFormPropertyNameInput.ForeColor = "Black"}  
     $ItemFormPropertyNameInput.Add_GotFocus({
         if ($ItemFormPropertyNameInput.Text -eq "Type in property name...") {
             $ItemFormPropertyNameInput.Text = ""
@@ -117,8 +117,8 @@ Function Add-ItemToList () {
     $ItemFormPropertyValueInput = New-Object System.Windows.Forms.TextBox 
     $ItemFormPropertyValueInput.Location = New-Object System.Drawing.Size(95,43) #x,y
     $ItemFormPropertyValueInput.Width = 190
-    $ItemFormPropertyValueInput.Text = "Type in property value..."
-    $ItemFormPropertyValueInput.ForeColor = "Gray"
+    if ($Type -eq "Add") {$ItemFormPropertyValueInput.Text = "Type in property value..."; $ItemFormPropertyValueInput.ForeColor = "Gray"}
+    if ($Type -eq "Apply") {$ItemFormPropertyValueInput.Text = $CreatePropertyListView.Items[$CreatePropertyListView.FocusedItem.Index].SubItems[1].Text; $ItemFormPropertyValueInput.ForeColor = "Black"}
     $ItemFormPropertyValueInput.Add_GotFocus({
         if ($ItemFormPropertyValueInput.Text -eq "Type in property value...") {
             $ItemFormPropertyValueInput.Text = ""
@@ -147,20 +147,34 @@ Function Add-ItemToList () {
     $DataTypes | % {$ItemFormPropertyTypeCombobox.Items.add($_)}
     $ItemFormPropertyTypeCombobox.SelectedIndex = 0
     $ItemForm.Controls.Add($ItemFormPropertyTypeCombobox)
-    #Buttom 'Add'
-    $ItemFormAddButton = New-Object System.Windows.Forms.Button
-    $ItemFormAddButton.Location = New-Object System.Drawing.Point(10,115) #x,y
-    $ItemFormAddButton.Size = New-Object System.Drawing.Point(70,22) #width,height
-    $ItemFormAddButton.Text = "Add"
-    $ItemFormAddButton.Add_Click({
-        $ItemToAdd = New-Object System.Windows.Forms.ListViewItem("$($ItemFormPropertyNameInput.Text)")
-        $ItemToAdd.SubItems.Add("$($ItemFormPropertyValueInput.Text)")
-        $ItemToAdd.SubItems.Add("$($ItemFormPropertyTypeCombobox.SelectedItem)")
-        $CreatePropertyListView.Items.Add($ItemToAdd)
-        Write-Host $ItemFormPropertyTypeCombobox.SelectedItem
-        $ItemForm.Close()
+    #Buttom 'AddApply'
+    $ItemFormAddApplyButton = New-Object System.Windows.Forms.Button
+    $ItemFormAddApplyButton.Location = New-Object System.Drawing.Point(10,115) #x,y
+    $ItemFormAddApplyButton.Size = New-Object System.Drawing.Point(70,22) #width,height
+    $ItemFormAddApplyButton.Text = $ButtonName
+    $ItemFormAddApplyButton.Add_Click({
+        if ($ItemFormPropertyNameInput.Text -eq "Type in property name..." -and $ItemFormPropertyValueInput.Text -eq "Type in property value...") {
+            Show-MessageBox -Message "Please specify property name and property value" -Title "Some input fields are empty" -Type OK
+        } elseif ($ItemFormPropertyNameInput.Text -eq "Type in property name..." -and $ItemFormPropertyValueInput.Text -ne "Type in property value...") {
+            Show-MessageBox -Message "Please specify property name" -Title "Some input fields are empty" -Type OK
+        } elseif ($ItemFormPropertyNameInput.Text -ne "Type in property name..." -and $ItemFormPropertyValueInput.Text -eq "Type in property value...") {
+            Show-MessageBox -Message "Please specify property value" -Title "Some input fields are empty" -Type OK
+        } else {
+                $ItemsOnTheList = @()
+                $CreatePropertyListView.Items | % {$ItemsOnTheList += $_.Text}
+                if ($ItemsOnTheList -contains $ItemFormPropertyNameInput.Text) {
+                Show-MessageBox -Message "Property with the specified name is already on the list." -Title "Property already exists" -Type OK
+            } else {
+                $ItemToAdd = New-Object System.Windows.Forms.ListViewItem("$($ItemFormPropertyNameInput.Text)")
+                $ItemToAdd.SubItems.Add("$($ItemFormPropertyValueInput.Text)")
+                $ItemToAdd.SubItems.Add("$($ItemFormPropertyTypeCombobox.SelectedItem)")
+                $CreatePropertyListView.Items.Add($ItemToAdd)
+                Write-Host $ItemFormPropertyTypeCombobox.SelectedItem
+                $ItemForm.Close()
+            }
+        }
     })
-    $ItemForm.Controls.Add($ItemFormAddButton)
+    $ItemForm.Controls.Add($ItemFormAddApplyButton)
     #Buttom 'Cancel'
     $ItemFormCancelButton = New-Object System.Windows.Forms.Button
     $ItemFormCancelButton.Location = New-Object System.Drawing.Point(215,115) #x,y
