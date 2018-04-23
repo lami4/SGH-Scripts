@@ -1,3 +1,59 @@
+$script:counter = 1
+
+Function Apply-FormattingInListTable($TableObject, $WordApp) {
+#Сделать границы таблицы видимыми
+$TableObject.Borders.Enable = $true
+#Ширина таблицы (19,4 см)
+$TableObject.Columns.Item(1).Width = $WordApp.CentimetersToPoints(18)
+#Отсутуп от левого края в ячейках
+$TableObject.LeftPadding = $WordApp.CentimetersToPoints(0.1)
+#Отсутуп от правого края в ячейках
+$TableObject.RightPadding = $WordApp.CentimetersToPoints(0.1)
+#Установить вертикальное выравнивание по центру для всех ячеек
+$TableObject.Cell(1, 1).VerticalAlignment = 1
+#Настройка шрифта в таблице
+$TableObject.Cell(1, 1).Range.Font.Name = "Arial"
+$TableObject.Cell(1, 1).Range.Font.Size = 9
+#Интервал после (0 пт) для каждой ячейки таблицы
+$TableObject.Range.ParagraphFormat.SpaceAfter = 0
+#Междустрочный интервал (одинарный) для каждой ячейки таблицы
+$TableObject.Range.ParagraphFormat.LineSpacingRule = 0
+#Установить высоту на минимум
+$TableObject.Cell(15, 1).HeightRule = 1
+$TableObject.Rows.Height = $word.CentimetersToPoints(0.5)
+#Разбить таблицу на 4 столбца и установить их ширину
+$TableObject.Cell(1, 1).Split(1, 4)
+$TableObject.Cell(1, 1).Column.Width = $WordApp.CentimetersToPoints(1.5)
+$TableObject.Cell(1, 2).Column.Width = $WordApp.CentimetersToPoints(1.5)
+$TableObject.Cell(1, 3).Column.Width = $WordApp.CentimetersToPoints(7.5)
+$TableObject.Cell(1, 4).Column.Width = $WordApp.CentimetersToPoints(7.5)
+#Добавить надписи в таблицу
+$TableObject.Cell(1, 1).Range.Text = "Поз."
+$TableObject.Cell(1, 2).Range.Text = "Изм."
+$TableObject.Cell(1, 3).Range.Text = "Обозначение"
+$TableObject.Cell(1, 4).Range.Text = "Примечание"
+#Установить выравниевание по центру для заголовка
+$TableObject.Rows.Item(1).Range.ParagraphFormat.Alignment = 1
+#Выровнять таблицу по центру в документу
+$TableObject.Rows.Alignment = 1
+#Добавить строку для данных
+$TableObject.Rows.Add()
+$TableObject.Cell(2, 3).Range.ParagraphFormat.Alignment = 0
+$TableObject.Cell(2, 2).LeftPadding = $word.CentimetersToPoints(0.1)
+$TableObject.Cell(2, 2).RightPadding = $word.CentimetersToPoints(0.1)
+}
+
+Function Add-TestData($TableObject) {
+    for ($t = 2; $t -lt 40; $t++) {
+    $TableObject.Cell($t, 1).Range.Text = $script:counter
+    $script:counter += 1
+    $TableObject.Cell($t, 2).Range.Text = "-"
+    $TableObject.Cell($t, 3).Range.Text = "ABCDFE-RU-RU-00.00.00.tEST.01.00_00.11"
+    $TableObject.Cell($t, 4).Range.Text = "81cf2f9f23fd597f2e278e56718c3831"
+    $TableObject.Rows.Add()
+    }
+}
+
 clear
 #Создать экземпляр приложения MS Word
 $word = New-Object -ComObject Word.Application
@@ -83,10 +139,13 @@ $table.Rows.Add()
 $table.Cell(12, 1).SetWidth($word.CentimetersToPoints(1.5), 1)
 $table.Rows.Add()
 $table.Rows.Add()
+$table.Cell(12, 2).Merge($table.Cell(13, 2))
 $table.Cell(14, 1).Merge($table.Cell(14, 2))
+
 for ($i = 0; $i -lt 29; $i++) {
 $table.Rows.Add()
 }
+
 #Вставить текст
 $table.Cell(1, 2).Range.Text = "БТД"
 $table.Cell(1, 3).Range.Text = "Извещение"
@@ -103,6 +162,8 @@ $table.Cell(9, 1).Range.Text = "Применяемость"
 $table.Cell(10, 1).Range.Text = "Разослать"
 $table.Cell(11, 1).Range.Text = "Приложение"
 $table.Cell(12, 1).Range.Text = "Изм."
+$table.Cell(13, 1).Range.Text = "-"
+$table.Cell(12, 2).Range.Text = "Содержание изменения"
 #Добавить логотип компании и выровнять по центру
 $table.Cell(1, 1).Range.InlineShapes.AddPicture("$PSScriptRoot\logo.jpg", $false, $true)
 $table.Cell(1, 1).Range.ParagraphFormat.Alignment = 1
@@ -131,8 +192,8 @@ $table.Cell(12, 1).Range.ParagraphFormat.Alignment = 1
 $table.Cell(3, 3).Range.ParagraphFormat.Alignment = 1
 $table.Cell(3, 4).Range.ParagraphFormat.Alignment = 1
 $table.Cell(5, 3).Range.ParagraphFormat.Alignment = 1
-#Отключить фиксированную высоту для ячейки, которая содержит перечень фдокументов и программ
-$table.Cell(14, 1).HeightRule = 1
+$table.Cell(13, 1).Range.ParagraphFormat.Alignment = 1
+$table.Cell(12, 2).Range.ParagraphFormat.Alignment = 1
 #Вставить надписть ГОСТ
 $document.Range([ref]$table.Cell(1, 1).Range.Start, [ref]$table.Cell(1, 4).Range.Start).Select()
 $document.Application.Selection.InsertRowsAbove()
@@ -156,9 +217,9 @@ $shapeTop.TextFrame.TextRange.Font.Bold = $true
 $shapeTop.TextFrame.TextRange.Font.ColorIndex = 1
 $shapeTop.TextFrame.TextRange.ParagraphFormat.SpaceAfter = 0
 $shapeTop.TextFrame.TextRange.ParagraphFormat.LineSpacingRule = 0
-$shapeTop.RelativeHorizontalPosition = 5
-$shapeTop.Left = $word.CentimetersToPoints(-8.2)
-$shapeTop.RelativeVerticalPosition = 4
+$shapeTop.RelativeHorizontalPosition = 1
+$shapeTop.Left = $word.CentimetersToPoints(11.8)
+$shapeTop.RelativeVerticalPosition = 1
 $shapeTop.Top = $word.CentimetersToPoints(0.4)
 $shapeTop.Fill.Visible = 0
 $shapeTop.Line.Weight = 1
@@ -237,7 +298,7 @@ $shapeBot.TextFrame.TextRange.Font.ColorIndex = 1
 $shapeBot.TextFrame.TextRange.ParagraphFormat.SpaceAfter = 0
 $shapeBot.TextFrame.TextRange.ParagraphFormat.LineSpacingRule = 0
 $shapeBot.RelativeHorizontalPosition = 1
-$shapeBot.Left = $word.CentimetersToPoints(11.83)
+$shapeBot.Left = $word.CentimetersToPoints(11.8)
 $shapeBot.RelativeVerticalPosition = 1
 $shapeBot.Top = $word.CentimetersToPoints(28.4)
 $shapeBot.Fill.Visible = 0
@@ -263,9 +324,9 @@ $shapeTopPageTwo.TextFrame.TextRange.Font.Bold = $true
 $shapeTopPageTwo.TextFrame.TextRange.Font.ColorIndex = 1
 $shapeTopPageTwo.TextFrame.TextRange.ParagraphFormat.SpaceAfter = 0
 $shapeTopPageTwo.TextFrame.TextRange.ParagraphFormat.LineSpacingRule = 0
-$shapeTopPageTwo.RelativeHorizontalPosition = 5
-$shapeTopPageTwo.RelativeVerticalPosition = 4
-$shapeTopPageTwo.Left = $word.CentimetersToPoints(-8.2)
+$shapeTopPageTwo.RelativeHorizontalPosition = 1
+$shapeTopPageTwo.RelativeVerticalPosition = 1
+$shapeTopPageTwo.Left = $word.CentimetersToPoints(11.8)
 $shapeTopPageTwo.Top = $word.CentimetersToPoints(0.4)
 $shapeTopPageTwo.Fill.Visible = 0
 $shapeTopPageTwo.Line.Weight = 1
@@ -315,8 +376,12 @@ $headerTable.Cell(3, 2).Merge($headerTable.Cell(4, 2))
 #Высота строки (0,5 см) для всех ячеек
 $headerTable.Rows.Height = $word.CentimetersToPoints(0.5)
 #Настройка выравнивания в ячейках
+$headerTable.Cell(2, 1).Range.ParagraphFormat.Alignment = 1
+$headerTable.Cell(2, 3).Range.ParagraphFormat.Alignment = 1
+$headerTable.Cell(2, 4).Range.ParagraphFormat.Alignment = 1
 $headerTable.Cell(3, 1).Range.ParagraphFormat.Alignment = 1
 $headerTable.Cell(4, 1).Range.ParagraphFormat.Alignment = 1
+$headerTable.Cell(3, 2).Range.ParagraphFormat.Alignment = 1
 #Включить постоянную высоту для строк таблицы
 $headerTable.Rows.HeightRule = 2
 #Добавить текст в таблице верхнего колонтитула второй страницы
@@ -324,7 +389,7 @@ $headerTable.Cell(2, 1).Range.Text = "Извещение"
 $headerTable.Cell(2, 3).Range.Text = "Лист"
 $headerTable.Cell(3, 1).Range.Text = "Изм."
 $headerTable.Cell(4, 1).Range.Text = "-"
-
+$headerTable.Cell(3, 2).Range.Text = "Содержание изменения"
 #Надпись в нижнем колонтитуле
 $document.Sections.Item(1).Headers.Item(1).Shapes.AddShape(1, 10, 10, 200, 20).TextFrame.TextRange.Text = "Коммерческая тайна"
 $shapeBotPageTwo = $document.Sections.Item(1).Headers.Item(1).Shapes.Item(4)
@@ -338,7 +403,7 @@ $shapeBotPageTwo.TextFrame.TextRange.Font.ColorIndex = 1
 $shapeBotPageTwo.TextFrame.TextRange.ParagraphFormat.SpaceAfter = 0
 $shapeBotPageTwo.TextFrame.TextRange.ParagraphFormat.LineSpacingRule = 0
 $shapeBotPageTwo.RelativeHorizontalPosition = 1
-$shapeBotPageTwo.Left = $word.CentimetersToPoints(11.83)
+$shapeBotPageTwo.Left = $word.CentimetersToPoints(11.8)
 $shapeBotPageTwo.RelativeVerticalPosition = 1
 $shapeBotPageTwo.Top = $word.CentimetersToPoints(28.4)
 $shapeBotPageTwo.Fill.Visible = 0
@@ -353,6 +418,27 @@ for ($i = 0; $i -lt 29; $i++) {
 $table.Cell(15, 1).Delete()
 }
 
+
+#Отключить фиксированную высоту для ячейки, которая содержит перечень фдокументов и программ
+$table.Cell(15, 1).HeightRule = 1
+#Вставить таблицы со списками для аннлирования, замены и публикации
+$document.Tables.Item(1).Cell(15, 1).TopPadding = $word.CentimetersToPoints(0.46)
+$document.Tables.Item(1).Cell(15, 1).BottomPadding = $word.CentimetersToPoints(0.46)
+$document.Tables.Item(1).Cell(15, 1).Range = [char]10 + [char]10 + "Заменить:" + [char]10 + [char]10 + [char]10 + [char]10 + "Аннулировать:" + [char]10 + [char]10 + [char]10 + [char]10 + "Выпустить:" + [char]10 + [char]10 + [char]10  + [char]10
+$document.Tables.Item(1).Cell(15, 1).Range.Paragraphs.Item(4).Range.Select()
+$document.Tables.Add($word.Selection.Range, 1, 1)
+$document.Tables.Item(1).Cell(15, 1).Range.Paragraphs.Item(9).Range.Select()
+$document.Tables.Add($word.Selection.Range, 1, 1)
+$document.Tables.Item(1).Cell(15, 1).Range.Paragraphs.Item(14).Range.Select()
+$document.Tables.Add($word.Selection.Range, 1, 1)
+$document.Tables.Item(1).Cell(15, 1).Range.ParagraphFormat.Alignment = 1
+Apply-FormattingInListTable -TableObject $document.Tables.Item(1).Tables.Item(1) -WordApp $word
+Apply-FormattingInListTable -TableObject $document.Tables.Item(1).Tables.Item(2) -WordApp $word
+Apply-FormattingInListTable -TableObject $document.Tables.Item(1).Tables.Item(3) -WordApp $word
+
+Add-TestData -TableObject $document.Tables.Item(1).Tables.Item(1)
+Add-TestData -TableObject $document.Tables.Item(1).Tables.Item(2)
+Add-TestData -TableObject $document.Tables.Item(1).Tables.Item(3)
 #Вставить поля
 $table.Cell(5, 4).Range.Select()
 $document.Application.Selection.Collapse(1)
@@ -362,26 +448,8 @@ $table.Cell(5, 4).Range.ParagraphFormat.Alignment = 1
 $headerTable.Cell(2, 4).Range.Select()
 $document.Application.Selection.Collapse(1)
 $myField = $document.Fields.Add($document.Application.Selection.Range, 33)
-$headerTable.Cell(2, 4).Range.ParagraphFormat.Alignment = 1
 
 $table.Cell(5, 3).Range.Select()
 $document.Application.Selection.Collapse(1)
 $myField = $document.Fields.Add($document.Application.Selection.Range, 33)
 $table.Cell(5, 3).Range.ParagraphFormat.Alignment = 1
-
-<#
-Function findAndReplace($Text, $Find, $ReplaceWith) {
-    $matchCase = $true
-    $matchWholeWord = $true
-    $matchWildcards = $false
-    $matchSoundsLike = $false
-    $matchAllWordForms = $false
-    $forward = $true
-    $findWrap = [Microsoft.Office.Interop.Word.WdReplace]::wdReplaceAll
-    $format = $false
-    $replace = [Microsoft.Office.Interop.Word.WdFindWrap]::wdFindContinue
-
-    $Text.Execute($Find, $matchCase, $matchWholeWord, $matchWildCards, ` 
-                  $matchSoundsLike, $matchAllWordForms, $forward, $findWrap, `  
-                  $format, $ReplaceWith, $replace) > $null
-}#>
