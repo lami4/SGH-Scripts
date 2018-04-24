@@ -36,13 +36,14 @@ $TableObject.Cell(1, 4).Range.Text = "Примечание"
 $TableObject.Rows.Item(1).Range.ParagraphFormat.Alignment = 1
 #Выровнять таблицу по центру в документу
 $TableObject.Rows.Alignment = 1
-#Добавить строку для данных
+#Добавить строку для входных данных
 $TableObject.Rows.Add()
+#Запретить переносить ячейку на селдующую страницу
 $TableObject.Rows.Item(2).AllowBreakAcrossPages = $false
+#Отформатировать строку для входных данных
 $TableObject.Cell(2, 3).Range.ParagraphFormat.Alignment = 0
 $TableObject.Cell(2, 2).LeftPadding = $word.CentimetersToPoints(0.1)
 $TableObject.Cell(2, 2).RightPadding = $word.CentimetersToPoints(0.1)
-#Запретить переносить ячейку на селдующую страницу
 }
 
 Function Add-TestData($TableObject) {
