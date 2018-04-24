@@ -38,9 +38,11 @@ $TableObject.Rows.Item(1).Range.ParagraphFormat.Alignment = 1
 $TableObject.Rows.Alignment = 1
 #Добавить строку для данных
 $TableObject.Rows.Add()
+$TableObject.Rows.Item(2).AllowBreakAcrossPages = $false
 $TableObject.Cell(2, 3).Range.ParagraphFormat.Alignment = 0
 $TableObject.Cell(2, 2).LeftPadding = $word.CentimetersToPoints(0.1)
 $TableObject.Cell(2, 2).RightPadding = $word.CentimetersToPoints(0.1)
+#Запретить переносить ячейку на селдующую страницу
 }
 
 Function Add-TestData($TableObject) {
@@ -57,11 +59,11 @@ Function Add-TestData($TableObject) {
 clear
 #Создать экземпляр приложения MS Word
 $word = New-Object -ComObject Word.Application
-#Сделать вызванное приложение невидемым
-$word.Visible = $true
 #Создать документ MS Word
 $document = $word.Documents.Add()
-
+#Сделать вызванное приложение невидемым
+$word.Visible = $true
+Start-Sleep -Seconds 5
 #НАСТРОЙКА ПОЛЕЙ ДОКУМЕНТА
 #Левое поле (сантиметры)
 $document.PageSetup.LeftMargin = $word.CentimetersToPoints(1)
@@ -422,8 +424,8 @@ $table.Cell(15, 1).Delete()
 #Отключить фиксированную высоту для ячейки, которая содержит перечень фдокументов и программ
 $table.Cell(15, 1).HeightRule = 1
 #Вставить таблицы со списками для аннлирования, замены и публикации
-$document.Tables.Item(1).Cell(15, 1).TopPadding = $word.CentimetersToPoints(0.46)
-$document.Tables.Item(1).Cell(15, 1).BottomPadding = $word.CentimetersToPoints(0.46)
+$document.Tables.Item(1).Cell(15, 1).TopPadding = $word.CentimetersToPoints(0.2)
+$document.Tables.Item(1).Cell(15, 1).BottomPadding = $word.CentimetersToPoints(0.2)
 $document.Tables.Item(1).Cell(15, 1).Range = [char]10 + [char]10 + "Заменить:" + [char]10 + [char]10 + [char]10 + [char]10 + "Аннулировать:" + [char]10 + [char]10 + [char]10 + [char]10 + "Выпустить:" + [char]10 + [char]10 + [char]10  + [char]10
 $document.Tables.Item(1).Cell(15, 1).Range.Paragraphs.Item(4).Range.Select()
 $document.Tables.Add($word.Selection.Range, 1, 1)
