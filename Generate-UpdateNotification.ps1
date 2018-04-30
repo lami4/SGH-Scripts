@@ -7,6 +7,18 @@ Function Add-HeaderToViewList ($ListView, $HeaderText, $Width)
     $ListView.Columns.Add($ColumnHeader)
 }
 
+    Function Move-ItemToAnotherList($MoveFrom, $MoveTo) {
+    Write-Host $MoVeFrom.Items[$MoVeFrom.SelectedIndices[0]].Text
+    Write-Host $MoVeFrom.Items[$MoVeFrom.SelectedIndices[0]].Subitems[1].Text
+    Write-Host $MoVeFrom.Items[$MoVeFrom.SelectedIndices[0]].Subitems[2].Text
+    $ItemToAdd = New-Object System.Windows.Forms.ListViewItem("$($MoVeFrom.Items[$MoVeFrom.SelectedIndices[0]].Text)")
+    $ItemToAdd.SubItems.Add("$($MoVeFrom.Items[$MoVeFrom.SelectedIndices[0]].Subitems[1].Text)")
+    $ItemToAdd.SubItems.Add("$($MoVeFrom.Items[$MoVeFrom.SelectedIndices[0]].Subitems[2].Text)")
+    $ItemToAdd.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
+    $MoveTo.Items.Add($ItemToAdd)
+    $MoveFrom.Items[$MoveFrom.SelectedIndices[0]].Remove()
+    }
+
 Function Show-MessageBox 
 { 
     param($Message, $Title, [ValidateSet("OK", "OKCancel", "YesNo")]$Type)
@@ -263,7 +275,12 @@ Function Custom-Form
             $ListViewAdd.Columns[2].Width = 43
         }
     }
-    $ListViewAdd.Add_Click({Unselect-ItemsInOtherLists -List1 $ListViewReplace -List2 $ListViewRemove})
+    $ListViewAdd.Add_Click({Unselect-ItemsInOtherLists -List1 $ListViewReplace -List2 $ListViewRemove; 
+    $ButtonMoveToLeftBetweenAddAndReplace.Enabled = $false
+    $ButtonMoveToRightBetweenAddAndReplace.Enabled = $true
+    $ButtonMoveToLeftBetweenReplaceAndRemove.Enabled = $false
+    $ButtonMoveToRightBetweenReplaceAndRemove.Enabled = $false
+    })
     $ListViewAdd.add_ColumnWidthChanged($ListViewAdd_ColumnWidthChanged)
     $ListSettingsGroup.Controls.Add($ListViewAdd)
     
@@ -283,6 +300,7 @@ Function Custom-Form
                 }
 
     })
+    $ButtonMoveToLeftBetweenAddAndReplace.Enabled = $false
     $ListSettingsGroup.Controls.Add($ButtonMoveToLeftBetweenAddAndReplace)
 
     #Button Move-to-right between Add and Replace
@@ -291,17 +309,20 @@ Function Custom-Form
     $ButtonMoveToRightBetweenAddAndReplace.Size = New-Object System.Drawing.Point(24,24) #width,height
     $ButtonMoveToRightBetweenAddAndReplace.Text = ">"
     $ButtonMoveToRightBetweenAddAndReplace.Add_Click({
-                for ($i = 0; $i -lt 20; $i++) {
+                <#for ($i = 0; $i -lt 20; $i++) {
                 $ItemToAdd = New-Object System.Windows.Forms.ListViewItem("PABKRF-RU-EN-02.02.02.dUSM.00.00")
                 $ItemToAdd.SubItems.Add("1")
                 $ItemToAdd.SubItems.Add("Прог.")
                 $ItemToAdd.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
                 $ListViewReplace.Items.Add($ItemToAdd)
-                }
-
+                }#>
+                Move-ItemToAnotherList -MoveFrom $ListViewAdd -MoveTo $ListViewReplace
     })
+    $ButtonMoveToRightBetweenAddAndReplace.Enabled = $false
     $ListSettingsGroup.Controls.Add($ButtonMoveToRightBetweenAddAndReplace)
     
+
+
     #Table Replace
     $ListViewReplace = New-Object System.Windows.Forms.ListView
     $ListViewReplace.Location = New-Object System.Drawing.Point(454,20) #x, y
@@ -325,30 +346,19 @@ Function Custom-Form
             $ListViewReplace.Columns[2].Width = 43
         }
     }
-    $ListViewReplace.Add_Click({Unselect-ItemsInOtherLists -List1 $ListViewAdd -List2 $ListViewRemove})
+    $ListViewReplace.Add_Click({
+    Unselect-ItemsInOtherLists -List1 $ListViewAdd -List2 $ListViewRemove
+    $ButtonMoveToLeftBetweenAddAndReplace.Enabled = $true
+    $ButtonMoveToRightBetweenAddAndReplace.Enabled = $false
+    $ButtonMoveToLeftBetweenReplaceAndRemove.Enabled = $false
+    $ButtonMoveToRightBetweenReplaceAndRemove.Enabled = $true
+    })
     $ListViewReplace.add_ColumnWidthChanged($ListViewReplace_ColumnWidthChanged)
     $ListSettingsGroup.Controls.Add($ListViewReplace)
 
-    #Button Move-to-left between Replace and Remove
-    $ButtonMoveToLeftBetweenReplaceAndRemove = New-Object System.Windows.Forms.Button
-    $ButtonMoveToLeftBetweenReplaceAndRemove.Location = New-Object System.Drawing.Point(864,50) #x,y
-    $ButtonMoveToLeftBetweenReplaceAndRemove.Size = New-Object System.Drawing.Point(24,24) #width,height
-    $ButtonMoveToLeftBetweenReplaceAndRemove.Text = "<"
-    $ButtonMoveToLeftBetweenReplaceAndRemove.Add_Click({
-                for ($i = 0; $i -lt 20; $i++) {
-                $ItemToAdd = New-Object System.Windows.Forms.ListViewItem("PABKRF-RU-EN-66.66.60.dUSM.00.00")
-                $ItemToAdd.SubItems.Add("1")
-                $ItemToAdd.SubItems.Add("Прог.")
-                $ItemToAdd.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
-                $ListViewReplace.Items.Add($ItemToAdd)
-                }
-
-    })
-    $ListSettingsGroup.Controls.Add($ButtonMoveToLeftBetweenReplaceAndRemove)
-
     #Button Move-to-right between Replace and Remove
     $ButtonMoveToRightBetweenReplaceAndRemove = New-Object System.Windows.Forms.Button
-    $ButtonMoveToRightBetweenReplaceAndRemove.Location = New-Object System.Drawing.Point(864,90) #x,y
+    $ButtonMoveToRightBetweenReplaceAndRemove.Location = New-Object System.Drawing.Point(864,50) #x,y
     $ButtonMoveToRightBetweenReplaceAndRemove.Size = New-Object System.Drawing.Point(24,24) #width,height
     $ButtonMoveToRightBetweenReplaceAndRemove.Text = ">"
     $ButtonMoveToRightBetweenReplaceAndRemove.Add_Click({
@@ -361,8 +371,27 @@ Function Custom-Form
                 }
 
     })
+    $ButtonMoveToRightBetweenReplaceAndRemove.Enabled = $false
     $ListSettingsGroup.Controls.Add($ButtonMoveToRightBetweenReplaceAndRemove)
     
+    #Button Move-to-left between Replace and Remove
+    $ButtonMoveToLeftBetweenReplaceAndRemove = New-Object System.Windows.Forms.Button
+    $ButtonMoveToLeftBetweenReplaceAndRemove.Location = New-Object System.Drawing.Point(864,90) #x,y
+    $ButtonMoveToLeftBetweenReplaceAndRemove.Size = New-Object System.Drawing.Point(24,24) #width,height
+    $ButtonMoveToLeftBetweenReplaceAndRemove.Text = "<"
+    $ButtonMoveToLeftBetweenReplaceAndRemove.Add_Click({
+                for ($i = 0; $i -lt 20; $i++) {
+                $ItemToAdd = New-Object System.Windows.Forms.ListViewItem("PABKRF-RU-EN-66.66.60.dUSM.00.00")
+                $ItemToAdd.SubItems.Add("1")
+                $ItemToAdd.SubItems.Add("Прог.")
+                $ItemToAdd.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
+                $ListViewReplace.Items.Add($ItemToAdd)
+                }
+
+    })
+    $ButtonMoveToLeftBetweenReplaceAndRemove.Enabled = $false
+    $ListSettingsGroup.Controls.Add($ButtonMoveToLeftBetweenReplaceAndRemove)
+
     #Table Remove
     $ListViewRemove = New-Object System.Windows.Forms.ListView
     $ListViewRemove.Location = New-Object System.Drawing.Point(898,20) #x, y
@@ -386,7 +415,13 @@ Function Custom-Form
             $ListViewRemove.Columns[2].Width = 43
         }
     }
-    $ListViewRemove.Add_Click({Unselect-ItemsInOtherLists -List1 $ListViewAdd -List2 $ListViewReplace})
+    $ListViewRemove.Add_Click({
+    Unselect-ItemsInOtherLists -List1 $ListViewAdd -List2 $ListViewReplace
+    $ButtonMoveToLeftBetweenAddAndReplace.Enabled = $false
+    $ButtonMoveToRightBetweenAddAndReplace.Enabled = $false
+    $ButtonMoveToLeftBetweenReplaceAndRemove.Enabled = $true
+    $ButtonMoveToRightBetweenReplaceAndRemove.Enabled = $false
+    })
     $ListViewRemove.add_ColumnWidthChanged($ListViewRemove_ColumnWidthChanged)
     $ListSettingsGroup.Controls.Add($ListViewRemove)
     #ADD ITEMS TO 'LIST SETTINGS' GROUP
@@ -422,7 +457,6 @@ Function Custom-Form
     if ($CreatePropertyListView.SelectedIndices.Count -gt 0) {AddApply-ItemToList -FormName "Edit item" -ButtonName "Apply" -Type Apply} else {write-host "FUCK YOU!"} 
     })
     $CreatePropertiesPageListSettings.Controls.Add($CreatePropertiesPageButtonEditItem)
-
     #Button 'Clear'
     $CreatePropertiesPageButtonClearList = New-Object System.Windows.Forms.Button
     $CreatePropertiesPageButtonClearList.Location = New-Object System.Drawing.Point(274,230) #x,y
