@@ -290,15 +290,15 @@ Function Custom-Form
     $ButtonMoveToLeftBetweenAddAndReplace.Size = New-Object System.Drawing.Point(24,24) #width,height
     $ButtonMoveToLeftBetweenAddAndReplace.Text = "<"
     $ButtonMoveToLeftBetweenAddAndReplace.Add_Click({
-                for ($i = 0; $i -lt 20; $i++) {
+                <#for ($i = 0; $i -lt 20; $i++) {
                 $ItemToAdd = New-Object System.Windows.Forms.ListViewItem("PABKRF-RU-EN-00.00.00.dUSM.00.00")
                 $ItemToAdd.SubItems.Add("1")
                 $ItemToAdd.SubItems.Add("Прог.")
                 $ItemToAdd.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
                 #$ItemToAdd.BackColor = [System.Drawing.Color]::Red
                 $ListViewAdd.Items.Add($ItemToAdd)
-                }
-
+                }#>
+                Move-ItemToAnotherList -MoveFrom $ListViewReplace -MoveTo $ListViewAdd
     })
     $ButtonMoveToLeftBetweenAddAndReplace.Enabled = $false
     $ListSettingsGroup.Controls.Add($ButtonMoveToLeftBetweenAddAndReplace)
@@ -362,14 +362,14 @@ Function Custom-Form
     $ButtonMoveToRightBetweenReplaceAndRemove.Size = New-Object System.Drawing.Point(24,24) #width,height
     $ButtonMoveToRightBetweenReplaceAndRemove.Text = ">"
     $ButtonMoveToRightBetweenReplaceAndRemove.Add_Click({
-                for ($i = 0; $i -lt 20; $i++) {
+                <#for ($i = 0; $i -lt 20; $i++) {
                 $ItemToAdd = New-Object System.Windows.Forms.ListViewItem("PABKRF-RU-EN-77.77.77.dUSM.00.00")
                 $ItemToAdd.SubItems.Add("1")
                 $ItemToAdd.SubItems.Add("Прог.")
                 $ItemToAdd.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
                 $ListViewRemove.Items.Add($ItemToAdd)
-                }
-
+                }#>
+                Move-ItemToAnotherList -MoveFrom $ListViewReplace -MoveTo $ListViewRemove
     })
     $ButtonMoveToRightBetweenReplaceAndRemove.Enabled = $false
     $ListSettingsGroup.Controls.Add($ButtonMoveToRightBetweenReplaceAndRemove)
@@ -380,14 +380,14 @@ Function Custom-Form
     $ButtonMoveToLeftBetweenReplaceAndRemove.Size = New-Object System.Drawing.Point(24,24) #width,height
     $ButtonMoveToLeftBetweenReplaceAndRemove.Text = "<"
     $ButtonMoveToLeftBetweenReplaceAndRemove.Add_Click({
-                for ($i = 0; $i -lt 20; $i++) {
+                <#for ($i = 0; $i -lt 20; $i++) {
                 $ItemToAdd = New-Object System.Windows.Forms.ListViewItem("PABKRF-RU-EN-66.66.60.dUSM.00.00")
                 $ItemToAdd.SubItems.Add("1")
                 $ItemToAdd.SubItems.Add("Прог.")
                 $ItemToAdd.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
                 $ListViewReplace.Items.Add($ItemToAdd)
-                }
-
+                }#>
+                Move-ItemToAnotherList -MoveFrom $ListViewRemove -MoveTo $ListViewReplace
     })
     $ButtonMoveToLeftBetweenReplaceAndRemove.Enabled = $false
     $ListSettingsGroup.Controls.Add($ButtonMoveToLeftBetweenReplaceAndRemove)
