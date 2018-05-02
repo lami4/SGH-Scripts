@@ -37,7 +37,7 @@ Function Show-MessageBox
     if ($Type -eq "YesNo") {[System.Windows.Forms.MessageBox]::Show("$Message","$Title",[System.Windows.Forms.MessageBoxButtons]::YesNo)}
 }
 
-Function Unselect-ItemsInOtherLists ($List1, $List2) 
+Function Unselect-ItemsInOtherLists ($List1, $List2, $List3) 
 {
     if ($List1.SelectedIndices.Count -gt 0) {
         for ($i = 0; $i -lt $List1.SelectedIndices.Count; $i++) {
@@ -47,6 +47,11 @@ Function Unselect-ItemsInOtherLists ($List1, $List2)
     if ($List2.SelectedIndices.Count -gt 0) {
         for ($i = 0; $i -lt $List2.SelectedIndices.Count; $i++) {
             $List2.Items[$List2.SelectedIndices[$i]].Selected = $false
+        }
+    }
+    if ($List3.SelectedIndices.Count -gt 0) {
+        for ($i = 0; $i -lt $List3.SelectedIndices.Count; $i++) {
+            $List3.Items[$List3.SelectedIndices[$i]].Selected = $false
         }
     }
 }
@@ -307,7 +312,7 @@ Function Custom-Form
     $ListViewAdd.Add_ItemSelectionChanged({
     if ($ListViewAdd.SelectedItems[0].Index -ne $null) {
         $SelectedIndexAdd = $ListViewAdd.SelectedItems[0].Index
-        Unselect-ItemsInOtherLists -List1 $ListViewReplace -List2 $ListViewRemove; 
+        Unselect-ItemsInOtherLists -List1 $ListViewReplace -List2 $ListViewRemove 
         $ButtonMoveToLeftBetweenAddAndReplace.Enabled = $false
         $ButtonMoveToRightBetweenAddAndReplace.Enabled = $true
         $ButtonMoveToLeftBetweenReplaceAndRemove.Enabled = $false
@@ -320,6 +325,7 @@ Function Custom-Form
         $ButtonMoveToRightBetweenAddAndReplace.Enabled = $false
         $ButtonMoveToLeftBetweenReplaceAndRemove.Enabled = $false
         $ButtonMoveToRightBetweenReplaceAndRemove.Enabled = $false
+        Update-SelectedFileDetails -FileName "" -FileNameLabel $ListSettingsSelectedItemFileName -FileAttribute "" -FileAttributeLabel $ListSettingsSelectedItemFileAttribute -FileType "" -FileTypeLabel $ListSettingsSelectedItemFileType
     }
     })
     $ListViewAdd.add_ColumnWidthChanged($ListViewAdd_ColumnWidthChanged)
@@ -406,6 +412,7 @@ Function Custom-Form
         $ButtonMoveToRightBetweenAddAndReplace.Enabled = $false
         $ButtonMoveToLeftBetweenReplaceAndRemove.Enabled = $false
         $ButtonMoveToRightBetweenReplaceAndRemove.Enabled = $false
+        Update-SelectedFileDetails -FileName "" -FileNameLabel $ListSettingsSelectedItemFileName -FileAttribute "" -FileAttributeLabel $ListSettingsSelectedItemFileAttribute -FileType "" -FileTypeLabel $ListSettingsSelectedItemFileType
     }
     })
     $ListViewReplace.add_ColumnWidthChanged($ListViewReplace_ColumnWidthChanged)
@@ -492,6 +499,7 @@ Function Custom-Form
     $ButtonMoveToRightBetweenAddAndReplace.Enabled = $false
     $ButtonMoveToLeftBetweenReplaceAndRemove.Enabled = $false
     $ButtonMoveToRightBetweenReplaceAndRemove.Enabled = $false
+    Update-SelectedFileDetails -FileName "" -FileNameLabel $ListSettingsSelectedItemFileName -FileAttribute "" -FileAttributeLabel $ListSettingsSelectedItemFileAttribute -FileType "" -FileTypeLabel $ListSettingsSelectedItemFileType
     }
     })
     $ListViewRemove.add_ColumnWidthChanged($ListViewRemove_ColumnWidthChanged)
@@ -555,9 +563,9 @@ Function Custom-Form
     Write-Host $ListViewAdd.SelectedItems.Count
     Write-Host $ListViewReplace.SelectedItems.Count
     Write-Host $ListViewRemove.SelectedItems.Count
-    if ($ListViewAdd.SelectedIndices.Count -gt 0) {$ListViewAdd.Items[$ListViewAdd.SelectedIndices[0]].Remove()} else {write-host "FUCK YOU!"} 
-    if ($ListViewReplace.SelectedIndices.Count -gt 0) {$ListViewReplace.Items[$ListViewReplace.SelectedIndices[0]].Remove()} else {write-host "FUCK YOU!"} 
-    if ($ListViewRemove.SelectedIndices.Count -gt 0) {$ListViewRemove.Items[$ListViewRemove.SelectedIndices[0]].Remove()} else {write-host "FUCK YOU!"}
+    if ($ListViewAdd.SelectedIndices.Count -gt 0) {$ListViewAdd.Items[$ListViewAdd.SelectedIndices[0]].Remove()}
+    if ($ListViewReplace.SelectedIndices.Count -gt 0) {$ListViewReplace.Items[$ListViewReplace.SelectedIndices[0]].Remove()}
+    if ($ListViewRemove.SelectedIndices.Count -gt 0) {$ListViewRemove.Items[$ListViewRemove.SelectedIndices[0]].Remove()}
     $ButtonMoveToLeftBetweenAddAndReplace.Enabled = $false
     $ButtonMoveToRightBetweenAddAndReplace.Enabled = $false
     $ButtonMoveToLeftBetweenReplaceAndRemove.Enabled = $false
@@ -566,8 +574,34 @@ Function Custom-Form
     })
     $ListSettingsGroup.Controls.Add($ButtonDeleteItem)
 
+    #Выбрать цвет
+    $ButtonSelectColor = New-Object System.Windows.Forms.Button
+    $ButtonSelectColor.Location = New-Object System.Drawing.Point(370,770) #x,y
+    $ButtonSelectColor.Size = New-Object System.Drawing.Point(110,22) #width,height
+    $ButtonSelectColor.Text = "Выбрать цвет"
+    $ColorDialog = New-Object System.Windows.Forms.ColorDialog
+    $ColorDialog.Color = [System.Drawing.Color]::White
+    $ButtonSelectColor.Add_Click({
+    $ColorDialog.ShowDialog()
+    })
+    $ListSettingsGroup.Controls.Add($ButtonSelectColor)
+
+    #Отметить цветом
+    $ButtonMarkWithColor = New-Object System.Windows.Forms.Button
+    $ButtonMarkWithColor.Location = New-Object System.Drawing.Point(490,770) #x,y
+    $ButtonMarkWithColor.Size = New-Object System.Drawing.Point(110,22) #width,height
+    $ButtonMarkWithColor.Text = "Пометить цветом"
+    $ButtonMarkWithColor.Add_Click({
+    Write-Host $ColorDialog.Color
+    if ($ListViewAdd.SelectedIndices.Count -gt 0) {$ListViewAdd.Items[$ListViewAdd.SelectedIndices[0]].BackColor = $ColorDialog.Color}
+    if ($ListViewReplace.SelectedIndices.Count -gt 0) {$ListViewReplace.Items[$ListViewReplace.SelectedIndices[0]].BackColor = $ColorDialog.Color}
+    if ($ListViewRemove.SelectedIndices.Count -gt 0) {$ListViewRemove.Items[$ListViewRemove.SelectedIndices[0]].BackColor = $ColorDialog.Color}
+    Unselect-ItemsInOtherLists -List3 $ListViewAdd -List1 $ListViewReplace -List2 $ListViewRemove 
+    })
+    $ListSettingsGroup.Controls.Add($ButtonMarkWithColor)
+
     
-    #Button 'Delete'
+    #Заполнить списки
     $ButtonPopulateLists = New-Object System.Windows.Forms.Button
     $ButtonPopulateLists.Location = New-Object System.Drawing.Point(250,770) #x,y
     $ButtonPopulateLists.Size = New-Object System.Drawing.Point(110,22) #width,height
