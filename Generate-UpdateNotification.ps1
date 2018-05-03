@@ -182,8 +182,8 @@ Function Add-ItemToList ()
     #Кнопка добавить
     $AddItemFormAddButton = New-Object System.Windows.Forms.Button
     $AddItemFormAddButton.Location = New-Object System.Drawing.Point(10,180) #x,y
-    $AddItemFormAddButton.Size = New-Object System.Drawing.Point(70,22) #width,height
-    $AddItemFormAddButton.Text = "Добавить запись"
+    $AddItemFormAddButton.Size = New-Object System.Drawing.Point(80,22) #width,height
+    $AddItemFormAddButton.Text = "Добавить"
     $AddItemFormAddButton.Add_Click({
         if ($AddItemFormFileNameInput.Text -eq "Укажите обозначение..." -and $AddItemFormAttributeValueInput.Text -eq "Укажите Изм. или MD5...") {
             Show-MessageBox -Message "Пожалуйста, укажите обозначение и Изм./MD5 для файла." -Title "Значения указаны не во всех полях" -Type OK
@@ -209,6 +209,7 @@ Function Add-ItemToList ()
                         if ($AddItemFormRadioButtonReplace.Checked -eq $true) {$ListViewReplace.Items.Insert(0, $ItemToAdd)}
                         if ($AddItemFormRadioButtonRemove.Checked -eq $true) {$ListViewRemove.Items.Insert(0, $ItemToAdd)}
                         Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
+                        Unselect-ItemsInOtherLists -List3 $ListViewAdd -List1 $ListViewReplace -List2 $ListViewRemove 
                         $AddItemForm.Close()
                     }
                 } elseif ($AddItemFormFileTypeCombobox.SelectedItem -eq "Программа" -and $AddItemFormAttributeValueInput.Text.Length -ne 32) {
@@ -221,6 +222,7 @@ Function Add-ItemToList ()
                         if ($AddItemFormRadioButtonReplace.Checked -eq $true) {$ListViewReplace.Items.Insert(0, $ItemToAdd)}
                         if ($AddItemFormRadioButtonRemove.Checked -eq $true) {$ListViewRemove.Items.Insert(0, $ItemToAdd)}
                         Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
+                        Unselect-ItemsInOtherLists -List3 $ListViewAdd -List1 $ListViewReplace -List2 $ListViewRemove 
                         $AddItemForm.Close()
                     }
                 } else {
@@ -232,6 +234,7 @@ Function Add-ItemToList ()
                     if ($AddItemFormRadioButtonReplace.Checked -eq $true) {$ListViewReplace.Items.Insert(0, $ItemToAdd)}
                     if ($AddItemFormRadioButtonRemove.Checked -eq $true) {$ListViewRemove.Items.Insert(0, $ItemToAdd)}
                     Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
+                    Unselect-ItemsInOtherLists -List3 $ListViewAdd -List1 $ListViewReplace -List2 $ListViewRemove 
                     $AddItemForm.Close()
                 }
             }
@@ -241,8 +244,8 @@ Function Add-ItemToList ()
     
     #Кнопка закрыть
     $AddItemFormCancelButton = New-Object System.Windows.Forms.Button
-    $AddItemFormCancelButton.Location = New-Object System.Drawing.Point(90,180) #x,y
-    $AddItemFormCancelButton.Size = New-Object System.Drawing.Point(70,22) #width,height
+    $AddItemFormCancelButton.Location = New-Object System.Drawing.Point(100,180) #x,y
+    $AddItemFormCancelButton.Size = New-Object System.Drawing.Point(80,22) #width,height
     $AddItemFormCancelButton.Text = "Закрыть"
     $AddItemFormCancelButton.Margin = New-Object System.Windows.Forms.Padding(0,0,10,10)
     $AddItemFormCancelButton.Add_Click({
@@ -253,7 +256,7 @@ Function Add-ItemToList ()
     $AddItemForm.ShowDialog()
 }
 
-Function Edit-ItemOnList ()
+Function Edit-ItemOnList ($ListObject)
 {
     $EditItemForm = New-Object System.Windows.Forms.Form
     $EditItemForm.Padding = New-Object System.Windows.Forms.Padding(0,0,10,0)
@@ -279,8 +282,8 @@ Function Edit-ItemOnList ()
     $EditItemFormFileNameInput = New-Object System.Windows.Forms.TextBox 
     $EditItemFormFileNameInput.Location = New-Object System.Drawing.Point(95,13) #x,y
     $EditItemFormFileNameInput.Width = 270
-    $EditItemFormFileNameInput.Text = "Укажите обозначение..."
-    $EditItemFormFileNameInput.ForeColor = "Gray"
+    $EditItemFormFileNameInput.Text = $ListObject.Items[$ListObject.SelectedIndices[0]].Text
+    $EditItemFormFileNameInput.ForeColor = "Black"
     $EditItemFormFileNameInput.Add_GotFocus({
         if ($EditItemFormFileNameInput.Text -eq "Укажите обозначение...") {
             $EditItemFormFileNameInput.Text = ""
@@ -309,7 +312,7 @@ Function Edit-ItemOnList ()
     $EditItemFormFileTypeCombobox.Location = New-Object System.Drawing.Point(95,43) #x,y
     $EditItemFormFileTypeCombobox.DropDownStyle = "DropDownList"
     $DataTypes | % {$EditItemFormFileTypeCombobox.Items.add($_)}
-    $EditItemFormFileTypeCombobox.SelectedIndex = 0
+    if ($ListObject.Items[$ListObject.SelectedIndices[0]].Subitems[2].Text -eq "Документ") {$EditItemFormFileTypeCombobox.SelectedIndex = 0} else {$EditItemFormFileTypeCombobox.SelectedIndex = 1}
     $EditItemForm.Controls.Add($EditItemFormFileTypeCombobox)
     
     #Надпись к полю для ввода MD5 и Изм.
@@ -324,8 +327,8 @@ Function Edit-ItemOnList ()
     $EditItemFormAttributeValueInput = New-Object System.Windows.Forms.TextBox 
     $EditItemFormAttributeValueInput.Location = New-Object System.Drawing.Point(95,73) #x,y
     $EditItemFormAttributeValueInput.Width = 270
-    $EditItemFormAttributeValueInput.Text = "Укажите Изм. или MD5..."
-    $EditItemFormAttributeValueInput.ForeColor = "Gray"
+    $EditItemFormAttributeValueInput.Text = $ListObject.Items[$ListObject.SelectedIndices[0]].Subitems[1].Text
+    $EditItemFormAttributeValueInput.ForeColor = "Black"
     $EditItemFormAttributeValueInput.Add_GotFocus({
         if ($EditItemFormAttributeValueInput.Text -eq "Укажите Изм. или MD5...") {
             $EditItemFormAttributeValueInput.Text = ""
@@ -343,8 +346,8 @@ Function Edit-ItemOnList ()
     #Кнопка добавить
     $EditItemFormAddButton = New-Object System.Windows.Forms.Button
     $EditItemFormAddButton.Location = New-Object System.Drawing.Point(10,109) #x,y
-    $EditItemFormAddButton.Size = New-Object System.Drawing.Point(70,22) #width,height
-    $EditItemFormAddButton.Text = "Добавить запись"
+    $EditItemFormAddButton.Size = New-Object System.Drawing.Point(80,22) #width,height
+    $EditItemFormAddButton.Text = "Применить"
     $EditItemFormAddButton.Add_Click({
         if ($EditItemFormFileNameInput.Text -eq "Укажите обозначение..." -and $EditItemFormAttributeValueInput.Text -eq "Укажите Изм. или MD5...") {
             Show-MessageBox -Message "Пожалуйста, укажите обозначение и Изм./MD5 для файла." -Title "Значения указаны не во всех полях" -Type OK
@@ -354,11 +357,9 @@ Function Edit-ItemOnList ()
             Show-MessageBox -Message "Пожалуйста, укажите Изм./MD5 для файла." -Title "Значения указаны не во всех полях" -Type OK
         } else {
                 $ItemsOnTheList = @()
-                if ($EditItemFormRadioButtonAdd.Checked -eq $true) {$ListViewAdd.Items | % {$ItemsOnTheList += $_.Text}}
-                if ($EditItemFormRadioButtonReplace.Checked -eq $true) {$ListViewReplace.Items | % {$ItemsOnTheList += $_.Text}}
-                if ($EditItemFormRadioButtonRemove.Checked -eq $true) {$ListViewRemove.Items | % {$ItemsOnTheList += $_.Text}}
-                if ($ItemsOnTheList -contains $EditItemFormFileNameInput.Text) {
-                Show-MessageBox -Message "Файл с таким обозначением уже содежится в указанном списке." -Title "Невозможно выполнить действие" -Type OK
+                $ListObject.Items | % {$ItemsOnTheList += $_.Text}
+                if ($ItemsOnTheList -contains $EditItemFormFileNameInput.Text -and $EditItemFormFileNameInput.Text -ne $ListObject.Items[$ListObject.SelectedIndices[0]].Text) {
+                Show-MessageBox -Message "Файл с таким обозначением уже содежится в списке." -Title "Невозможно выполнить действие" -Type OK
             } else {
                 if ($EditItemFormFileTypeCombobox.SelectedItem -eq "Документ" -and $EditItemFormAttributeValueInput.Text.Length -gt 5) {
                     if ((Show-MessageBox -Message "Указанный Изм. содержит больше пяти символов. Возможно вы ошибочно указали MD5 или выбрали неверный тип файла.`r`nВсе равно продолжить?" -Title "Для файла указан подозрительный Изм." -Type YesNo) -eq "Yes") {
@@ -366,9 +367,9 @@ Function Edit-ItemOnList ()
                         $ItemToAdd.SubItems.Add("$($EditItemFormAttributeValueInput.Text)")
                         $ItemToAdd.SubItems.Add("$($EditItemFormFileTypeCombobox.SelectedItem)")
                         $ItemToAdd.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
-                        if ($EditItemFormRadioButtonAdd.Checked -eq $true) {$ListViewAdd.Items.Insert(0, $ItemToAdd)}
-                        if ($EditItemFormRadioButtonReplace.Checked -eq $true) {$ListViewReplace.Items.Insert(0, $ItemToAdd)}
-                        if ($EditItemFormRadioButtonRemove.Checked -eq $true) {$ListViewRemove.Items.Insert(0, $ItemToAdd)}
+                        $ItemToAdd.BackColor = $ListObject.Items[$ListObject.SelectedIndices[0]].BackColor
+                        $ListObject.Items.Insert($ListObject.Items[$ListObject.SelectedIndices[0]].Index, $ItemToAdd)
+                        $ListObject.Items[$ListObject.SelectedIndices[0]].Remove()
                         Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
                         $EditItemForm.Close()
                     }
@@ -378,9 +379,9 @@ Function Edit-ItemOnList ()
                         $ItemToAdd.SubItems.Add("$($EditItemFormAttributeValueInput.Text)")
                         $ItemToAdd.SubItems.Add("$($EditItemFormFileTypeCombobox.SelectedItem)")
                         $ItemToAdd.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
-                        if ($EditItemFormRadioButtonAdd.Checked -eq $true) {$ListViewAdd.Items.Insert(0, $ItemToAdd)}
-                        if ($EditItemFormRadioButtonReplace.Checked -eq $true) {$ListViewReplace.Items.Insert(0, $ItemToAdd)}
-                        if ($EditItemFormRadioButtonRemove.Checked -eq $true) {$ListViewRemove.Items.Insert(0, $ItemToAdd)}
+                        $ItemToAdd.BackColor = $ListObject.Items[$ListObject.SelectedIndices[0]].BackColor
+                        $ListObject.Items.Insert($ListObject.Items[$ListObject.SelectedIndices[0]].Index, $ItemToAdd)
+                        $ListObject.Items[$ListObject.SelectedIndices[0]].Remove()
                         Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
                         $EditItemForm.Close()
                     }
@@ -389,9 +390,9 @@ Function Edit-ItemOnList ()
                     $ItemToAdd.SubItems.Add("$($EditItemFormAttributeValueInput.Text)")
                     $ItemToAdd.SubItems.Add("$($EditItemFormFileTypeCombobox.SelectedItem)")
                     $ItemToAdd.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
-                    if ($EditItemFormRadioButtonAdd.Checked -eq $true) {$ListViewAdd.Items.Insert(0, $ItemToAdd)}
-                    if ($EditItemFormRadioButtonReplace.Checked -eq $true) {$ListViewReplace.Items.Insert(0, $ItemToAdd)}
-                    if ($EditItemFormRadioButtonRemove.Checked -eq $true) {$ListViewRemove.Items.Insert(0, $ItemToAdd)}
+                    $ItemToAdd.BackColor = $ListObject.Items[$ListObject.SelectedIndices[0]].BackColor
+                    $ListObject.Items.Insert($ListObject.Items[$ListObject.SelectedIndices[0]].Index, $ItemToAdd)
+                    $ListObject.Items[$ListObject.SelectedIndices[0]].Remove()
                     Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
                     $EditItemForm.Close()
                 }
@@ -402,8 +403,8 @@ Function Edit-ItemOnList ()
     
     #Кнопка закрыть
     $EditItemFormCancelButton = New-Object System.Windows.Forms.Button
-    $EditItemFormCancelButton.Location = New-Object System.Drawing.Point(90,109) #x,y
-    $EditItemFormCancelButton.Size = New-Object System.Drawing.Point(70,22) #width,height
+    $EditItemFormCancelButton.Location = New-Object System.Drawing.Point(100,109) #x,y
+    $EditItemFormCancelButton.Size = New-Object System.Drawing.Point(80,22) #width,height
     $EditItemFormCancelButton.Text = "Закрыть"
     $EditItemFormCancelButton.Margin = New-Object System.Windows.Forms.Padding(0,0,10,10)
     $EditItemFormCancelButton.Add_Click({
@@ -440,7 +441,7 @@ Function Custom-Form ()
     
     #Надпись к списку Выпустить
     $ListViewAddLabel = New-Object System.Windows.Forms.Label
-    $ListViewAddLabel.Location =  New-Object System.Drawing.Point(10,25) #x,y
+    $ListViewAddLabel.Location =  New-Object System.Drawing.Point(10,50) #x,y
     $ListViewAddLabel.Width = 200
     $ListViewAddLabel.Height = 15
     $ListViewAddLabel.Font = New-Object System.Drawing.Font("Microsoft Sans Serif",8.25,[System.Drawing.FontStyle]::Bold)
@@ -451,7 +452,7 @@ Function Custom-Form ()
     
     #Список Выпустить
     $ListViewAdd = New-Object System.Windows.Forms.ListView
-    $ListViewAdd.Location = New-Object System.Drawing.Point(10,42) #x, y
+    $ListViewAdd.Location = New-Object System.Drawing.Point(10,66) #x, y
     $ListViewAdd.View = "Details"
     $ListViewAdd.FullRowSelect = $true
     $ListViewAdd.MultiSelect = $false
@@ -496,7 +497,7 @@ Function Custom-Form ()
     
     #Button Move-to-left between Add and Replace
     $ButtonMoveToLeftBetweenAddAndReplace = New-Object System.Windows.Forms.Button
-    $ButtonMoveToLeftBetweenAddAndReplace.Location = New-Object System.Drawing.Point(420,50) #x,y
+    $ButtonMoveToLeftBetweenAddAndReplace.Location = New-Object System.Drawing.Point(420,205) #x,y
     $ButtonMoveToLeftBetweenAddAndReplace.Size = New-Object System.Drawing.Point(24,24) #width,height
     $ButtonMoveToLeftBetweenAddAndReplace.Text = "<"
     $ButtonMoveToLeftBetweenAddAndReplace.Add_Click({
@@ -512,7 +513,7 @@ Function Custom-Form ()
 
     #Button Move-to-right between Add and Replace
     $ButtonMoveToRightBetweenAddAndReplace = New-Object System.Windows.Forms.Button
-    $ButtonMoveToRightBetweenAddAndReplace.Location = New-Object System.Drawing.Point(420,90) #x,y
+    $ButtonMoveToRightBetweenAddAndReplace.Location = New-Object System.Drawing.Point(420,265) #x,y
     $ButtonMoveToRightBetweenAddAndReplace.Size = New-Object System.Drawing.Point(24,24) #width,height
     $ButtonMoveToRightBetweenAddAndReplace.Text = ">"
     $ButtonMoveToRightBetweenAddAndReplace.Add_Click({
@@ -528,7 +529,7 @@ Function Custom-Form ()
     
     #Надпись к списку Заменить
     $ListViewReplaceLabel = New-Object System.Windows.Forms.Label
-    $ListViewReplaceLabel.Location =  New-Object System.Drawing.Point(454,25) #x,y
+    $ListViewReplaceLabel.Location =  New-Object System.Drawing.Point(454,50) #x,y
     $ListViewReplaceLabel.Width = 200
     $ListViewReplaceLabel.Height = 15
     $ListViewReplaceLabel.Font = New-Object System.Drawing.Font("Microsoft Sans Serif",8.25,[System.Drawing.FontStyle]::Bold)
@@ -538,7 +539,7 @@ Function Custom-Form ()
 
     #Список Заменить
     $ListViewReplace = New-Object System.Windows.Forms.ListView
-    $ListViewReplace.Location = New-Object System.Drawing.Point(454,42) #x, y
+    $ListViewReplace.Location = New-Object System.Drawing.Point(454,66) #x, y
     $ListViewReplace.View = "Details"
     $ListViewReplace.FullRowSelect = $true
     $ListViewReplace.MultiSelect = $false
@@ -583,7 +584,7 @@ Function Custom-Form ()
 
     #Button Move-to-right between Replace and Remove
     $ButtonMoveToRightBetweenReplaceAndRemove = New-Object System.Windows.Forms.Button
-    $ButtonMoveToRightBetweenReplaceAndRemove.Location = New-Object System.Drawing.Point(864,50) #x,y
+    $ButtonMoveToRightBetweenReplaceAndRemove.Location = New-Object System.Drawing.Point(864,205) #x,y
     $ButtonMoveToRightBetweenReplaceAndRemove.Size = New-Object System.Drawing.Point(24,24) #width,height
     $ButtonMoveToRightBetweenReplaceAndRemove.Text = ">"
     $ButtonMoveToRightBetweenReplaceAndRemove.Add_Click({
@@ -599,7 +600,7 @@ Function Custom-Form ()
     
     #Button Move-to-left between Replace and Remove
     $ButtonMoveToLeftBetweenReplaceAndRemove = New-Object System.Windows.Forms.Button
-    $ButtonMoveToLeftBetweenReplaceAndRemove.Location = New-Object System.Drawing.Point(864,90) #x,y
+    $ButtonMoveToLeftBetweenReplaceAndRemove.Location = New-Object System.Drawing.Point(864,265) #x,y
     $ButtonMoveToLeftBetweenReplaceAndRemove.Size = New-Object System.Drawing.Point(24,24) #width,height
     $ButtonMoveToLeftBetweenReplaceAndRemove.Text = "<"
     $ButtonMoveToLeftBetweenReplaceAndRemove.Add_Click({
@@ -615,7 +616,7 @@ Function Custom-Form ()
 
     #Надпись к списку Аннулировать
     $ListViewRemoveLabel = New-Object System.Windows.Forms.Label
-    $ListViewRemoveLabel.Location =  New-Object System.Drawing.Point(898,25) #x,y
+    $ListViewRemoveLabel.Location =  New-Object System.Drawing.Point(898,50) #x,y
     $ListViewRemoveLabel.Width = 200
     $ListViewRemoveLabel.Height = 15
     $ListViewRemoveLabel.Font = New-Object System.Drawing.Font("Microsoft Sans Serif",8.25,[System.Drawing.FontStyle]::Bold)
@@ -625,7 +626,7 @@ Function Custom-Form ()
 
     #Список Аннулировать
     $ListViewRemove = New-Object System.Windows.Forms.ListView
-    $ListViewRemove.Location = New-Object System.Drawing.Point(898,42) #x, y
+    $ListViewRemove.Location = New-Object System.Drawing.Point(898,66) #x, y
     $ListViewRemove.View = "Details"
     $ListViewRemove.FullRowSelect = $true
     $ListViewRemove.MultiSelect = $false
@@ -670,7 +671,7 @@ Function Custom-Form ()
     
     #Надпись к Всего файлов в списках
     $ListSettingsGroupTotalEntries = New-Object System.Windows.Forms.Label
-    $ListSettingsGroupTotalEntries.Location =  New-Object System.Drawing.Point(10,420) #x,y
+    $ListSettingsGroupTotalEntries.Location =  New-Object System.Drawing.Point(10,25) #x,y
     $ListSettingsGroupTotalEntries.Width = 200
     $ListSettingsGroupTotalEntries.Height = 15
     $ListSettingsGroupTotalEntries.Font = New-Object System.Drawing.Font("Microsoft Sans Serif",8.25,[System.Drawing.FontStyle]::Regular)
@@ -680,7 +681,7 @@ Function Custom-Form ()
 
     #Группа элементов Выбранный файл
     $ListSettingsSelectedItem = New-Object System.Windows.Forms.GroupBox
-    $ListSettingsSelectedItem.Location = New-Object System.Drawing.Point(10,440) #x,y
+    $ListSettingsSelectedItem.Location = New-Object System.Drawing.Point(10,445) #x,y
     $ListSettingsSelectedItem.Size = New-Object System.Drawing.Point(400,100) #width,height
     $ListSettingsSelectedItem.Text = "Выбранный файл"
     $ListSettingsGroup.Controls.Add($ListSettingsSelectedItem)
@@ -708,20 +709,39 @@ Function Custom-Form ()
     $ListSettingsSelectedItemFileType.Text = "Тип файла:"
     $ListSettingsSelectedItemFileType.TextAlign = "TopLeft"
     $ListSettingsSelectedItem.Controls.Add($ListSettingsSelectedItemFileType)
-    
-    #ADD ITEMS TO 'LIST SETTINGS' GROUP
-    $ButtonAddItem = New-Object System.Windows.Forms.Button
-    $ButtonAddItem.Location = New-Object System.Drawing.Point(10,770) #x,y
-    $ButtonAddItem.Size = New-Object System.Drawing.Point(110,22) #width,height
-    $ButtonAddItem.Text = "Добавить запись"
-    $ButtonAddItem.Add_Click({Add-ItemToList})
-    $ListSettingsGroup.Controls.Add($ButtonAddItem)
 
-    #Button 'Delete'
+    #Группа элементов Действия с записью
+    $ListSettingsItemActions = New-Object System.Windows.Forms.GroupBox
+    $ListSettingsItemActions.Location = New-Object System.Drawing.Point(567,445) #x,y
+    $ListSettingsItemActions.Size = New-Object System.Drawing.Point(287,100) #width,height
+    $ListSettingsItemActions.Text = "Действия с записью"
+    $ListSettingsGroup.Controls.Add($ListSettingsItemActions)
+    
+    #Добавить запись
+    $ButtonAddItem = New-Object System.Windows.Forms.Button
+    $ButtonAddItem.Location = New-Object System.Drawing.Point(10,17) #x,y
+    $ButtonAddItem.Size = New-Object System.Drawing.Point(110,22) #width,height
+    $ButtonAddItem.Text = "Добавить"
+    $ButtonAddItem.Add_Click({Add-ItemToList})
+    $ListSettingsItemActions.Controls.Add($ButtonAddItem)
+
+    #Редактировать запись
+    $ButtonEditItemOnList = New-Object System.Windows.Forms.Button
+    $ButtonEditItemOnList.Location = New-Object System.Drawing.Point(10,43) #x,y
+    $ButtonEditItemOnList.Size = New-Object System.Drawing.Point(110,22) #width,height
+    $ButtonEditItemOnList.Text = "Редактировать"
+    $ButtonEditItemOnList.Add_Click({
+    if ($ListViewAdd.SelectedIndices.Count -gt 0) {Edit-ItemOnList -ListObject $ListViewAdd}
+    if ($ListViewReplace.SelectedIndices.Count -gt 0) {Edit-ItemOnList -ListObject $ListViewReplace}
+    if ($ListViewRemove.SelectedIndices.Count -gt 0) {Edit-ItemOnList -ListObject $ListViewRemove}
+    })
+    $ListSettingsItemActions.Controls.Add($ButtonEditItemOnList)
+
+    #Удалить запись
     $ButtonDeleteItem = New-Object System.Windows.Forms.Button
-    $ButtonDeleteItem.Location = New-Object System.Drawing.Point(130,770) #x,y
+    $ButtonDeleteItem.Location = New-Object System.Drawing.Point(10,69) #x,y
     $ButtonDeleteItem.Size = New-Object System.Drawing.Point(110,22) #width,height
-    $ButtonDeleteItem.Text = "Удалить запись"
+    $ButtonDeleteItem.Text = "Удалить"
     $ButtonDeleteItem.Add_Click({
     Write-Host $ListViewAdd.SelectedItems.Count
     Write-Host $ListViewReplace.SelectedItems.Count
@@ -735,24 +755,11 @@ Function Custom-Form ()
     $ButtonMoveToRightBetweenReplaceAndRemove.Enabled = $false 
     Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
     })
-    $ListSettingsGroup.Controls.Add($ButtonDeleteItem)
-
-    #Выбрать цвет
-    $ButtonSelectColor = New-Object System.Windows.Forms.Button
-    $ButtonSelectColor.Location = New-Object System.Drawing.Point(370,770) #x,y
-    $ButtonSelectColor.Size = New-Object System.Drawing.Point(22,22) #width,height
-    $ColorDialog = New-Object System.Windows.Forms.ColorDialog
-    $ButtonSelectColor.BackColor = [System.Drawing.Color]::LightGreen
-    $ColorDialog.Color = [System.Drawing.Color]::LightGreen
-    $ButtonSelectColor.Add_Click({
-    $ColorDialog.ShowDialog()
-    $ButtonSelectColor.BackColor = $ColorDialog.Color
-    })
-    $ListSettingsGroup.Controls.Add($ButtonSelectColor)
+    $ListSettingsItemActions.Controls.Add($ButtonDeleteItem)
 
     #Выделить цветом
     $ButtonMarkWithColor = New-Object System.Windows.Forms.Button
-    $ButtonMarkWithColor.Location = New-Object System.Drawing.Point(490,770) #x,y
+    $ButtonMarkWithColor.Location = New-Object System.Drawing.Point(140,17) #x,y
     $ButtonMarkWithColor.Size = New-Object System.Drawing.Point(110,22) #width,height
     $ButtonMarkWithColor.Text = "Выделить цветом"
     $ButtonMarkWithColor.Add_Click({
@@ -762,11 +769,37 @@ Function Custom-Form ()
     if ($ListViewRemove.SelectedIndices.Count -gt 0) {$ListViewRemove.Items[$ListViewRemove.SelectedIndices[0]].BackColor = $ColorDialog.Color}
     Unselect-ItemsInOtherLists -List3 $ListViewAdd -List1 $ListViewReplace -List2 $ListViewRemove 
     })
-    $ListSettingsGroup.Controls.Add($ButtonMarkWithColor)
+    $ListSettingsItemActions.Controls.Add($ButtonMarkWithColor)
+
+    #Выбрать цвет
+    $ButtonSelectColor = New-Object System.Windows.Forms.Button
+    $ButtonSelectColor.Location = New-Object System.Drawing.Point(255,17) #x,y
+    $ButtonSelectColor.Size = New-Object System.Drawing.Point(22,22) #width,height
+    $ColorDialog = New-Object System.Windows.Forms.ColorDialog
+    $ButtonSelectColor.BackColor = [System.Drawing.Color]::LightGreen
+    $ColorDialog.Color = [System.Drawing.Color]::LightGreen
+    $ButtonSelectColor.Add_Click({
+    $ColorDialog.ShowDialog()
+    $ButtonSelectColor.BackColor = $ColorDialog.Color
+    })
+    $ListSettingsItemActions.Controls.Add($ButtonSelectColor)
+
+    #Отменить выделение
+    $ButtonRemoveColoring = New-Object System.Windows.Forms.Button
+    $ButtonRemoveColoring.Location = New-Object System.Drawing.Point(140,43) #x,y
+    $ButtonRemoveColoring.Size = New-Object System.Drawing.Point(137,22) #width,height
+    $ButtonRemoveColoring.Text = "Отменить выделение"
+    $ButtonRemoveColoring.Add_Click({
+    if ($ListViewAdd.SelectedIndices.Count -gt 0) {$ListViewAdd.Items[$ListViewAdd.SelectedIndices[0]].BackColor = [System.Drawing.Color]::White}
+    if ($ListViewReplace.SelectedIndices.Count -gt 0) {$ListViewReplace.Items[$ListViewReplace.SelectedIndices[0]].BackColor = [System.Drawing.Color]::White}
+    if ($ListViewRemove.SelectedIndices.Count -gt 0) {$ListViewRemove.Items[$ListViewRemove.SelectedIndices[0]].BackColor = [System.Drawing.Color]::White}
+    Unselect-ItemsInOtherLists -List3 $ListViewAdd -List1 $ListViewReplace -List2 $ListViewRemove 
+    })
+    $ListSettingsItemActions.Controls.Add($ButtonRemoveColoring)
 
     #Заполнить списки
     $ButtonPopulateLists = New-Object System.Windows.Forms.Button
-    $ButtonPopulateLists.Location = New-Object System.Drawing.Point(250,770) #x,y
+    $ButtonPopulateLists.Location = New-Object System.Drawing.Point(140,69) #x,y
     $ButtonPopulateLists.Size = New-Object System.Drawing.Point(110,22) #width,height
     $ButtonPopulateLists.Text = "Заполнить списки"
     $ButtonPopulateLists.Add_Click({
@@ -793,17 +826,9 @@ Function Custom-Form ()
                 }
     Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
     })
-    $ListSettingsGroup.Controls.Add($ButtonPopulateLists)
+    $ListSettingsItemActions.Controls.Add($ButtonPopulateLists)
 
-    #Редактировать запись
-    $ButtonEditItemOnList = New-Object System.Windows.Forms.Button
-    $ButtonEditItemOnList.Location = New-Object System.Drawing.Point(610,770) #x,y
-    $ButtonEditItemOnList.Size = New-Object System.Drawing.Point(110,22) #width,height
-    $ButtonEditItemOnList.Text = "Изменить запись"
-    $ButtonEditItemOnList.Add_Click({
-    Edit-ItemOnList
-    })
-    $ListSettingsGroup.Controls.Add($ButtonEditItemOnList)
+
 
     
     <#
