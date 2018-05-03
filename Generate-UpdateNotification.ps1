@@ -7,15 +7,15 @@ Function Add-HeaderToViewList ($ListView, $HeaderText, $Width)
     $ListView.Columns.Add($ColumnHeader)
 }
 
-Function Move-ItemToAnotherList($MoveFrom, $MoveTo) 
+Function Move-ItemToAnotherList ($MoveFrom, $MoveTo) 
 {
-    Write-Host $MoVeFrom.Items[$MoVeFrom.SelectedIndices[0]].Text
-    Write-Host $MoVeFrom.Items[$MoVeFrom.SelectedIndices[0]].Subitems[1].Text
-    Write-Host $MoVeFrom.Items[$MoVeFrom.SelectedIndices[0]].Subitems[2].Text
+    $InheritedColor = New-Object System.Drawing.Color
+    $InheritedColor = $MoVeFrom.Items[$MoVeFrom.SelectedIndices[0]].BackColor
     $ItemToAdd = New-Object System.Windows.Forms.ListViewItem("$($MoVeFrom.Items[$MoVeFrom.SelectedIndices[0]].Text)")
     $ItemToAdd.SubItems.Add("$($MoVeFrom.Items[$MoVeFrom.SelectedIndices[0]].Subitems[1].Text)")
     $ItemToAdd.SubItems.Add("$($MoVeFrom.Items[$MoVeFrom.SelectedIndices[0]].Subitems[2].Text)")
     $ItemToAdd.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
+    $ItemToAdd.BackColor = $InheritedColor
     #$MoveTo.Items.Add($ItemToAdd)
     $MoveTo.Items.Insert(0, $ItemToAdd)
     $MoveFrom.Items[$MoveFrom.SelectedIndices[0]].Remove()
@@ -28,7 +28,7 @@ Function Update-SelectedFileDetails ($FileName, $FileNameLabel, $FileAttribute, 
     $FileTypeLabel.Text = "Тип файла: $($FileType)"
 }
 
-Function Show-MessageBox 
+Function Show-MessageBox ()
 { 
     param($Message, $Title, [ValidateSet("OK", "OKCancel", "YesNo")]$Type)
     Add-Type –AssemblyName System.Windows.Forms 
@@ -64,12 +64,13 @@ Function Update-ListCounters ($AddListCounter, $AddList, $ReplaceListCounter, $R
     $RemoveListCounter.Text = "Аннулировать ($($RemoveList.Items.Count)):"
 }
 
-Function Add-ItemToList ($FormName, $ButtonName, [ValidateSet("Add", "Apply")]$Type) {
+Function Add-ItemToList ()
+{
     $AddItemForm = New-Object System.Windows.Forms.Form
     $AddItemForm.Padding = New-Object System.Windows.Forms.Padding(0,0,10,0)
     $AddItemForm.ShowIcon = $false
     $AddItemForm.AutoSize = $true
-    $AddItemForm.Text = $FormName
+    $AddItemForm.Text = "Добавить запись"
     $AddItemForm.AutoSizeMode = "GrowAndShrink"
     $AddItemForm.WindowState = "Normal"
     $AddItemForm.SizeGripStyle = "Hide"
@@ -89,8 +90,8 @@ Function Add-ItemToList ($FormName, $ButtonName, [ValidateSet("Add", "Apply")]$T
     $AddItemFormFileNameInput = New-Object System.Windows.Forms.TextBox 
     $AddItemFormFileNameInput.Location = New-Object System.Drawing.Point(95,13) #x,y
     $AddItemFormFileNameInput.Width = 270
-    if ($Type -eq "Add") {$AddItemFormFileNameInput.Text = "Укажите обозначение..."; $AddItemFormFileNameInput.ForeColor = "Gray"}
-    if ($Type -eq "Apply") {$AddItemFormFileNameInput.Text = $CreatePropertyListView.Items[$CreatePropertyListView.FocusedItem.Index].SubItems[0].Text; $AddItemFormFileNameInput.ForeColor = "Black"}  
+    $AddItemFormFileNameInput.Text = "Укажите обозначение..."
+    $AddItemFormFileNameInput.ForeColor = "Gray"
     $AddItemFormFileNameInput.Add_GotFocus({
         if ($AddItemFormFileNameInput.Text -eq "Укажите обозначение...") {
             $AddItemFormFileNameInput.Text = ""
@@ -119,7 +120,7 @@ Function Add-ItemToList ($FormName, $ButtonName, [ValidateSet("Add", "Apply")]$T
     $AddItemFormFileTypeCombobox.Location = New-Object System.Drawing.Point(95,43) #x,y
     $AddItemFormFileTypeCombobox.DropDownStyle = "DropDownList"
     $DataTypes | % {$AddItemFormFileTypeCombobox.Items.add($_)}
-    if ($Type -eq "Add") {$AddItemFormFileTypeCombobox.SelectedIndex = 0}
+    $AddItemFormFileTypeCombobox.SelectedIndex = 0
     $AddItemForm.Controls.Add($AddItemFormFileTypeCombobox)
     
     #Надпись к полю для ввода MD5 и Изм.
@@ -134,7 +135,8 @@ Function Add-ItemToList ($FormName, $ButtonName, [ValidateSet("Add", "Apply")]$T
     $AddItemFormAttributeValueInput = New-Object System.Windows.Forms.TextBox 
     $AddItemFormAttributeValueInput.Location = New-Object System.Drawing.Point(95,73) #x,y
     $AddItemFormAttributeValueInput.Width = 270
-    if ($Type -eq "Add") {$AddItemFormAttributeValueInput.Text = "Укажите Изм. или MD5..."; $AddItemFormAttributeValueInput.ForeColor = "Gray"}
+    $AddItemFormAttributeValueInput.Text = "Укажите Изм. или MD5..."
+    $AddItemFormAttributeValueInput.ForeColor = "Gray"
     $AddItemFormAttributeValueInput.Add_GotFocus({
         if ($AddItemFormAttributeValueInput.Text -eq "Укажите Изм. или MD5...") {
             $AddItemFormAttributeValueInput.Text = ""
@@ -181,7 +183,7 @@ Function Add-ItemToList ($FormName, $ButtonName, [ValidateSet("Add", "Apply")]$T
     $AddItemFormAddButton = New-Object System.Windows.Forms.Button
     $AddItemFormAddButton.Location = New-Object System.Drawing.Point(10,180) #x,y
     $AddItemFormAddButton.Size = New-Object System.Drawing.Point(70,22) #width,height
-    $AddItemFormAddButton.Text = $ButtonName
+    $AddItemFormAddButton.Text = "Добавить запись"
     $AddItemFormAddButton.Add_Click({
         if ($AddItemFormFileNameInput.Text -eq "Укажите обозначение..." -and $AddItemFormAttributeValueInput.Text -eq "Укажите Изм. или MD5...") {
             Show-MessageBox -Message "Пожалуйста, укажите обозначение и Изм./MD5 для файла." -Title "Значения указаны не во всех полях" -Type OK
@@ -203,9 +205,9 @@ Function Add-ItemToList ($FormName, $ButtonName, [ValidateSet("Add", "Apply")]$T
                         $ItemToAdd.SubItems.Add("$($AddItemFormAttributeValueInput.Text)")
                         $ItemToAdd.SubItems.Add("$($AddItemFormFileTypeCombobox.SelectedItem)")
                         $ItemToAdd.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
-                        if ($AddItemFormRadioButtonAdd.Checked -eq $true) {$ListViewAdd.Items.Add($ItemToAdd)}
-                        if ($AddItemFormRadioButtonReplace.Checked -eq $true) {$ListViewReplace.Items.Add($ItemToAdd)}
-                        if ($AddItemFormRadioButtonRemove.Checked -eq $true) {$ListViewRemove.Items.Add($ItemToAdd)}
+                        if ($AddItemFormRadioButtonAdd.Checked -eq $true) {$ListViewAdd.Items.Insert(0, $ItemToAdd)}
+                        if ($AddItemFormRadioButtonReplace.Checked -eq $true) {$ListViewReplace.Items.Insert(0, $ItemToAdd)}
+                        if ($AddItemFormRadioButtonRemove.Checked -eq $true) {$ListViewRemove.Items.Insert(0, $ItemToAdd)}
                         Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
                         $AddItemForm.Close()
                     }
@@ -215,9 +217,9 @@ Function Add-ItemToList ($FormName, $ButtonName, [ValidateSet("Add", "Apply")]$T
                         $ItemToAdd.SubItems.Add("$($AddItemFormAttributeValueInput.Text)")
                         $ItemToAdd.SubItems.Add("$($AddItemFormFileTypeCombobox.SelectedItem)")
                         $ItemToAdd.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
-                        if ($AddItemFormRadioButtonAdd.Checked -eq $true) {$ListViewAdd.Items.Add($ItemToAdd)}
-                        if ($AddItemFormRadioButtonReplace.Checked -eq $true) {$ListViewReplace.Items.Add($ItemToAdd)}
-                        if ($AddItemFormRadioButtonRemove.Checked -eq $true) {$ListViewRemove.Items.Add($ItemToAdd)}
+                        if ($AddItemFormRadioButtonAdd.Checked -eq $true) {$ListViewAdd.Items.Insert(0, $ItemToAdd)}
+                        if ($AddItemFormRadioButtonReplace.Checked -eq $true) {$ListViewReplace.Items.Insert(0, $ItemToAdd)}
+                        if ($AddItemFormRadioButtonRemove.Checked -eq $true) {$ListViewRemove.Items.Insert(0, $ItemToAdd)}
                         Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
                         $AddItemForm.Close()
                     }
@@ -226,9 +228,9 @@ Function Add-ItemToList ($FormName, $ButtonName, [ValidateSet("Add", "Apply")]$T
                     $ItemToAdd.SubItems.Add("$($AddItemFormAttributeValueInput.Text)")
                     $ItemToAdd.SubItems.Add("$($AddItemFormFileTypeCombobox.SelectedItem)")
                     $ItemToAdd.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
-                    if ($AddItemFormRadioButtonAdd.Checked -eq $true) {$ListViewAdd.Items.Add($ItemToAdd)}
-                    if ($AddItemFormRadioButtonReplace.Checked -eq $true) {$ListViewReplace.Items.Add($ItemToAdd)}
-                    if ($AddItemFormRadioButtonRemove.Checked -eq $true) {$ListViewRemove.Items.Add($ItemToAdd)}
+                    if ($AddItemFormRadioButtonAdd.Checked -eq $true) {$ListViewAdd.Items.Insert(0, $ItemToAdd)}
+                    if ($AddItemFormRadioButtonReplace.Checked -eq $true) {$ListViewReplace.Items.Insert(0, $ItemToAdd)}
+                    if ($AddItemFormRadioButtonRemove.Checked -eq $true) {$ListViewRemove.Items.Insert(0, $ItemToAdd)}
                     Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
                     $AddItemForm.Close()
                 }
@@ -251,7 +253,168 @@ Function Add-ItemToList ($FormName, $ButtonName, [ValidateSet("Add", "Apply")]$T
     $AddItemForm.ShowDialog()
 }
 
-Function Custom-Form
+Function Edit-ItemOnList ()
+{
+    $EditItemForm = New-Object System.Windows.Forms.Form
+    $EditItemForm.Padding = New-Object System.Windows.Forms.Padding(0,0,10,0)
+    $EditItemForm.ShowIcon = $false
+    $EditItemForm.AutoSize = $true
+    $EditItemForm.Text = "Редактировать запись"
+    $EditItemForm.AutoSizeMode = "GrowAndShrink"
+    $EditItemForm.WindowState = "Normal"
+    $EditItemForm.SizeGripStyle = "Hide"
+    $EditItemForm.ShowInTaskbar = $true
+    $EditItemForm.StartPosition = "CenterScreen"
+    $EditItemForm.MinimizeBox = $false
+    $EditItemForm.MaximizeBox = $false
+    #Надпись к поля для ввода обозначение
+    $EditItemFormFileNameLabel = New-Object System.Windows.Forms.Label
+    $EditItemFormFileNameLabel.Location =  New-Object System.Drawing.Point(10,15) #x,y
+    $EditItemFormFileNameLabel.Width = 81
+    $EditItemFormFileNameLabel.Text = "Обозначение:"
+    $EditItemFormFileNameLabel.TextAlign = "TopLeft"
+    $EditItemForm.Controls.Add($EditItemFormFileNameLabel)
+    
+    #Поле для ввода обозначение
+    $EditItemFormFileNameInput = New-Object System.Windows.Forms.TextBox 
+    $EditItemFormFileNameInput.Location = New-Object System.Drawing.Point(95,13) #x,y
+    $EditItemFormFileNameInput.Width = 270
+    $EditItemFormFileNameInput.Text = "Укажите обозначение..."
+    $EditItemFormFileNameInput.ForeColor = "Gray"
+    $EditItemFormFileNameInput.Add_GotFocus({
+        if ($EditItemFormFileNameInput.Text -eq "Укажите обозначение...") {
+            $EditItemFormFileNameInput.Text = ""
+            $EditItemFormFileNameInput.ForeColor = "Black"
+        }
+        })
+    $EditItemFormFileNameInput.Add_LostFocus({
+        if ($EditItemFormFileNameInput.Text -eq "") {
+            $EditItemFormFileNameInput.Text = "Укажите обозначение..."
+            $EditItemFormFileNameInput.ForeColor = "Gray"
+        }
+        })
+    $EditItemForm.Controls.Add($EditItemFormFileNameInput)
+    
+    #Надпись к списку для указания типа файла
+    $EditItemFormFileTypeLabel = New-Object System.Windows.Forms.Label
+    $EditItemFormFileTypeLabel.Location = New-Object System.Drawing.Point(10,45) #x,y
+    $EditItemFormFileTypeLabel.Width = 81
+    $EditItemFormFileTypeLabel.Text = "Тип файла:"
+    $EditItemFormFileTypeLabel.TextAlign = "TopLeft"
+    $EditItemForm.Controls.Add($EditItemFormFileTypeLabel)
+    
+    #Список содержащий доступные типы файлов
+    $DataTypes = @("Документ","Программа")
+    $EditItemFormFileTypeCombobox = New-Object System.Windows.Forms.ComboBox
+    $EditItemFormFileTypeCombobox.Location = New-Object System.Drawing.Point(95,43) #x,y
+    $EditItemFormFileTypeCombobox.DropDownStyle = "DropDownList"
+    $DataTypes | % {$EditItemFormFileTypeCombobox.Items.add($_)}
+    $EditItemFormFileTypeCombobox.SelectedIndex = 0
+    $EditItemForm.Controls.Add($EditItemFormFileTypeCombobox)
+    
+    #Надпись к полю для ввода MD5 и Изм.
+    $EditItemFormAttributeValueLabel = New-Object System.Windows.Forms.Label
+    $EditItemFormAttributeValueLabel.Location =  New-Object System.Drawing.Point(10,75) #x,y
+    $EditItemFormAttributeValueLabel.Width = 81
+    $EditItemFormAttributeValueLabel.Text = "Изм./MD5:"
+    $EditItemFormAttributeValueLabel.TextAlign = "TopLeft"
+    $EditItemForm.Controls.Add($EditItemFormAttributeValueLabel)
+    
+    #Поле для ввода MD5 и Изм.
+    $EditItemFormAttributeValueInput = New-Object System.Windows.Forms.TextBox 
+    $EditItemFormAttributeValueInput.Location = New-Object System.Drawing.Point(95,73) #x,y
+    $EditItemFormAttributeValueInput.Width = 270
+    $EditItemFormAttributeValueInput.Text = "Укажите Изм. или MD5..."
+    $EditItemFormAttributeValueInput.ForeColor = "Gray"
+    $EditItemFormAttributeValueInput.Add_GotFocus({
+        if ($EditItemFormAttributeValueInput.Text -eq "Укажите Изм. или MD5...") {
+            $EditItemFormAttributeValueInput.Text = ""
+            $EditItemFormAttributeValueInput.ForeColor = "Black"
+        }
+        })
+    $EditItemFormAttributeValueInput.Add_LostFocus({
+        if ($EditItemFormAttributeValueInput.Text -eq "") {
+            $EditItemFormAttributeValueInput.Text = "Укажите Изм. или MD5..."
+            $EditItemFormAttributeValueInput.ForeColor = "Gray"
+        }
+        })
+    $EditItemForm.Controls.Add($EditItemFormAttributeValueInput)
+    
+    #Кнопка добавить
+    $EditItemFormAddButton = New-Object System.Windows.Forms.Button
+    $EditItemFormAddButton.Location = New-Object System.Drawing.Point(10,109) #x,y
+    $EditItemFormAddButton.Size = New-Object System.Drawing.Point(70,22) #width,height
+    $EditItemFormAddButton.Text = "Добавить запись"
+    $EditItemFormAddButton.Add_Click({
+        if ($EditItemFormFileNameInput.Text -eq "Укажите обозначение..." -and $EditItemFormAttributeValueInput.Text -eq "Укажите Изм. или MD5...") {
+            Show-MessageBox -Message "Пожалуйста, укажите обозначение и Изм./MD5 для файла." -Title "Значения указаны не во всех полях" -Type OK
+        } elseif ($EditItemFormFileNameInput.Text -eq "Укажите обозначение..." -and $EditItemFormAttributeValueInput.Text -ne "Укажите Изм. или MD5...") {
+            Show-MessageBox -Message "Пожалуйста, укажите обозначение файла." -Title "Значения указаны не во всех полях" -Type OK
+        } elseif ($EditItemFormFileNameInput.Text -ne "Укажите обозначение..." -and $EditItemFormAttributeValueInput.Text -eq "Укажите Изм. или MD5...") {
+            Show-MessageBox -Message "Пожалуйста, укажите Изм./MD5 для файла." -Title "Значения указаны не во всех полях" -Type OK
+        } else {
+                $ItemsOnTheList = @()
+                if ($EditItemFormRadioButtonAdd.Checked -eq $true) {$ListViewAdd.Items | % {$ItemsOnTheList += $_.Text}}
+                if ($EditItemFormRadioButtonReplace.Checked -eq $true) {$ListViewReplace.Items | % {$ItemsOnTheList += $_.Text}}
+                if ($EditItemFormRadioButtonRemove.Checked -eq $true) {$ListViewRemove.Items | % {$ItemsOnTheList += $_.Text}}
+                if ($ItemsOnTheList -contains $EditItemFormFileNameInput.Text) {
+                Show-MessageBox -Message "Файл с таким обозначением уже содежится в указанном списке." -Title "Невозможно выполнить действие" -Type OK
+            } else {
+                if ($EditItemFormFileTypeCombobox.SelectedItem -eq "Документ" -and $EditItemFormAttributeValueInput.Text.Length -gt 5) {
+                    if ((Show-MessageBox -Message "Указанный Изм. содержит больше пяти символов. Возможно вы ошибочно указали MD5 или выбрали неверный тип файла.`r`nВсе равно продолжить?" -Title "Для файла указан подозрительный Изм." -Type YesNo) -eq "Yes") {
+                        $ItemToAdd = New-Object System.Windows.Forms.ListViewItem("$($EditItemFormFileNameInput.Text)")
+                        $ItemToAdd.SubItems.Add("$($EditItemFormAttributeValueInput.Text)")
+                        $ItemToAdd.SubItems.Add("$($EditItemFormFileTypeCombobox.SelectedItem)")
+                        $ItemToAdd.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
+                        if ($EditItemFormRadioButtonAdd.Checked -eq $true) {$ListViewAdd.Items.Insert(0, $ItemToAdd)}
+                        if ($EditItemFormRadioButtonReplace.Checked -eq $true) {$ListViewReplace.Items.Insert(0, $ItemToAdd)}
+                        if ($EditItemFormRadioButtonRemove.Checked -eq $true) {$ListViewRemove.Items.Insert(0, $ItemToAdd)}
+                        Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
+                        $EditItemForm.Close()
+                    }
+                } elseif ($EditItemFormFileTypeCombobox.SelectedItem -eq "Программа" -and $EditItemFormAttributeValueInput.Text.Length -ne 32) {
+                    if ((Show-MessageBox -Message "Указанная сумма MD5 некорректна. Возможно вы непольностью указали ее, ошибочно указали Изм. или выбрали неверный тип файла.`r`nВсе равно продолжить?" -Title "Для файла указана подозрительная MD5 сумма" -Type YesNo) -eq "Yes") {
+                        $ItemToAdd = New-Object System.Windows.Forms.ListViewItem("$($EditItemFormFileNameInput.Text)")
+                        $ItemToAdd.SubItems.Add("$($EditItemFormAttributeValueInput.Text)")
+                        $ItemToAdd.SubItems.Add("$($EditItemFormFileTypeCombobox.SelectedItem)")
+                        $ItemToAdd.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
+                        if ($EditItemFormRadioButtonAdd.Checked -eq $true) {$ListViewAdd.Items.Insert(0, $ItemToAdd)}
+                        if ($EditItemFormRadioButtonReplace.Checked -eq $true) {$ListViewReplace.Items.Insert(0, $ItemToAdd)}
+                        if ($EditItemFormRadioButtonRemove.Checked -eq $true) {$ListViewRemove.Items.Insert(0, $ItemToAdd)}
+                        Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
+                        $EditItemForm.Close()
+                    }
+                } else {
+                    $ItemToAdd = New-Object System.Windows.Forms.ListViewItem("$($EditItemFormFileNameInput.Text)")
+                    $ItemToAdd.SubItems.Add("$($EditItemFormAttributeValueInput.Text)")
+                    $ItemToAdd.SubItems.Add("$($EditItemFormFileTypeCombobox.SelectedItem)")
+                    $ItemToAdd.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
+                    if ($EditItemFormRadioButtonAdd.Checked -eq $true) {$ListViewAdd.Items.Insert(0, $ItemToAdd)}
+                    if ($EditItemFormRadioButtonReplace.Checked -eq $true) {$ListViewReplace.Items.Insert(0, $ItemToAdd)}
+                    if ($EditItemFormRadioButtonRemove.Checked -eq $true) {$ListViewRemove.Items.Insert(0, $ItemToAdd)}
+                    Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
+                    $EditItemForm.Close()
+                }
+            }
+        }
+    })
+    $EditItemForm.Controls.Add($EditItemFormAddButton)
+    
+    #Кнопка закрыть
+    $EditItemFormCancelButton = New-Object System.Windows.Forms.Button
+    $EditItemFormCancelButton.Location = New-Object System.Drawing.Point(90,109) #x,y
+    $EditItemFormCancelButton.Size = New-Object System.Drawing.Point(70,22) #width,height
+    $EditItemFormCancelButton.Text = "Закрыть"
+    $EditItemFormCancelButton.Margin = New-Object System.Windows.Forms.Padding(0,0,10,10)
+    $EditItemFormCancelButton.Add_Click({
+    $EditItemForm.Close()
+    })
+    $EditItemForm.Controls.Add($EditItemFormCancelButton)
+    $EditItemForm.ActiveControl = $EditItemFormFileTypeLabel
+    $EditItemForm.ShowDialog()
+}
+
+Function Custom-Form ()
 {
     Add-Type -AssemblyName System.Windows.Forms
     #FORM
@@ -551,7 +714,7 @@ Function Custom-Form
     $ButtonAddItem.Location = New-Object System.Drawing.Point(10,770) #x,y
     $ButtonAddItem.Size = New-Object System.Drawing.Point(110,22) #width,height
     $ButtonAddItem.Text = "Добавить запись"
-    $ButtonAddItem.Add_Click({Add-ItemToList -FormName "Добавить запись" -ButtonName "Добавить запись" -Type Add})
+    $ButtonAddItem.Add_Click({Add-ItemToList})
     $ListSettingsGroup.Controls.Add($ButtonAddItem)
 
     #Button 'Delete'
@@ -577,20 +740,21 @@ Function Custom-Form
     #Выбрать цвет
     $ButtonSelectColor = New-Object System.Windows.Forms.Button
     $ButtonSelectColor.Location = New-Object System.Drawing.Point(370,770) #x,y
-    $ButtonSelectColor.Size = New-Object System.Drawing.Point(110,22) #width,height
-    $ButtonSelectColor.Text = "Выбрать цвет"
+    $ButtonSelectColor.Size = New-Object System.Drawing.Point(22,22) #width,height
     $ColorDialog = New-Object System.Windows.Forms.ColorDialog
-    $ColorDialog.Color = [System.Drawing.Color]::White
+    $ButtonSelectColor.BackColor = [System.Drawing.Color]::LightGreen
+    $ColorDialog.Color = [System.Drawing.Color]::LightGreen
     $ButtonSelectColor.Add_Click({
     $ColorDialog.ShowDialog()
+    $ButtonSelectColor.BackColor = $ColorDialog.Color
     })
     $ListSettingsGroup.Controls.Add($ButtonSelectColor)
 
-    #Отметить цветом
+    #Выделить цветом
     $ButtonMarkWithColor = New-Object System.Windows.Forms.Button
     $ButtonMarkWithColor.Location = New-Object System.Drawing.Point(490,770) #x,y
     $ButtonMarkWithColor.Size = New-Object System.Drawing.Point(110,22) #width,height
-    $ButtonMarkWithColor.Text = "Пометить цветом"
+    $ButtonMarkWithColor.Text = "Выделить цветом"
     $ButtonMarkWithColor.Add_Click({
     Write-Host $ColorDialog.Color
     if ($ListViewAdd.SelectedIndices.Count -gt 0) {$ListViewAdd.Items[$ListViewAdd.SelectedIndices[0]].BackColor = $ColorDialog.Color}
@@ -600,7 +764,6 @@ Function Custom-Form
     })
     $ListSettingsGroup.Controls.Add($ButtonMarkWithColor)
 
-    
     #Заполнить списки
     $ButtonPopulateLists = New-Object System.Windows.Forms.Button
     $ButtonPopulateLists.Location = New-Object System.Drawing.Point(250,770) #x,y
@@ -631,6 +794,16 @@ Function Custom-Form
     Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
     })
     $ListSettingsGroup.Controls.Add($ButtonPopulateLists)
+
+    #Редактировать запись
+    $ButtonEditItemOnList = New-Object System.Windows.Forms.Button
+    $ButtonEditItemOnList.Location = New-Object System.Drawing.Point(610,770) #x,y
+    $ButtonEditItemOnList.Size = New-Object System.Drawing.Point(110,22) #width,height
+    $ButtonEditItemOnList.Text = "Изменить запись"
+    $ButtonEditItemOnList.Add_Click({
+    Edit-ItemOnList
+    })
+    $ListSettingsGroup.Controls.Add($ButtonEditItemOnList)
 
     
     <#
