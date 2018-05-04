@@ -549,6 +549,177 @@ Function Discard-Coloring ()
     $DiscardColoringForm.ShowDialog()
 }
 
+Function Disable-AllExceptEditing ($BooleanRest, $BooleanEditing) 
+{
+    $GetPropertyListBoxBlackList.Enabled = $BooleanRest
+    $GetPropertyButtonAddItem.Enabled = $BooleanRest
+    $GetPropertyInputboxAddItem.Enabled = $BooleanRest
+    $GetPropertyButtonDeleteItem.Enabled = $BooleanRest
+    $GetPropertyLabelButtonDelete.Enabled = $BooleanRest
+    $GetPropertyInputboxEditItem.Enabled = $BooleanEditing
+    $GetPropertyButtonApplyItem.Enabled = $BooleanEditing
+    $GetPropertyButtonCancelItem.Enabled = $BooleanEditing
+    $GetPropertyButtonEditItem.Enabled = $BooleanRest
+    $GetPropertyButtonClear.Enabled = $BooleanRest
+    $GetPropertyLabelButtonClear.Enabled = $BooleanRest
+}
+
+Function Manage-CustomLists ($PathToLost, [ValidateSet("Departments", "Employees")]$ListType)
+{
+    $ManageCustomListsForm = New-Object System.Windows.Forms.Form
+    $ManageCustomListsForm.Padding = New-Object System.Windows.Forms.Padding(0,0,10,0)
+    $ManageCustomListsForm.ShowIcon = $false
+    $ManageCustomListsForm.AutoSize = $true
+    if ($ListType -eq "Departments") {$ManageCustomListsForm.Text = "Редактировать список отделов"}
+    if ($ListType -eq "Employees") {$ManageCustomListsForm.Text = "Редактировать список сотрудников"}
+    #$ManageCustomListsForm.AutoSizeMode = "GrowAndShrink"
+    $ManageCustomListsForm.WindowState = "Normal"
+    $ManageCustomListsForm.SizeGripStyle = "Hide"
+    $ManageCustomListsForm.ShowInTaskbar = $true
+    $ManageCustomListsForm.StartPosition = "CenterScreen"
+    $ManageCustomListsForm.MinimizeBox = $false
+    $ManageCustomListsForm.MaximizeBox = $false
+    $ManageCustomListsForm.Size = New-Object System.Drawing.Point(550,300) #width,height 
+    #Надпись к списку, который содержит список отделов/сотрудников компании
+    $GetPropertyLabelBlacklistListBox = New-Object System.Windows.Forms.Label
+    $GetPropertyLabelBlacklistListBox.Location =  New-Object System.Drawing.Point(10,10) #x,y
+    $GetPropertyLabelBlacklistListBox.Width = 250
+    $GetPropertyLabelBlacklistListBox.Height = 13
+    if ($ListType -eq "Departments") {$GetPropertyLabelBlacklistListBox.Text = "Список отделов компании:"}
+    if ($ListType -eq "Employees") {$GetPropertyLabelBlacklistListBox.Text = "Список сотрудников компании:"}
+    $ManageCustomListsForm.Controls.Add($GetPropertyLabelBlacklistListBox)
+    #Список отделов/сотрудников компании
+    $DefaultBlackList = @("Last author", "Template", "Security", "Revision number", "Application name", "Last print date", "Number of bytes", "Number of characters (with spaces)", "Number of multimedia clips", "Number of hidden Slides", "Number of notes", "Number of slides", "Number of paragraphs", "Number of lines", "Number of characters", "Number of words", "Number of pages", "Total editing time", "Last save time", "Creation date")
+    $GetPropertyListBoxBlackList = New-Object System.Windows.Forms.ListBox
+    $GetPropertyListBoxBlackList.Location = New-Object System.Drawing.Point(10,25) #x,y
+    $GetPropertyListBoxBlackList.Size = New-Object System.Drawing.Point(210,260) #width,height
+    $DefaultBlackList | % {$GetPropertyListBoxBlackList.Items.Add($_)} | Out-Null
+    $GetPropertyListBoxBlackList.Add_SelectedIndexChanged({
+        if ($GetPropertyListBoxBlackList.SelectedIndex -ne -1) {
+            #Write-Host "$($GetPropertyListBoxBlackList.SelectedIndex)"
+            $GetPropertyInputboxEditItem.Text = $GetPropertyListBoxBlackList.SelectedItem
+        }
+        })
+    $ManageCustomListsForm.Controls.Add($GetPropertyListBoxBlackList)
+    #Button 'Add'
+    $GetPropertyButtonAddItem = New-Object System.Windows.Forms.Button
+    $GetPropertyButtonAddItem.Location = New-Object System.Drawing.Point(235,25) #x,y
+    $GetPropertyButtonAddItem.Size = New-Object System.Drawing.Point(110,22) #width,height
+    $GetPropertyButtonAddItem.Text = "Добавить"
+    $GetPropertyButtonAddItem.Add_Click({
+        if ($GetPropertyInputboxAddItem.Text -ne "Укажите название отдела...") {
+            if ($GetPropertyListBoxBlackList.Items.Contains($GetPropertyInputboxAddItem.Text)) {
+                Show-MessageBox -Title "Item already exists" -Type OK -Message "The property you are attempting to add ($($GetPropertyInputboxAddItem.Text)) is already on the list."
+            } else {
+                $GetPropertyListBoxBlackList.Items.Insert(0, $GetPropertyInputboxAddItem.Text)
+                $GetPropertyInputboxAddItem.Text = "Укажите название отдела..."
+                $GetPropertyInputboxAddItem.ForeColor = "Gray"
+            }
+        }
+        })
+    $ManageCustomListsForm.Controls.Add($GetPropertyButtonAddItem)
+    #Inputbox 'Add item to the list'
+    $GetPropertyInputboxAddItem = New-Object System.Windows.Forms.TextBox 
+    $GetPropertyInputboxAddItem.Location = New-Object System.Drawing.Size(350,26) #x,y
+    $GetPropertyInputboxAddItem.Width = 190
+    $GetPropertyInputboxAddItem.Text = "Укажите название отдела..."
+    $GetPropertyInputboxAddItem.ForeColor = "Gray"
+    $GetPropertyInputboxAddItem.Add_GotFocus({
+        if ($GetPropertyInputboxAddItem.Text -eq "Укажите название отдела...") {
+            $GetPropertyInputboxAddItem.Text = ""
+            $GetPropertyInputboxAddItem.ForeColor = "Black"
+        }
+        })
+    $GetPropertyInputboxAddItem.Add_LostFocus({
+        if ($GetPropertyInputboxAddItem.Text -eq "") {
+            $GetPropertyInputboxAddItem.Text = "Укажите название отдела..."
+            $GetPropertyInputboxAddItem.ForeColor = "Gray"
+        }
+        })
+    $ManageCustomListsForm.Controls.Add($GetPropertyInputboxAddItem)
+    #Button 'Edit'
+    $GetPropertyButtonEditItem = New-Object System.Windows.Forms.Button
+    $GetPropertyButtonEditItem.Location = New-Object System.Drawing.Point(235,53) #x,y
+    $GetPropertyButtonEditItem.Size = New-Object System.Drawing.Point(110,22) #width,height
+    $GetPropertyButtonEditItem.Text = "Редактировать"
+    $GetPropertyButtonEditItem.Add_Click({
+        if ($GetPropertyInputboxEditItem.Text -ne "Выберите запись из списка...") {
+            Disable-AllExceptEditing -BooleanRest $false -BooleanEditing $true
+        }
+        })
+    $ManageCustomListsForm.Controls.Add($GetPropertyButtonEditItem)
+    #Inputbox 'Edit the selected item'
+    $GetPropertyInputboxEditItem = New-Object System.Windows.Forms.TextBox 
+    $GetPropertyInputboxEditItem.Location = New-Object System.Drawing.Size(350,54) #x,y
+    $GetPropertyInputboxEditItem.Width = 190
+    $GetPropertyInputboxEditItem.Enabled = $false
+    $GetPropertyInputboxEditItem.Text = "Выберите запись из списка..."
+    $ManageCustomListsForm.Controls.Add($GetPropertyInputboxEditItem)
+    #Button 'Apply'
+    $GetPropertyButtonApplyItem = New-Object System.Windows.Forms.Button
+    $GetPropertyButtonApplyItem.Location = New-Object System.Drawing.Point(350,76) #x,y
+    $GetPropertyButtonApplyItem.Size = New-Object System.Drawing.Point(80,22) #width,height
+    $GetPropertyButtonApplyItem.Text = "Применить"
+    $GetPropertyButtonApplyItem.Enabled = $false
+    $GetPropertyButtonApplyItem.Add_Click({
+        if ($GetPropertyInputboxEditItem.Text -eq $GetPropertyListBoxBlackList.SelectedItem) {
+            Disable-AllExceptEditing -BooleanRest $true -BooleanEditing $false
+        } else {
+            $SelectedIndex = $GetPropertyListBoxBlackList.SelectedIndex
+            $GetPropertyListBoxBlackList.Items.Insert($GetPropertyListBoxBlackList.SelectedIndex, ($GetPropertyInputboxEditItem.Text).Trim(' '))
+            $GetPropertyListBoxBlackList.Items.Remove($GetPropertyListBoxBlackList.SelectedItem)
+            $GetPropertyListBoxBlackList.SelectedIndex = $SelectedIndex
+            Disable-AllExceptEditing -BooleanRest $true -BooleanEditing $false
+        }
+        })
+    $ManageCustomListsForm.Controls.Add($GetPropertyButtonApplyItem)
+    #Button 'Cancel'
+    $GetPropertyButtonCancelItem = New-Object System.Windows.Forms.Button
+    $GetPropertyButtonCancelItem.Location = New-Object System.Drawing.Point(432,76) #x,y
+    $GetPropertyButtonCancelItem.Size = New-Object System.Drawing.Point(80,22) #width,height
+    $GetPropertyButtonCancelItem.Text = "Отмена"
+    $GetPropertyButtonCancelItem.Enabled = $false
+    $GetPropertyButtonCancelItem.Add_Click({
+        Disable-AllExceptEditing -BooleanRest $true -BooleanEditing $false    
+        })
+    $ManageCustomListsForm.Controls.Add($GetPropertyButtonCancelItem)
+    #Button 'Delete'
+    $GetPropertyButtonDeleteItem = New-Object System.Windows.Forms.Button
+    $GetPropertyButtonDeleteItem.Location = New-Object System.Drawing.Point(235,104) #x,y
+    $GetPropertyButtonDeleteItem.Size = New-Object System.Drawing.Point(110,22) #width,height
+    $GetPropertyButtonDeleteItem.Text = "Удалить"
+    $GetPropertyButtonDeleteItem.Add_Click({
+        $GetPropertyListBoxBlackList.Items.Remove($GetPropertyListBoxBlackList.SelectedItem)
+        $GetPropertyInputboxEditItem.Text = "Выберите запись из списка..."
+        })
+    $ManageCustomListsForm.Controls.Add($GetPropertyButtonDeleteItem)
+    #Label for 'Delete' button
+    $GetPropertyLabelButtonDelete = New-Object System.Windows.Forms.Label
+    $GetPropertyLabelButtonDelete.Location =  New-Object System.Drawing.Point(350,107) #x,y
+    $GetPropertyLabelButtonDelete.Size =  New-Object System.Drawing.Point(203,15) #width,height
+    if ($ListType -eq "Departments") {$GetPropertyLabelButtonDelete.Text = "Удалить отдел из списка"}
+    if ($ListType -eq "Employees") {$GetPropertyLabelButtonDelete.Text = "Удалить сотрудника из списка"}
+    
+    $ManageCustomListsForm.Controls.Add($GetPropertyLabelButtonDelete)
+    #Button 'Clear'
+    $GetPropertyButtonClear = New-Object System.Windows.Forms.Button
+    $GetPropertyButtonClear.Location = New-Object System.Drawing.Point(235,132) #x,y
+    $GetPropertyButtonClear.Size = New-Object System.Drawing.Point(110,22) #width,height
+    $GetPropertyButtonClear.Text = "Очистить список"
+    $GetPropertyButtonClear.Add_Click({
+        $ClickResult = Show-MessageBox -Title "Подтвердите действие" -Type YesNo -Message "Вы уверены, что хотите полностью очистить список от записей?"
+        if ($ClickResult -eq "Yes") {$GetPropertyListBoxBlackList.Items.Clear()}
+    })
+    $ManageCustomListsForm.Controls.Add($GetPropertyButtonClear)
+    #Label for 'Clear' button
+    $GetPropertyLabelButtonClear = New-Object System.Windows.Forms.Label
+    $GetPropertyLabelButtonClear.Location =  New-Object System.Drawing.Point(350,135) #x,y
+    $GetPropertyLabelButtonClear.Size =  New-Object System.Drawing.Point(203,15) #width,height
+    $GetPropertyLabelButtonClear.Text = "Удалить все записи из списка"
+    $ManageCustomListsForm.Controls.Add($GetPropertyLabelButtonClear)
+    $ManageCustomListsForm.ShowDialog()
+}
+
 Function Custom-Form ()
 {
     Add-Type -AssemblyName System.Windows.Forms
@@ -558,21 +729,20 @@ Function Custom-Form ()
     $ScriptMainWindow.AutoSize = $true
     $ScriptMainWindow.Text = "Генерация ИИ"
     $ScriptMainWindow.AutoSizeMode = "GrowAndShrink"
-    $ScriptMainWindow.WindowState = "Normal"
+    $ScriptMainWindow.WindowState = [System.Windows.Forms.FormWindowState]::Normal
     $ScriptMainWindow.SizeGripStyle = "Hide"
     $ScriptMainWindow.ShowInTaskbar = $true
     $ScriptMainWindow.StartPosition = "CenterScreen"
     $ScriptMainWindow.MinimizeBox = $true
     $ScriptMainWindow.MaximizeBox = $false
     $ScriptMainWindow.Padding = New-Object System.Windows.Forms.Padding(0,0,10,10)
-    
     #Группа элементов Настройка списков
     $ListSettingsGroup = New-Object System.Windows.Forms.GroupBox
     $ListSettingsGroup.Location = New-Object System.Drawing.Point(10,10) #x,y
     $ListSettingsGroup.Size = New-Object System.Drawing.Point(1308,555) #width,height
     $ListSettingsGroup.Text = "Настройка списков"
     $ScriptMainWindow.Controls.Add($ListSettingsGroup)
-    
+   
     #Надпись к списку Выпустить
     $ListViewAddLabel = New-Object System.Windows.Forms.Label
     $ListViewAddLabel.Location =  New-Object System.Drawing.Point(10,50) #x,y
@@ -582,7 +752,6 @@ Function Custom-Form ()
     $ListViewAddLabel.Text = "Выпустить (0):"
     $ListViewAddLabel.TextAlign = "TopLeft"
     $ListSettingsGroup.Controls.Add($ListViewAddLabel)
-
     #Список Выпустить
     $ListViewAdd = New-Object System.Windows.Forms.ListView
     $ListViewAdd.Location = New-Object System.Drawing.Point(10,66) #x, y
@@ -1013,11 +1182,120 @@ Function Custom-Form ()
     #Группа элементов Параметры извещения
     $UpdateNotificationParameters = New-Object System.Windows.Forms.GroupBox
     $UpdateNotificationParameters.Location = New-Object System.Drawing.Point(10,575) #x,y
-    $UpdateNotificationParameters.Size = New-Object System.Drawing.Point(400,200) #width,height
-    $UpdateNotificationParameters.Text = "Параметры извещения об изменении"
+    $UpdateNotificationParameters.Size = New-Object System.Drawing.Point(800,115) #width,height
+    $UpdateNotificationParameters.Text = "Параметры извещения"
     $ScriptMainWindow.Controls.Add($UpdateNotificationParameters)
+    #Надпись к полю Номер извещения
+    $UpdateNotificationNumber = New-Object System.Windows.Forms.Label
+    $UpdateNotificationNumber.Location =  New-Object System.Drawing.Point(10,25) #x,y
+    $UpdateNotificationNumber.Width = 147
+    $UpdateNotificationNumber.Text = "Номер извещения:"
+    $UpdateNotificationNumber.TextAlign = "TopRight"
+    $UpdateNotificationParameters.Controls.Add($UpdateNotificationNumber)
+    #Поле для ввода Номера извещения
+    $UpdateNotificationNumberInput = New-Object System.Windows.Forms.MaskedTextBox
+    $UpdateNotificationNumberInput.Location = New-Object System.Drawing.Point(162,23) #x,y
+    $UpdateNotificationNumberInput.Width = 62
+    $UpdateNotificationNumberInput.Mask = "00-00-0000"
+    #$UpdateNotificationNumberInput.Text = "11-22-3333"
+    $UpdateNotificationNumberInput.ForeColor = "Black"
+    $UpdateNotificationParameters.Controls.Add($UpdateNotificationNumberInput)
+    #Надпись к календарю для указания Даты выпуска
+    $CalendarIssueDateLabel = New-Object System.Windows.Forms.Label
+    $CalendarIssueDateLabel.Location =  New-Object System.Drawing.Point(10,55) #x,y
+    $CalendarIssueDateLabel.Width = 147
+    $CalendarIssueDateLabel.Text = "Дата выпуска:"
+    $CalendarIssueDateLabel.TextAlign = "TopRight"
+    $UpdateNotificationParameters.Controls.Add($CalendarIssueDateLabel)
+    #Календарь для указания Даты выпуска
+    $CalendarIssueDateInput = New-Object System.Windows.Forms.DateTimePicker
+    $CalendarIssueDateInput.Location = New-Object System.Drawing.Point(162,53) #x,y
+    $CalendarIssueDateInput.Format = [System.Windows.Forms.DateTimePickerFormat]::Short
+    $CalendarIssueDateInput.Width = 100
+    #$CalendarIssueDateInput.Text = "03.02.1990"
+    $UpdateNotificationParameters.Controls.Add($CalendarIssueDateInput)
+    #Надпись к календарю для указания Срока внесения изменений
+    $CalendarApplyUpdatesUntilLabel = New-Object System.Windows.Forms.Label
+    $CalendarApplyUpdatesUntilLabel.Location =  New-Object System.Drawing.Point(10,85) #x,y
+    $CalendarApplyUpdatesUntilLabel.Width = 147
+    $CalendarApplyUpdatesUntilLabel.Text = "Срок внесения изменений:"
+    $CalendarApplyUpdatesUntilLabel.TextAlign = "TopRight"
+    $UpdateNotificationParameters.Controls.Add($CalendarApplyUpdatesUntilLabel)
+    #Календарь для указания Срока внесения изменений
+    $CalendarApplyUpdatesUntilInput = New-Object System.Windows.Forms.DateTimePicker
+    $CalendarApplyUpdatesUntilInput.Location = New-Object System.Drawing.Point(162,82) #x,y
+    $CalendarApplyUpdatesUntilInput.Format = [System.Windows.Forms.DateTimePickerFormat]::Short
+    $CalendarApplyUpdatesUntilInput.Width = 100
+    #$CalendarApplyUpdatesUntilInput.Text = "03.02.1990"
+    $UpdateNotificationParameters.Controls.Add($CalendarApplyUpdatesUntilInput)
+    #Надпись к списку для указания Название отдела
+    $ComboboxDepartmentNameLabel = New-Object System.Windows.Forms.Label
+    $ComboboxDepartmentNameLabel.Location = New-Object System.Drawing.Point(317,25) #x,y
+    $ComboboxDepartmentNameLabel.Width = 100
+    $ComboboxDepartmentNameLabel.Text = "Название отдела:"
+    $ComboboxDepartmentNameLabel.TextAlign = "TopRight"
+    $UpdateNotificationParameters.Controls.Add($ComboboxDepartmentNameLabel)
+    #Список содержащий доступные Названия отделов
+    $NamesOfDepartments = @("БТД","ОПУ")
+    $ComboboxDepartmentName = New-Object System.Windows.Forms.ComboBox
+    $ComboboxDepartmentName.Location = New-Object System.Drawing.Point(422,23) #x,y
+    $ComboboxDepartmentName.DropDownStyle = "DropDownList"
+    $ComboboxDepartmentName.Width = 200
+    $NamesOfDepartments | % {$ComboboxDepartmentName.Items.Add($_)}
+    $UpdateNotificationParameters.Controls.Add($ComboboxDepartmentName)
+    #Кнопка Редактирования списка отделов
+    $ButtonEditListOfDepartments = New-Object System.Windows.Forms.Button
+    $ButtonEditListOfDepartments.Location = New-Object System.Drawing.Point(627,22) #x,y
+    $ButtonEditListOfDepartments.Size = New-Object System.Drawing.Point(22,23) #width,height
+    $ButtonEditListOfDepartments.Text = "..."
+    $ButtonEditListOfDepartments.Add_Click({Manage-CustomLists -ListType Departments})
+    $UpdateNotificationParameters.Controls.Add($ButtonEditListOfDepartments)
 
-    
+    #Надпись к списку для указания Составил
+    $ComboboxCreatedByLabel = New-Object System.Windows.Forms.Label
+    $ComboboxCreatedByLabel.Location = New-Object System.Drawing.Point(317,55) #x,y
+    $ComboboxCreatedByLabel.Width = 100
+    $ComboboxCreatedByLabel.Text = "Выпустил:"
+    $ComboboxCreatedByLabel.TextAlign = "TopRight"
+    $UpdateNotificationParameters.Controls.Add($ComboboxCreatedByLabel)
+    #Список содержащий доступные ФИО
+    $ListOfNames = @("С. Селюто","В. Горемыкин","И. Чижиков")
+    $ComboboxCreatedBy = New-Object System.Windows.Forms.ComboBox
+    $ComboboxCreatedBy.Location = New-Object System.Drawing.Point(422,53) #x,y
+    $ComboboxCreatedBy.DropDownStyle = "DropDownList"
+    $ComboboxCreatedBy.Width = 200
+    $ListOfNames | % {$ComboboxCreatedBy.Items.Add($_)}
+    $UpdateNotificationParameters.Controls.Add($ComboboxCreatedBy)
+    #Кнопка Редактирования списка ФИО
+    $ButtonEditListOfNamesCreatedBy = New-Object System.Windows.Forms.Button
+    $ButtonEditListOfNamesCreatedBy.Location = New-Object System.Drawing.Point(627,52) #x,y
+    $ButtonEditListOfNamesCreatedBy.Size = New-Object System.Drawing.Point(22,23) #width,height
+    $ButtonEditListOfNamesCreatedBy.Text = "..."
+    $ButtonEditListOfNamesCreatedBy.Add_Click({})
+    $UpdateNotificationParameters.Controls.Add($ButtonEditListOfNamesCreatedBy)
+
+    #Надпись к списку для указания Проверил
+    $ComboboxCheckedByLabel = New-Object System.Windows.Forms.Label
+    $ComboboxCheckedByLabel.Location = New-Object System.Drawing.Point(317,85) #x,y
+    $ComboboxCheckedByLabel.Width = 100
+    $ComboboxCheckedByLabel.Text = "Проверил:"
+    $ComboboxCheckedByLabel.TextAlign = "TopRight"
+    $UpdateNotificationParameters.Controls.Add($ComboboxCheckedByLabel)
+    #Список содержащий доступные ФИО
+    $ListOfNames = @("С. Селюто","В. Горемыкин","И. Чижиков")
+    $ComboboxCheckedBy = New-Object System.Windows.Forms.ComboBox
+    $ComboboxCheckedBy.Location = New-Object System.Drawing.Point(422,82) #x,y
+    $ComboboxCheckedBy.DropDownStyle = "DropDownList"
+    $ComboboxCheckedBy.Width = 200
+    $ListOfNames | % {$ComboboxCheckedBy.Items.Add($_)}
+    $UpdateNotificationParameters.Controls.Add($ComboboxCheckedBy)
+    #Кнопка Редактирования списка ФИО
+    $ButtonEditListOfNamesCheckedBy = New-Object System.Windows.Forms.Button
+    $ButtonEditListOfNamesCheckedBy.Location = New-Object System.Drawing.Point(627,81) #x,y
+    $ButtonEditListOfNamesCheckedBy.Size = New-Object System.Drawing.Point(22,23) #width,height
+    $ButtonEditListOfNamesCheckedBy.Text = "..."
+    $ButtonEditListOfNamesCheckedBy.Add_Click({})
+    $UpdateNotificationParameters.Controls.Add($ButtonEditListOfNamesCheckedBy)
 
     
     <#
