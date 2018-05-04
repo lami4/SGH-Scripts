@@ -343,7 +343,7 @@ Function Edit-ItemOnList ($ListObject)
         })
     $EditItemForm.Controls.Add($EditItemFormAttributeValueInput)
     
-    #Кнопка добавить
+    #Кнопка применить
     $EditItemFormAddButton = New-Object System.Windows.Forms.Button
     $EditItemFormAddButton.Location = New-Object System.Drawing.Point(10,109) #x,y
     $EditItemFormAddButton.Size = New-Object System.Drawing.Point(80,22) #width,height
@@ -415,10 +415,144 @@ Function Edit-ItemOnList ($ListObject)
     $EditItemForm.ShowDialog()
 }
 
+Function Clear-Lists ()
+{
+    #Окно Очистить списки
+    $ClearListsForm = New-Object System.Windows.Forms.Form
+    $ClearListsForm.Padding = New-Object System.Windows.Forms.Padding(0,0,10,0)
+    $ClearListsForm.ShowIcon = $false
+    $ClearListsForm.AutoSize = $true
+    $ClearListsForm.Text = "Очистить списки"
+    $ClearListsForm.AutoSizeMode = "GrowAndShrink"
+    $ClearListsForm.WindowState = "Normal"
+    $ClearListsForm.SizeGripStyle = "Hide"
+    $ClearListsForm.ShowInTaskbar = $true
+    $ClearListsForm.StartPosition = "CenterScreen"
+    $ClearListsForm.MinimizeBox = $false
+    $ClearListsForm.MaximizeBox = $false
+    #Чекбокс Очистить список 'Выпустить'
+    $CheckboxClearAddList = New-Object System.Windows.Forms.CheckBox
+    $CheckboxClearAddList.Width = 350
+    $CheckboxClearAddList.Text = "Очистить список 'Выпустить'"
+    $CheckboxClearAddList.Location = New-Object System.Drawing.Point(10,15) #x,y
+    $CheckboxClearAddList.Enabled = $true
+    $CheckboxClearAddList.Checked = $true
+    $CheckboxClearAddList.Add_CheckStateChanged({})
+    $ClearListsForm.Controls.Add($CheckboxClearAddList)
+    #Чекбокс Очистить список 'Заменить'
+    $CheckboxClearReplaceList = New-Object System.Windows.Forms.CheckBox
+    $CheckboxClearReplaceList.Width = 350
+    $CheckboxClearReplaceList.Text = "Очистить список 'Заменить'"
+    $CheckboxClearReplaceList.Location = New-Object System.Drawing.Point(10,45) #x,y
+    $CheckboxClearReplaceList.Enabled = $true
+    $CheckboxClearReplaceList.Checked = $true
+    $CheckboxClearReplaceList.Add_CheckStateChanged({})
+    $ClearListsForm.Controls.Add($CheckboxClearReplaceList)
+    #Чекбокс Очистить список 'Аннулировать'
+    $CheckboxClearRemoveList = New-Object System.Windows.Forms.CheckBox
+    $CheckboxClearRemoveList.Width = 350
+    $CheckboxClearRemoveList.Text = "Очистить список 'Аннулировать'"
+    $CheckboxClearRemoveList.Location = New-Object System.Drawing.Point(10,75) #x,y
+    $CheckboxClearRemoveList.Enabled = $true
+    $CheckboxClearRemoveList.Checked = $true
+    $CheckboxClearRemoveList.Add_CheckStateChanged({})
+    $ClearListsForm.Controls.Add($CheckboxClearRemoveList)
+    #Кнопка применить
+    $ClearListsFormAddButton = New-Object System.Windows.Forms.Button
+    $ClearListsFormAddButton.Location = New-Object System.Drawing.Point(10,109) #x,y
+    $ClearListsFormAddButton.Size = New-Object System.Drawing.Point(80,22) #width,height
+    $ClearListsFormAddButton.Text = "Применить"
+    $ClearListsFormAddButton.Add_Click({
+       if ($CheckboxClearAddList.Checked -eq $true) {$ListViewAdd.Items.Clear()}
+       if ($CheckboxClearReplaceList.Checked -eq $true) {$ListViewReplace.Items.Clear()}
+       if ($CheckboxClearRemoveList.Checked -eq $true) {$ListViewRemove.Items.Clear()}
+       $ClearListsForm.Close()
+    })
+    $ClearListsForm.Controls.Add($ClearListsFormAddButton)
+    #Кнопка закрыть
+    $ClearListsFormCancelButton = New-Object System.Windows.Forms.Button
+    $ClearListsFormCancelButton.Location = New-Object System.Drawing.Point(100,109) #x,y
+    $ClearListsFormCancelButton.Size = New-Object System.Drawing.Point(80,22) #width,height
+    $ClearListsFormCancelButton.Text = "Закрыть"
+    $ClearListsFormCancelButton.Margin = New-Object System.Windows.Forms.Padding(0,0,10,10)
+    $ClearListsFormCancelButton.Add_Click({
+    $ClearListsForm.Close()
+    })
+    $ClearListsForm.Controls.Add($ClearListsFormCancelButton)
+    $ClearListsForm.ShowDialog()
+}
+
+Function Discard-Coloring ()
+{
+    #Окно Очистить списки
+    $DiscardColoringForm = New-Object System.Windows.Forms.Form
+    $DiscardColoringForm.Padding = New-Object System.Windows.Forms.Padding(0,0,10,0)
+    $DiscardColoringForm.ShowIcon = $false
+    $DiscardColoringForm.AutoSize = $true
+    $DiscardColoringForm.Text = "Отменить выделение цветом в списках"
+    $DiscardColoringForm.AutoSizeMode = "GrowAndShrink"
+    $DiscardColoringForm.WindowState = "Normal"
+    $DiscardColoringForm.SizeGripStyle = "Hide"
+    $DiscardColoringForm.ShowInTaskbar = $true
+    $DiscardColoringForm.StartPosition = "CenterScreen"
+    $DiscardColoringForm.MinimizeBox = $false
+    $DiscardColoringForm.MaximizeBox = $false
+    #Чекбокс Очистить список 'Выпустить'
+    $CheckboxDiscardColoringInAddList = New-Object System.Windows.Forms.CheckBox
+    $CheckboxDiscardColoringInAddList.Width = 350
+    $CheckboxDiscardColoringInAddList.Text = "Отменить выделение цветом в списке 'Выпустить'"
+    $CheckboxDiscardColoringInAddList.Location = New-Object System.Drawing.Point(10,15) #x,y
+    $CheckboxDiscardColoringInAddList.Enabled = $true
+    $CheckboxDiscardColoringInAddList.Checked = $true
+    $CheckboxDiscardColoringInAddList.Add_CheckStateChanged({})
+    $DiscardColoringForm.Controls.Add($CheckboxDiscardColoringInAddList)
+    #Чекбокс Очистить список 'Заменить'
+    $CheckboxDiscardColoringInReplaceList = New-Object System.Windows.Forms.CheckBox
+    $CheckboxDiscardColoringInReplaceList.Width = 350
+    $CheckboxDiscardColoringInReplaceList.Text = "Отменить выделение цветом в списке 'Заменить'"
+    $CheckboxDiscardColoringInReplaceList.Location = New-Object System.Drawing.Point(10,45) #x,y
+    $CheckboxDiscardColoringInReplaceList.Enabled = $true
+    $CheckboxDiscardColoringInReplaceList.Checked = $true
+    $CheckboxDiscardColoringInReplaceList.Add_CheckStateChanged({})
+    $DiscardColoringForm.Controls.Add($CheckboxDiscardColoringInReplaceList)
+    #Чекбокс Очистить список 'Аннулировать'
+    $CheckboxDiscardColoringInRemoveList = New-Object System.Windows.Forms.CheckBox
+    $CheckboxDiscardColoringInRemoveList.Width = 350
+    $CheckboxDiscardColoringInRemoveList.Text = "Отменить выделение цветом в списке 'Аннулировать'"
+    $CheckboxDiscardColoringInRemoveList.Location = New-Object System.Drawing.Point(10,75) #x,y
+    $CheckboxDiscardColoringInRemoveList.Enabled = $true
+    $CheckboxDiscardColoringInRemoveList.Checked = $true
+    $CheckboxDiscardColoringInRemoveList.Add_CheckStateChanged({})
+    $DiscardColoringForm.Controls.Add($CheckboxDiscardColoringInRemoveList)
+    #Кнопка применить
+    $DiscardColoringFormAddButton = New-Object System.Windows.Forms.Button
+    $DiscardColoringFormAddButton.Location = New-Object System.Drawing.Point(10,109) #x,y
+    $DiscardColoringFormAddButton.Size = New-Object System.Drawing.Point(80,22) #width,height
+    $DiscardColoringFormAddButton.Text = "Применить"
+    $DiscardColoringFormAddButton.Add_Click({
+       if ($CheckboxDiscardColoringInAddList.Checked -eq $true) {foreach ($Item in $ListViewAdd.Items) {$Item.BackColor = [System.Drawing.Color]::White}}
+       if ($CheckboxDiscardColoringInReplaceList.Checked -eq $true) {foreach ($Item in $ListViewReplace.Items) {$Item.BackColor = [System.Drawing.Color]::White}}
+       if ($CheckboxDiscardColoringInRemoveList.Checked -eq $true) {foreach ($Item in $ListViewRemove.Items) {$Item.BackColor = [System.Drawing.Color]::White}}
+       $DiscardColoringForm.Close()
+    })
+    $DiscardColoringForm.Controls.Add($DiscardColoringFormAddButton)
+    #Кнопка закрыть
+    $DiscardColoringFormCancelButton = New-Object System.Windows.Forms.Button
+    $DiscardColoringFormCancelButton.Location = New-Object System.Drawing.Point(100,109) #x,y
+    $DiscardColoringFormCancelButton.Size = New-Object System.Drawing.Point(80,22) #width,height
+    $DiscardColoringFormCancelButton.Text = "Закрыть"
+    $DiscardColoringFormCancelButton.Margin = New-Object System.Windows.Forms.Padding(0,0,10,10)
+    $DiscardColoringFormCancelButton.Add_Click({
+    $DiscardColoringForm.Close()
+    })
+    $DiscardColoringForm.Controls.Add($DiscardColoringFormCancelButton)
+    $DiscardColoringForm.ShowDialog()
+}
+
 Function Custom-Form ()
 {
     Add-Type -AssemblyName System.Windows.Forms
-    #FORM
+    #Главное окно
     $ScriptMainWindow = New-Object System.Windows.Forms.Form
     $ScriptMainWindow.ShowIcon = $false
     $ScriptMainWindow.AutoSize = $true
@@ -430,12 +564,12 @@ Function Custom-Form ()
     $ScriptMainWindow.StartPosition = "CenterScreen"
     $ScriptMainWindow.MinimizeBox = $true
     $ScriptMainWindow.MaximizeBox = $false
-    $ScriptMainWindow.Padding = New-Object System.Windows.Forms.Padding(0,0,10,0)
+    $ScriptMainWindow.Padding = New-Object System.Windows.Forms.Padding(0,0,10,10)
     
-    #Groupbox 'Настройка списков'
+    #Группа элементов Настройка списков
     $ListSettingsGroup = New-Object System.Windows.Forms.GroupBox
     $ListSettingsGroup.Location = New-Object System.Drawing.Point(10,10) #x,y
-    $ListSettingsGroup.Size = New-Object System.Drawing.Point(1308,800) #width,height
+    $ListSettingsGroup.Size = New-Object System.Drawing.Point(1308,555) #width,height
     $ListSettingsGroup.Text = "Настройка списков"
     $ScriptMainWindow.Controls.Add($ListSettingsGroup)
     
@@ -449,7 +583,6 @@ Function Custom-Form ()
     $ListViewAddLabel.TextAlign = "TopLeft"
     $ListSettingsGroup.Controls.Add($ListViewAddLabel)
 
-    
     #Список Выпустить
     $ListViewAdd = New-Object System.Windows.Forms.ListView
     $ListViewAdd.Location = New-Object System.Drawing.Point(10,66) #x, y
@@ -682,13 +815,13 @@ Function Custom-Form ()
     #Группа элементов Выбранный файл
     $ListSettingsSelectedItem = New-Object System.Windows.Forms.GroupBox
     $ListSettingsSelectedItem.Location = New-Object System.Drawing.Point(10,445) #x,y
-    $ListSettingsSelectedItem.Size = New-Object System.Drawing.Point(400,100) #width,height
+    $ListSettingsSelectedItem.Size = New-Object System.Drawing.Point(513,100) #width,height
     $ListSettingsSelectedItem.Text = "Выбранный файл"
     $ListSettingsGroup.Controls.Add($ListSettingsSelectedItem)
     #Поле Обозначение для группы элементов Выбранный файл
     $ListSettingsSelectedItemFileName = New-Object System.Windows.Forms.Label
     $ListSettingsSelectedItemFileName.Location =  New-Object System.Drawing.Point(15,20) #x,y
-    $ListSettingsSelectedItemFileName.Width = 380
+    $ListSettingsSelectedItemFileName.Width = 490
     $ListSettingsSelectedItemFileName.Height = 15
     $ListSettingsSelectedItemFileName.Text = "Обозначение:"
     $ListSettingsSelectedItemFileName.TextAlign = "TopLeft"
@@ -696,7 +829,7 @@ Function Custom-Form ()
     #Поле Изм./MD5 для группы элементов Выбранный файл
     $ListSettingsSelectedItemFileAttribute = New-Object System.Windows.Forms.Label
     $ListSettingsSelectedItemFileAttribute.Location =  New-Object System.Drawing.Point(15,45) #x,y
-    $ListSettingsSelectedItemFileAttribute.Width = 380
+    $ListSettingsSelectedItemFileAttribute.Width = 490
     $ListSettingsSelectedItemFileAttribute.Height = 15
     $ListSettingsSelectedItemFileAttribute.Text = "Изм./MD5:"
     $ListSettingsSelectedItemFileAttribute.TextAlign = "TopLeft"
@@ -704,7 +837,7 @@ Function Custom-Form ()
     #Поле Тип файла для группы элементов Выбранный файл
     $ListSettingsSelectedItemFileType = New-Object System.Windows.Forms.Label
     $ListSettingsSelectedItemFileType.Location =  New-Object System.Drawing.Point(15,70) #x,y
-    $ListSettingsSelectedItemFileType.Width = 380
+    $ListSettingsSelectedItemFileType.Width = 490
     $ListSettingsSelectedItemFileType.Height = 15
     $ListSettingsSelectedItemFileType.Text = "Тип файла:"
     $ListSettingsSelectedItemFileType.TextAlign = "TopLeft"
@@ -716,27 +849,24 @@ Function Custom-Form ()
     $ListSettingsItemActions.Size = New-Object System.Drawing.Point(287,100) #width,height
     $ListSettingsItemActions.Text = "Действия с записью"
     $ListSettingsGroup.Controls.Add($ListSettingsItemActions)
-    
     #Добавить запись
     $ButtonAddItem = New-Object System.Windows.Forms.Button
     $ButtonAddItem.Location = New-Object System.Drawing.Point(10,17) #x,y
     $ButtonAddItem.Size = New-Object System.Drawing.Point(110,22) #width,height
-    $ButtonAddItem.Text = "Добавить"
+    $ButtonAddItem.Text = "Добавить..."
     $ButtonAddItem.Add_Click({Add-ItemToList})
     $ListSettingsItemActions.Controls.Add($ButtonAddItem)
-
     #Редактировать запись
     $ButtonEditItemOnList = New-Object System.Windows.Forms.Button
     $ButtonEditItemOnList.Location = New-Object System.Drawing.Point(10,43) #x,y
     $ButtonEditItemOnList.Size = New-Object System.Drawing.Point(110,22) #width,height
-    $ButtonEditItemOnList.Text = "Редактировать"
+    $ButtonEditItemOnList.Text = "Редактировать..."
     $ButtonEditItemOnList.Add_Click({
     if ($ListViewAdd.SelectedIndices.Count -gt 0) {Edit-ItemOnList -ListObject $ListViewAdd}
     if ($ListViewReplace.SelectedIndices.Count -gt 0) {Edit-ItemOnList -ListObject $ListViewReplace}
     if ($ListViewRemove.SelectedIndices.Count -gt 0) {Edit-ItemOnList -ListObject $ListViewRemove}
     })
     $ListSettingsItemActions.Controls.Add($ButtonEditItemOnList)
-
     #Удалить запись
     $ButtonDeleteItem = New-Object System.Windows.Forms.Button
     $ButtonDeleteItem.Location = New-Object System.Drawing.Point(10,69) #x,y
@@ -756,7 +886,6 @@ Function Custom-Form ()
     Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
     })
     $ListSettingsItemActions.Controls.Add($ButtonDeleteItem)
-
     #Выделить цветом
     $ButtonMarkWithColor = New-Object System.Windows.Forms.Button
     $ButtonMarkWithColor.Location = New-Object System.Drawing.Point(140,17) #x,y
@@ -770,7 +899,6 @@ Function Custom-Form ()
     Unselect-ItemsInOtherLists -List3 $ListViewAdd -List1 $ListViewReplace -List2 $ListViewRemove 
     })
     $ListSettingsItemActions.Controls.Add($ButtonMarkWithColor)
-
     #Выбрать цвет
     $ButtonSelectColor = New-Object System.Windows.Forms.Button
     $ButtonSelectColor.Location = New-Object System.Drawing.Point(255,17) #x,y
@@ -783,7 +911,6 @@ Function Custom-Form ()
     $ButtonSelectColor.BackColor = $ColorDialog.Color
     })
     $ListSettingsItemActions.Controls.Add($ButtonSelectColor)
-
     #Отменить выделение
     $ButtonRemoveColoring = New-Object System.Windows.Forms.Button
     $ButtonRemoveColoring.Location = New-Object System.Drawing.Point(140,43) #x,y
@@ -796,7 +923,6 @@ Function Custom-Form ()
     Unselect-ItemsInOtherLists -List3 $ListViewAdd -List1 $ListViewReplace -List2 $ListViewRemove 
     })
     $ListSettingsItemActions.Controls.Add($ButtonRemoveColoring)
-
     #Заполнить списки
     $ButtonPopulateLists = New-Object System.Windows.Forms.Button
     $ButtonPopulateLists.Location = New-Object System.Drawing.Point(140,69) #x,y
@@ -828,28 +954,73 @@ Function Custom-Form ()
     })
     $ListSettingsItemActions.Controls.Add($ButtonPopulateLists)
 
+    #Группа элементов Действия со списками
+    $ListSettingsListActions = New-Object System.Windows.Forms.GroupBox
+    $ListSettingsListActions.Location = New-Object System.Drawing.Point(898,445) #x,y
+    $ListSettingsListActions.Size = New-Object System.Drawing.Point(400,100) #width,height
+    $ListSettingsListActions.Text = "Действия со списками"
+    $ListSettingsGroup.Controls.Add($ListSettingsListActions)
+    #Очистить списки
+    $ButtonClearLists = New-Object System.Windows.Forms.Button
+    $ButtonClearLists.Location = New-Object System.Drawing.Point(10,17) #x,y
+    $ButtonClearLists.Size = New-Object System.Drawing.Point(137,22) #width,height
+    $ButtonClearLists.Text = "Очистить..."
+    $ButtonClearLists.Add_Click({Clear-Lists})
+    $ListSettingsListActions.Controls.Add($ButtonClearLists)
+    #Отменить выделение
+    $ButtonRemoveColoringLists = New-Object System.Windows.Forms.Button
+    $ButtonRemoveColoringLists.Location = New-Object System.Drawing.Point(10,43) #x,y
+    $ButtonRemoveColoringLists.Size = New-Object System.Drawing.Point(137,22) #width,height
+    $ButtonRemoveColoringLists.Text = "Отменить выделение..."
+    $ButtonRemoveColoringLists.Add_Click({Discard-Coloring})
+    $ListSettingsListActions.Controls.Add($ButtonRemoveColoringLists)
+    #Чекбокс Отобразить сетку
+    $CheckboxDisplayGrid = New-Object System.Windows.Forms.CheckBox
+    $CheckboxDisplayGrid.Width = 150
+    $CheckboxDisplayGrid.Text = "Отобразить сетку"
+    $CheckboxDisplayGrid.Location = New-Object System.Drawing.Point(10,69) #x,y
+    $CheckboxDisplayGrid.Enabled = $true
+    $CheckboxDisplayGrid.Add_CheckStateChanged({
+        if ($CheckboxDisplayGrid.Checked -eq $true) {
+            $ListViewAdd.GridLines = $true; $ListViewReplace.GridLines = $true; $ListViewRemove.GridLines = $true
+        } else {
+            $ListViewAdd.GridLines = $false; $ListViewReplace.GridLines = $false; $ListViewRemove.GridLines = $false
+        }
+    })
+    $ListSettingsListActions.Controls.Add($CheckboxDisplayGrid)
+    #Импортировать из XML
+    $ButtonImportFromXml = New-Object System.Windows.Forms.Button
+    $ButtonImportFromXml.Location = New-Object System.Drawing.Point(167,17) #x,y
+    $ButtonImportFromXml.Size = New-Object System.Drawing.Point(137,22) #width,height
+    $ButtonImportFromXml.Text = "Импорт из XML..."
+    $ButtonImportFromXml.Add_Click({})
+    $ListSettingsListActions.Controls.Add($ButtonImportFromXml)
+    #Экспортировать в XML
+    $ButtonExportToXml = New-Object System.Windows.Forms.Button
+    $ButtonExportToXml.Location = New-Object System.Drawing.Point(167,43) #x,y
+    $ButtonExportToXml.Size = New-Object System.Drawing.Point(137,22) #width,height
+    $ButtonExportToXml.Text = "Экспорт в XML..."
+    $ButtonExportToXml.Add_Click({})
+    $ListSettingsListActions.Controls.Add($ButtonExportToXml)
+    #Пакетный импорт файлов
+    $ButtonBatchFileImport = New-Object System.Windows.Forms.Button
+    $ButtonBatchFileImport.Location = New-Object System.Drawing.Point(167,69) #x,y
+    $ButtonBatchFileImport.Size = New-Object System.Drawing.Point(137,22) #width,height
+    $ButtonBatchFileImport.Text = "Пакетный импорт..."
+    $ButtonBatchFileImport.Add_Click({})
+    $ListSettingsListActions.Controls.Add($ButtonBatchFileImport)
 
+    #Группа элементов Параметры извещения
+    $UpdateNotificationParameters = New-Object System.Windows.Forms.GroupBox
+    $UpdateNotificationParameters.Location = New-Object System.Drawing.Point(10,575) #x,y
+    $UpdateNotificationParameters.Size = New-Object System.Drawing.Point(400,200) #width,height
+    $UpdateNotificationParameters.Text = "Параметры извещения об изменении"
+    $ScriptMainWindow.Controls.Add($UpdateNotificationParameters)
+
+    
 
     
     <#
-    #Button 'Edit'
-    $CreatePropertiesPageButtonEditItem = New-Object System.Windows.Forms.Button
-    $CreatePropertiesPageButtonEditItem.Location = New-Object System.Drawing.Point(98,230) #x,y
-    $CreatePropertiesPageButtonEditItem.Size = New-Object System.Drawing.Point(70,22) #width,height
-    $CreatePropertiesPageButtonEditItem.Text = "Edit item"
-    $CreatePropertiesPageButtonEditItem.Add_Click({
-    if ($CreatePropertyListView.SelectedIndices.Count -gt 0) {AddApply-ItemToList -FormName "Edit item" -ButtonName "Apply" -Type Apply} else {write-host "FUCK YOU!"} 
-    })
-    $CreatePropertiesPageListSettings.Controls.Add($CreatePropertiesPageButtonEditItem)
-    #Button 'Clear'
-    $CreatePropertiesPageButtonClearList = New-Object System.Windows.Forms.Button
-    $CreatePropertiesPageButtonClearList.Location = New-Object System.Drawing.Point(274,230) #x,y
-    $CreatePropertiesPageButtonClearList.Size = New-Object System.Drawing.Point(70,22) #width,height
-    $CreatePropertiesPageButtonClearList.Text = "Clear list"
-    $CreatePropertiesPageButtonClearList.Add_Click({
-    $CreatePropertyListView.Items.Clear()
-    })
-    $CreatePropertiesPageListSettings.Controls.Add($CreatePropertiesPageButtonClearList)
     #Button 'Export'
     $CreatePropertiesPageButtonExportList = New-Object System.Windows.Forms.Button
     $CreatePropertiesPageButtonExportList.Location = New-Object System.Drawing.Point(362,230) #x,y
