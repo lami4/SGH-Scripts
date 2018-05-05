@@ -562,24 +562,62 @@ Function Disable-AllExceptEditing ($BooleanRest, $BooleanEditing)
     $GetPropertyButtonEditItem.Enabled = $BooleanRest
     $GetPropertyButtonClear.Enabled = $BooleanRest
     $GetPropertyLabelButtonClear.Enabled = $BooleanRest
+    $ManageCustomListsCloseButton.Enabled = $BooleanRest
+    $ManageCustomListsSaveButton.Enabled = $BooleanRest
+}
+
+Function Populate-List ($List, $PathToXml)
+{
+    $ServiceXml = New-Object System.Xml.XmlDocument
+    $ServiceXml.Load($PathToXml)
+    $InnerTexts = $ServiceXml.SelectNodes("//name")
+    Foreach ($InnerText in $InnerTexts) {
+        $List.Items.Add($InnerText.InnerText)
+    }
+}
+
+Function Generate-XmlList ($List, [ValidateSet("Departments", "Employees")]$ListType)
+{
+$XmlList = New-Object System.Xml.XmlDocument
+$XmlList.CreateXmlDeclaration("1.0","UTF-8",$null)
+$XmlList.AppendChild($XmlList.CreateXmlDeclaration("1.0","UTF-8",$null))
+$CommentForXml = @"
+
+Автоматически сгенерированный список
+Сгенерирован: $(Get-Date)
+
+"@
+$XmlList.AppendChild($XmlList.CreateComment($CommentForXml))
+if ($ListType -eq "Departments") {$RootElement = $XmlList.CreateNode("element","departments",$null)}
+if ($ListType -eq "Employees") {$RootElement = $XmlList.CreateNode("element","employees",$null)}
+$XmlList.AppendChild($RootElement) | Out-Null
+
+Foreach ($ListItem in $List) {
+$ElementName = $XmlList.CreateNode("element","name",$null)
+$ElementName.InnerText = $ListItem
+$XmlList.SelectSingleNode("/departments").AppendChild($ElementName)
+}
+if ($ListType -eq "Departments") {$XmlList.Save("$PSScriptRoot\Отделы.xml")}
+if ($ListType -eq "Employees") {$XmlList.Save("$PSScriptRoot\Сотрудники.xml")}
+
 }
 
 Function Manage-CustomLists ($PathToLost, [ValidateSet("Departments", "Employees")]$ListType)
 {
     $ManageCustomListsForm = New-Object System.Windows.Forms.Form
-    $ManageCustomListsForm.Padding = New-Object System.Windows.Forms.Padding(0,0,10,0)
+    $ManageCustomListsForm.Padding = New-Object System.Windows.Forms.Padding(0,0,10,10)
     $ManageCustomListsForm.ShowIcon = $false
     $ManageCustomListsForm.AutoSize = $true
     if ($ListType -eq "Departments") {$ManageCustomListsForm.Text = "Редактировать список отделов"}
     if ($ListType -eq "Employees") {$ManageCustomListsForm.Text = "Редактировать список сотрудников"}
-    #$ManageCustomListsForm.AutoSizeMode = "GrowAndShrink"
+    $ManageCustomListsForm.AutoSizeMode = "GrowAndShrink"
     $ManageCustomListsForm.WindowState = "Normal"
     $ManageCustomListsForm.SizeGripStyle = "Hide"
     $ManageCustomListsForm.ShowInTaskbar = $true
     $ManageCustomListsForm.StartPosition = "CenterScreen"
     $ManageCustomListsForm.MinimizeBox = $false
     $ManageCustomListsForm.MaximizeBox = $false
-    $ManageCustomListsForm.Size = New-Object System.Drawing.Point(550,300) #width,height 
+    #$ManageCustomListsForm.Size = New-Object System.Drawing.Point(550,300) #width,height 
     #Надпись к списку, который содержит список отделов/сотрудников компании
     $GetPropertyLabelBlacklistListBox = New-Object System.Windows.Forms.Label
     $GetPropertyLabelBlacklistListBox.Location =  New-Object System.Drawing.Point(10,10) #x,y
@@ -589,11 +627,13 @@ Function Manage-CustomLists ($PathToLost, [ValidateSet("Departments", "Employees
     if ($ListType -eq "Employees") {$GetPropertyLabelBlacklistListBox.Text = "Список сотрудников компании:"}
     $ManageCustomListsForm.Controls.Add($GetPropertyLabelBlacklistListBox)
     #Список отделов/сотрудников компании
-    $DefaultBlackList = @("Last author", "Template", "Security", "Revision number", "Application name", "Last print date", "Number of bytes", "Number of characters (with spaces)", "Number of multimedia clips", "Number of hidden Slides", "Number of notes", "Number of slides", "Number of paragraphs", "Number of lines", "Number of characters", "Number of words", "Number of pages", "Total editing time", "Last save time", "Creation date")
+    #$DefaultBlackList = @("Last author", "Template", "Security", "Revision number", "Application name", "Last print date", "Number of bytes", "Number of characters (with spaces)", "Number of multimedia clips", "Number of hidden Slides", "Number of notes", "Number of slides", "Number of paragraphs", "Number of lines", "Number of characters", "Number of words", "Number of pages", "Total editing time", "Last save time", "Creation date")
     $GetPropertyListBoxBlackList = New-Object System.Windows.Forms.ListBox
     $GetPropertyListBoxBlackList.Location = New-Object System.Drawing.Point(10,25) #x,y
     $GetPropertyListBoxBlackList.Size = New-Object System.Drawing.Point(210,260) #width,height
-    $DefaultBlackList | % {$GetPropertyListBoxBlackList.Items.Add($_)} | Out-Null
+    #$DefaultBlackList | % {$GetPropertyListBoxBlackList.Items.Add($_)} | Out-Null
+    if ($ListType -eq "Departments") {if (Test-Path "$PSScriptRoot\Отделы.xml") {Populate-List -List $GetPropertyListBoxBlackList -PathToXml "$PSScriptRoot\Отделы.xml"}}
+    if ($ListType -eq "Employees") {if (Test-Path "$PSScriptRoot\Сотрудники.xml") {Populate-List -List $GetPropertyListBoxBlackList -PathToXml "$PSScriptRoot\Сотрудники.xml"}}
     $GetPropertyListBoxBlackList.Add_SelectedIndexChanged({
         if ($GetPropertyListBoxBlackList.SelectedIndex -ne -1) {
             #Write-Host "$($GetPropertyListBoxBlackList.SelectedIndex)"
@@ -601,43 +641,59 @@ Function Manage-CustomLists ($PathToLost, [ValidateSet("Departments", "Employees
         }
         })
     $ManageCustomListsForm.Controls.Add($GetPropertyListBoxBlackList)
-    #Button 'Add'
+    #Кнопка добавить
     $GetPropertyButtonAddItem = New-Object System.Windows.Forms.Button
     $GetPropertyButtonAddItem.Location = New-Object System.Drawing.Point(235,25) #x,y
     $GetPropertyButtonAddItem.Size = New-Object System.Drawing.Point(110,22) #width,height
     $GetPropertyButtonAddItem.Text = "Добавить"
     $GetPropertyButtonAddItem.Add_Click({
-        if ($GetPropertyInputboxAddItem.Text -ne "Укажите название отдела...") {
-            if ($GetPropertyListBoxBlackList.Items.Contains($GetPropertyInputboxAddItem.Text)) {
-                Show-MessageBox -Title "Item already exists" -Type OK -Message "The property you are attempting to add ($($GetPropertyInputboxAddItem.Text)) is already on the list."
-            } else {
-                $GetPropertyListBoxBlackList.Items.Insert(0, $GetPropertyInputboxAddItem.Text)
-                $GetPropertyInputboxAddItem.Text = "Укажите название отдела..."
-                $GetPropertyInputboxAddItem.ForeColor = "Gray"
+        if ($ListType -eq "Departments") {
+            if ($GetPropertyInputboxAddItem.Text -ne "Укажите название отдела...") {
+                if ($GetPropertyListBoxBlackList.Items.Contains($GetPropertyInputboxAddItem.Text)) {
+                    Show-MessageBox -Title "Запись уже существует в списке" -Type OK -Message "Список уже содержит указанный отдел ($($GetPropertyInputboxAddItem.Text))."
+                } else {
+                    $GetPropertyListBoxBlackList.Items.Insert(0, $GetPropertyInputboxAddItem.Text)
+                    $GetPropertyInputboxAddItem.Text = "Укажите название отдела..."
+                    $GetPropertyInputboxAddItem.ForeColor = "Gray"
+                }
+            }
+        }
+        if ($ListType -eq "Employees") {
+            if ($GetPropertyInputboxAddItem.Text -ne "Укажите ФИО...") {
+                if ($GetPropertyListBoxBlackList.Items.Contains($GetPropertyInputboxAddItem.Text)) {
+                Show-MessageBox -Title "Запись уже существует в списке" -Type OK -Message "Список уже содержит указанное ФИО ($($GetPropertyInputboxAddItem.Text))."
+                } else {
+                    $GetPropertyListBoxBlackList.Items.Insert(0, $GetPropertyInputboxAddItem.Text)
+                    $GetPropertyInputboxAddItem.Text = "Укажите ФИО..."
+                    $GetPropertyInputboxAddItem.ForeColor = "Gray"               
+                }
             }
         }
         })
     $ManageCustomListsForm.Controls.Add($GetPropertyButtonAddItem)
-    #Inputbox 'Add item to the list'
+    #Поле ввода для указания названия отдела
     $GetPropertyInputboxAddItem = New-Object System.Windows.Forms.TextBox 
     $GetPropertyInputboxAddItem.Location = New-Object System.Drawing.Size(350,26) #x,y
     $GetPropertyInputboxAddItem.Width = 190
-    $GetPropertyInputboxAddItem.Text = "Укажите название отдела..."
+    if ($ListType -eq "Departments") {$GetPropertyInputboxAddItem.Text = "Укажите название отдела..."}
+    if ($ListType -eq "Employees") {$GetPropertyInputboxAddItem.Text = "Укажите ФИО..."}
+    
     $GetPropertyInputboxAddItem.ForeColor = "Gray"
     $GetPropertyInputboxAddItem.Add_GotFocus({
-        if ($GetPropertyInputboxAddItem.Text -eq "Укажите название отдела...") {
+        if ($GetPropertyInputboxAddItem.Text -eq "Укажите название отдела..." -or $GetPropertyInputboxAddItem.Text -eq "Укажите ФИО...") {
             $GetPropertyInputboxAddItem.Text = ""
             $GetPropertyInputboxAddItem.ForeColor = "Black"
         }
         })
     $GetPropertyInputboxAddItem.Add_LostFocus({
         if ($GetPropertyInputboxAddItem.Text -eq "") {
-            $GetPropertyInputboxAddItem.Text = "Укажите название отдела..."
+            if ($ListType -eq "Departments") {$GetPropertyInputboxAddItem.Text = "Укажите название отдела..."}
+            if ($ListType -eq "Employees") {$GetPropertyInputboxAddItem.Text = "Укажите ФИО..."}
             $GetPropertyInputboxAddItem.ForeColor = "Gray"
         }
         })
     $ManageCustomListsForm.Controls.Add($GetPropertyInputboxAddItem)
-    #Button 'Edit'
+    #Кнопка редактировать
     $GetPropertyButtonEditItem = New-Object System.Windows.Forms.Button
     $GetPropertyButtonEditItem.Location = New-Object System.Drawing.Point(235,53) #x,y
     $GetPropertyButtonEditItem.Size = New-Object System.Drawing.Point(110,22) #width,height
@@ -648,14 +704,14 @@ Function Manage-CustomLists ($PathToLost, [ValidateSet("Departments", "Employees
         }
         })
     $ManageCustomListsForm.Controls.Add($GetPropertyButtonEditItem)
-    #Inputbox 'Edit the selected item'
+    #Поле ввода для редактирования названия отдела
     $GetPropertyInputboxEditItem = New-Object System.Windows.Forms.TextBox 
     $GetPropertyInputboxEditItem.Location = New-Object System.Drawing.Size(350,54) #x,y
     $GetPropertyInputboxEditItem.Width = 190
     $GetPropertyInputboxEditItem.Enabled = $false
     $GetPropertyInputboxEditItem.Text = "Выберите запись из списка..."
     $ManageCustomListsForm.Controls.Add($GetPropertyInputboxEditItem)
-    #Button 'Apply'
+    #Кнопка применить
     $GetPropertyButtonApplyItem = New-Object System.Windows.Forms.Button
     $GetPropertyButtonApplyItem.Location = New-Object System.Drawing.Point(350,76) #x,y
     $GetPropertyButtonApplyItem.Size = New-Object System.Drawing.Point(80,22) #width,height
@@ -665,25 +721,32 @@ Function Manage-CustomLists ($PathToLost, [ValidateSet("Departments", "Employees
         if ($GetPropertyInputboxEditItem.Text -eq $GetPropertyListBoxBlackList.SelectedItem) {
             Disable-AllExceptEditing -BooleanRest $true -BooleanEditing $false
         } else {
-            $SelectedIndex = $GetPropertyListBoxBlackList.SelectedIndex
-            $GetPropertyListBoxBlackList.Items.Insert($GetPropertyListBoxBlackList.SelectedIndex, ($GetPropertyInputboxEditItem.Text).Trim(' '))
-            $GetPropertyListBoxBlackList.Items.Remove($GetPropertyListBoxBlackList.SelectedItem)
-            $GetPropertyListBoxBlackList.SelectedIndex = $SelectedIndex
-            Disable-AllExceptEditing -BooleanRest $true -BooleanEditing $false
+            if ($GetPropertyListBoxBlackList.Items.Contains($GetPropertyInputboxEditItem.Text)) {
+                if ($ListType -eq "Departments") {Show-MessageBox -Title "Запись уже существует в списке" -Type OK -Message "Список уже содержит указанный отдел ($($GetPropertyInputboxEditItem.Text))."}
+                if ($ListType -eq "Employees") {Show-MessageBox -Title "Запись уже существует в списке" -Type OK -Message "Список уже содержит указанное ФИО ($($GetPropertyInputboxEditItem.Text))."}
+            } else {
+                $SelectedIndex = $GetPropertyListBoxBlackList.SelectedIndex
+                $GetPropertyListBoxBlackList.Items.Insert($GetPropertyListBoxBlackList.SelectedIndex, ($GetPropertyInputboxEditItem.Text).Trim(' '))
+                $GetPropertyListBoxBlackList.Items.Remove($GetPropertyListBoxBlackList.SelectedItem)
+                $GetPropertyListBoxBlackList.SelectedIndex = $SelectedIndex
+                $GetPropertyInputboxEditItem.Text = ($GetPropertyInputboxEditItem.Text).Trim(' ')
+                Disable-AllExceptEditing -BooleanRest $true -BooleanEditing $false
+            }
         }
         })
     $ManageCustomListsForm.Controls.Add($GetPropertyButtonApplyItem)
-    #Button 'Cancel'
+    #Кнопка отмена
     $GetPropertyButtonCancelItem = New-Object System.Windows.Forms.Button
     $GetPropertyButtonCancelItem.Location = New-Object System.Drawing.Point(432,76) #x,y
     $GetPropertyButtonCancelItem.Size = New-Object System.Drawing.Point(80,22) #width,height
     $GetPropertyButtonCancelItem.Text = "Отмена"
     $GetPropertyButtonCancelItem.Enabled = $false
     $GetPropertyButtonCancelItem.Add_Click({
+        $GetPropertyInputboxEditItem.Text = $GetPropertyListBoxBlackList.SelectedItem
         Disable-AllExceptEditing -BooleanRest $true -BooleanEditing $false    
         })
     $ManageCustomListsForm.Controls.Add($GetPropertyButtonCancelItem)
-    #Button 'Delete'
+    #Кнопка удалить
     $GetPropertyButtonDeleteItem = New-Object System.Windows.Forms.Button
     $GetPropertyButtonDeleteItem.Location = New-Object System.Drawing.Point(235,104) #x,y
     $GetPropertyButtonDeleteItem.Size = New-Object System.Drawing.Point(110,22) #width,height
@@ -693,30 +756,53 @@ Function Manage-CustomLists ($PathToLost, [ValidateSet("Departments", "Employees
         $GetPropertyInputboxEditItem.Text = "Выберите запись из списка..."
         })
     $ManageCustomListsForm.Controls.Add($GetPropertyButtonDeleteItem)
-    #Label for 'Delete' button
+    #Надпись для кнопки удалить
     $GetPropertyLabelButtonDelete = New-Object System.Windows.Forms.Label
     $GetPropertyLabelButtonDelete.Location =  New-Object System.Drawing.Point(350,107) #x,y
-    $GetPropertyLabelButtonDelete.Size =  New-Object System.Drawing.Point(203,15) #width,height
+    $GetPropertyLabelButtonDelete.Size =  New-Object System.Drawing.Point(180,15) #width,height
     if ($ListType -eq "Departments") {$GetPropertyLabelButtonDelete.Text = "Удалить отдел из списка"}
     if ($ListType -eq "Employees") {$GetPropertyLabelButtonDelete.Text = "Удалить сотрудника из списка"}
     
     $ManageCustomListsForm.Controls.Add($GetPropertyLabelButtonDelete)
-    #Button 'Clear'
+    #Кнопка очистить
     $GetPropertyButtonClear = New-Object System.Windows.Forms.Button
     $GetPropertyButtonClear.Location = New-Object System.Drawing.Point(235,132) #x,y
     $GetPropertyButtonClear.Size = New-Object System.Drawing.Point(110,22) #width,height
     $GetPropertyButtonClear.Text = "Очистить список"
     $GetPropertyButtonClear.Add_Click({
-        $ClickResult = Show-MessageBox -Title "Подтвердите действие" -Type YesNo -Message "Вы уверены, что хотите полностью очистить список от записей?"
+        $ClickResult = Show-MessageBox -Title "Подтвердите действие" -Type YesNo -Message "Вы уверены, что хотите удалить все записи из списка?"
         if ($ClickResult -eq "Yes") {$GetPropertyListBoxBlackList.Items.Clear()}
     })
     $ManageCustomListsForm.Controls.Add($GetPropertyButtonClear)
-    #Label for 'Clear' button
+    #Надпись для кнопки очистить
     $GetPropertyLabelButtonClear = New-Object System.Windows.Forms.Label
     $GetPropertyLabelButtonClear.Location =  New-Object System.Drawing.Point(350,135) #x,y
-    $GetPropertyLabelButtonClear.Size =  New-Object System.Drawing.Point(203,15) #width,height
+    $GetPropertyLabelButtonClear.Size =  New-Object System.Drawing.Point(180,15) #width,height
     $GetPropertyLabelButtonClear.Text = "Удалить все записи из списка"
     $ManageCustomListsForm.Controls.Add($GetPropertyLabelButtonClear)
+    #Кнопка Сохранить
+    $ManageCustomListsSaveButton = New-Object System.Windows.Forms.Button
+    $ManageCustomListsSaveButton.Location = New-Object System.Drawing.Point(235,255) #x,y
+    $ManageCustomListsSaveButton.Size = New-Object System.Drawing.Point(110,22) #width,height
+    $ManageCustomListsSaveButton.Text = "Сохранить"
+    $ManageCustomListsSaveButton.Add_Click({
+    Generate-XmlList -List $GetPropertyListBoxBlackList.Items -ListType Departments
+    $ManageCustomListsForm.Close()
+    if ($ListType -eq "Departments") {
+        $ComboboxDepartmentName.Items.Clear()
+        Foreach ($ItemInList in $GetPropertyListBoxBlackList.Items) {
+            $ComboboxDepartmentName.Items.Add($ItemInList)
+        }
+    }
+    })
+    $ManageCustomListsForm.Controls.Add($ManageCustomListsSaveButton)
+    #Кнопка Закрыть
+    $ManageCustomListsCloseButton = New-Object System.Windows.Forms.Button
+    $ManageCustomListsCloseButton.Location = New-Object System.Drawing.Point(350,255) #x,y
+    $ManageCustomListsCloseButton.Size = New-Object System.Drawing.Point(110,22) #width,height
+    $ManageCustomListsCloseButton.Text = "Закрыть"
+    $ManageCustomListsCloseButton.Add_Click({$ManageCustomListsForm.Close()})
+    $ManageCustomListsForm.Controls.Add($ManageCustomListsCloseButton)
     $ManageCustomListsForm.ShowDialog()
 }
 
@@ -1211,7 +1297,7 @@ Function Custom-Form ()
     $CalendarIssueDateInput = New-Object System.Windows.Forms.DateTimePicker
     $CalendarIssueDateInput.Location = New-Object System.Drawing.Point(162,53) #x,y
     $CalendarIssueDateInput.Format = [System.Windows.Forms.DateTimePickerFormat]::Short
-    $CalendarIssueDateInput.Width = 100
+    $CalendarIssueDateInput.Width = 110
     #$CalendarIssueDateInput.Text = "03.02.1990"
     $UpdateNotificationParameters.Controls.Add($CalendarIssueDateInput)
     #Надпись к календарю для указания Срока внесения изменений
@@ -1225,7 +1311,7 @@ Function Custom-Form ()
     $CalendarApplyUpdatesUntilInput = New-Object System.Windows.Forms.DateTimePicker
     $CalendarApplyUpdatesUntilInput.Location = New-Object System.Drawing.Point(162,82) #x,y
     $CalendarApplyUpdatesUntilInput.Format = [System.Windows.Forms.DateTimePickerFormat]::Short
-    $CalendarApplyUpdatesUntilInput.Width = 100
+    $CalendarApplyUpdatesUntilInput.Width = 110
     #$CalendarApplyUpdatesUntilInput.Text = "03.02.1990"
     $UpdateNotificationParameters.Controls.Add($CalendarApplyUpdatesUntilInput)
     #Надпись к списку для указания Название отдела
@@ -1236,12 +1322,11 @@ Function Custom-Form ()
     $ComboboxDepartmentNameLabel.TextAlign = "TopRight"
     $UpdateNotificationParameters.Controls.Add($ComboboxDepartmentNameLabel)
     #Список содержащий доступные Названия отделов
-    $NamesOfDepartments = @("БТД","ОПУ")
     $ComboboxDepartmentName = New-Object System.Windows.Forms.ComboBox
     $ComboboxDepartmentName.Location = New-Object System.Drawing.Point(422,23) #x,y
     $ComboboxDepartmentName.DropDownStyle = "DropDownList"
     $ComboboxDepartmentName.Width = 200
-    $NamesOfDepartments | % {$ComboboxDepartmentName.Items.Add($_)}
+    if (Test-Path -Path "$PSScriptRoot\Отделы.xml") {Populate-List -List $ComboboxDepartmentName -PathToXml "$PSScriptRoot\Отделы.xml"}
     $UpdateNotificationParameters.Controls.Add($ComboboxDepartmentName)
     #Кнопка Редактирования списка отделов
     $ButtonEditListOfDepartments = New-Object System.Windows.Forms.Button
