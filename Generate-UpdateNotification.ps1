@@ -466,6 +466,7 @@ Function Clear-Lists ()
        if ($CheckboxClearAddList.Checked -eq $true) {$ListViewAdd.Items.Clear()}
        if ($CheckboxClearReplaceList.Checked -eq $true) {$ListViewReplace.Items.Clear()}
        if ($CheckboxClearRemoveList.Checked -eq $true) {$ListViewRemove.Items.Clear()}
+       Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
        $ClearListsForm.Close()
     })
     $ClearListsForm.Controls.Add($ClearListsFormAddButton)
@@ -578,28 +579,27 @@ Function Populate-List ($List, $PathToXml)
 
 Function Generate-XmlList ($List, [ValidateSet("Departments", "Employees")]$ListType)
 {
-$XmlList = New-Object System.Xml.XmlDocument
-$XmlList.CreateXmlDeclaration("1.0","UTF-8",$null)
-$XmlList.AppendChild($XmlList.CreateXmlDeclaration("1.0","UTF-8",$null))
+    $XmlList = New-Object System.Xml.XmlDocument
+    $XmlList.CreateXmlDeclaration("1.0","UTF-8",$null)
+    $XmlList.AppendChild($XmlList.CreateXmlDeclaration("1.0","UTF-8",$null))
 $CommentForXml = @"
 
 Автоматически сгенерированный список
 Сгенерирован: $(Get-Date)
 
 "@
-$XmlList.AppendChild($XmlList.CreateComment($CommentForXml))
-if ($ListType -eq "Departments") {$RootElement = $XmlList.CreateNode("element","departments",$null)}
-if ($ListType -eq "Employees") {$RootElement = $XmlList.CreateNode("element","employees",$null)}
-$XmlList.AppendChild($RootElement) | Out-Null
-
-Foreach ($ListItem in $List) {
-$ElementName = $XmlList.CreateNode("element","name",$null)
-$ElementName.InnerText = $ListItem
-$XmlList.SelectSingleNode("/departments").AppendChild($ElementName)
-}
-if ($ListType -eq "Departments") {$XmlList.Save("$PSScriptRoot\Отделы.xml")}
-if ($ListType -eq "Employees") {$XmlList.Save("$PSScriptRoot\Сотрудники.xml")}
-
+    $XmlList.AppendChild($XmlList.CreateComment($CommentForXml))
+    if ($ListType -eq "Departments") {$RootElement = $XmlList.CreateNode("element","departments",$null)}
+    if ($ListType -eq "Employees") {$RootElement = $XmlList.CreateNode("element","employees",$null)}
+    $XmlList.AppendChild($RootElement) | Out-Null
+    Foreach ($ListItem in $List) {
+        $ElementName = $XmlList.CreateNode("element","name",$null)
+        $ElementName.InnerText = $ListItem
+        if ($ListType -eq "Departments") {$XmlList.SelectSingleNode("/departments").AppendChild($ElementName)}
+        if ($ListType -eq "Employees") {$XmlList.SelectSingleNode("/employees").AppendChild($ElementName)}
+    }
+    if ($ListType -eq "Departments") {$XmlList.Save("$PSScriptRoot\Отделы.xml")}
+    if ($ListType -eq "Employees") {$XmlList.Save("$PSScriptRoot\Сотрудники.xml")}
 }
 
 Function Manage-CustomLists ($PathToLost, [ValidateSet("Departments", "Employees")]$ListType)
@@ -786,14 +786,23 @@ Function Manage-CustomLists ($PathToLost, [ValidateSet("Departments", "Employees
     $ManageCustomListsSaveButton.Size = New-Object System.Drawing.Point(110,22) #width,height
     $ManageCustomListsSaveButton.Text = "Сохранить"
     $ManageCustomListsSaveButton.Add_Click({
-    Generate-XmlList -List $GetPropertyListBoxBlackList.Items -ListType Departments
-    $ManageCustomListsForm.Close()
     if ($ListType -eq "Departments") {
+    Generate-XmlList -List $GetPropertyListBoxBlackList.Items -ListType Departments
         $ComboboxDepartmentName.Items.Clear()
         Foreach ($ItemInList in $GetPropertyListBoxBlackList.Items) {
             $ComboboxDepartmentName.Items.Add($ItemInList)
         }
     }
+    if ($ListType -eq "Employees") {
+    Generate-XmlList -List $GetPropertyListBoxBlackList.Items -ListType Employees
+        $ComboboxCheckedBy.Items.Clear()
+        $ComboboxCreatedBy.Items.Clear()
+        Foreach ($ItemInList in $GetPropertyListBoxBlackList.Items) {
+            $ComboboxCheckedBy.Items.Add($ItemInList)
+            $ComboboxCreatedBy.Items.Add($ItemInList)
+        }
+    }
+    $ManageCustomListsForm.Close()
     })
     $ManageCustomListsForm.Controls.Add($ManageCustomListsSaveButton)
     #Кнопка Закрыть
@@ -847,9 +856,9 @@ Function Custom-Form ()
     $ListViewAdd.HideSelection = $false
     $ListViewAdd.Width = 400
     $ListViewAdd.Height = 370
-    Add-HeaderToViewList -ListView $ListViewAdd -HeaderText "Обозначение" -Width 267
-    Add-HeaderToViewList -ListView $ListViewAdd -HeaderText "Изм./MD5" -Width 69
-    Add-HeaderToViewList -ListView $ListViewAdd -HeaderText "Тип" -Width 43
+    Add-HeaderToViewList -ListView $ListViewAdd -HeaderText "Обозначение" -Width 267 | Out-Null
+    Add-HeaderToViewList -ListView $ListViewAdd -HeaderText "Изм./MD5" -Width 69 | Out-Null
+    Add-HeaderToViewList -ListView $ListViewAdd -HeaderText "Тип" -Width 43 | Out-Null
     $ListViewAdd_ColumnWidthChanged = [System.Windows.Forms.ColumnWidthChangedEventHandler]{
         if ($ListViewAdd.Columns[0].Width -ne 267) {
             $ListViewAdd.Columns[0].Width = 267
@@ -934,9 +943,9 @@ Function Custom-Form ()
     $ListViewReplace.HideSelection = $false
     $ListViewReplace.Width = 400
     $ListViewReplace.Height = 370
-    Add-HeaderToViewList -ListView $ListViewReplace -HeaderText "Обозначение" -Width 267
-    Add-HeaderToViewList -ListView $ListViewReplace -HeaderText "Изм./MD5" -Width 69
-    Add-HeaderToViewList -ListView $ListViewReplace -HeaderText "Тип" -Width 43
+    Add-HeaderToViewList -ListView $ListViewReplace -HeaderText "Обозначение" -Width 267 | Out-Null
+    Add-HeaderToViewList -ListView $ListViewReplace -HeaderText "Изм./MD5" -Width 69 | Out-Null
+    Add-HeaderToViewList -ListView $ListViewReplace -HeaderText "Тип" -Width 43 | Out-Null
     $ListViewReplace_ColumnWidthChanged = [System.Windows.Forms.ColumnWidthChangedEventHandler]{
         if ($ListViewReplace.Columns[0].Width -ne 267) {
             $ListViewReplace.Columns[0].Width = 267
@@ -1021,9 +1030,9 @@ Function Custom-Form ()
     $ListViewRemove.HideSelection = $false
     $ListViewRemove.Width = 400
     $ListViewRemove.Height = 370
-    Add-HeaderToViewList -ListView $ListViewRemove -HeaderText "Обозначение" -Width 267
-    Add-HeaderToViewList -ListView $ListViewRemove -HeaderText "Изм./MD5" -Width 69
-    Add-HeaderToViewList -ListView $ListViewRemove -HeaderText "Тип" -Width 43
+    Add-HeaderToViewList -ListView $ListViewRemove -HeaderText "Обозначение" -Width 267 | Out-Null
+    Add-HeaderToViewList -ListView $ListViewRemove -HeaderText "Изм./MD5" -Width 69 | Out-Null
+    Add-HeaderToViewList -ListView $ListViewRemove -HeaderText "Тип" -Width 43 | Out-Null
         $ListViewRemove_ColumnWidthChanged = [System.Windows.Forms.ColumnWidthChangedEventHandler]{
         if ($ListViewRemove.Columns[0].Width -ne 267) {
             $ListViewRemove.Columns[0].Width = 267
@@ -1128,9 +1137,6 @@ Function Custom-Form ()
     $ButtonDeleteItem.Size = New-Object System.Drawing.Point(110,22) #width,height
     $ButtonDeleteItem.Text = "Удалить"
     $ButtonDeleteItem.Add_Click({
-    Write-Host $ListViewAdd.SelectedItems.Count
-    Write-Host $ListViewReplace.SelectedItems.Count
-    Write-Host $ListViewRemove.SelectedItems.Count
     if ($ListViewAdd.SelectedIndices.Count -gt 0) {$ListViewAdd.Items[$ListViewAdd.SelectedIndices[0]].Remove()}
     if ($ListViewReplace.SelectedIndices.Count -gt 0) {$ListViewReplace.Items[$ListViewReplace.SelectedIndices[0]].Remove()}
     if ($ListViewRemove.SelectedIndices.Count -gt 0) {$ListViewRemove.Items[$ListViewRemove.SelectedIndices[0]].Remove()}
@@ -1147,7 +1153,6 @@ Function Custom-Form ()
     $ButtonMarkWithColor.Size = New-Object System.Drawing.Point(110,22) #width,height
     $ButtonMarkWithColor.Text = "Выделить цветом"
     $ButtonMarkWithColor.Add_Click({
-    Write-Host $ColorDialog.Color
     if ($ListViewAdd.SelectedIndices.Count -gt 0) {$ListViewAdd.Items[$ListViewAdd.SelectedIndices[0]].BackColor = $ColorDialog.Color}
     if ($ListViewReplace.SelectedIndices.Count -gt 0) {$ListViewReplace.Items[$ListViewReplace.SelectedIndices[0]].BackColor = $ColorDialog.Color}
     if ($ListViewRemove.SelectedIndices.Count -gt 0) {$ListViewRemove.Items[$ListViewRemove.SelectedIndices[0]].BackColor = $ColorDialog.Color}
@@ -1268,7 +1273,7 @@ Function Custom-Form ()
     #Группа элементов Параметры извещения
     $UpdateNotificationParameters = New-Object System.Windows.Forms.GroupBox
     $UpdateNotificationParameters.Location = New-Object System.Drawing.Point(10,575) #x,y
-    $UpdateNotificationParameters.Size = New-Object System.Drawing.Point(800,115) #width,height
+    $UpdateNotificationParameters.Size = New-Object System.Drawing.Point(659,115) #width,height
     $UpdateNotificationParameters.Text = "Параметры извещения"
     $ScriptMainWindow.Controls.Add($UpdateNotificationParameters)
     #Надпись к полю Номер извещения
@@ -1318,7 +1323,7 @@ Function Custom-Form ()
     $ComboboxDepartmentNameLabel = New-Object System.Windows.Forms.Label
     $ComboboxDepartmentNameLabel.Location = New-Object System.Drawing.Point(317,25) #x,y
     $ComboboxDepartmentNameLabel.Width = 100
-    $ComboboxDepartmentNameLabel.Text = "Название отдела:"
+    $ComboboxDepartmentNameLabel.Text = "Отдел:"
     $ComboboxDepartmentNameLabel.TextAlign = "TopRight"
     $UpdateNotificationParameters.Controls.Add($ComboboxDepartmentNameLabel)
     #Список содержащий доступные Названия отделов
@@ -1344,19 +1349,18 @@ Function Custom-Form ()
     $ComboboxCreatedByLabel.TextAlign = "TopRight"
     $UpdateNotificationParameters.Controls.Add($ComboboxCreatedByLabel)
     #Список содержащий доступные ФИО
-    $ListOfNames = @("С. Селюто","В. Горемыкин","И. Чижиков")
     $ComboboxCreatedBy = New-Object System.Windows.Forms.ComboBox
     $ComboboxCreatedBy.Location = New-Object System.Drawing.Point(422,53) #x,y
     $ComboboxCreatedBy.DropDownStyle = "DropDownList"
     $ComboboxCreatedBy.Width = 200
-    $ListOfNames | % {$ComboboxCreatedBy.Items.Add($_)}
+    if (Test-Path -Path "$PSScriptRoot\Сотрудники.xml") {Populate-List -List $ComboboxCreatedBy -PathToXml "$PSScriptRoot\Сотрудники.xml"}
     $UpdateNotificationParameters.Controls.Add($ComboboxCreatedBy)
     #Кнопка Редактирования списка ФИО
     $ButtonEditListOfNamesCreatedBy = New-Object System.Windows.Forms.Button
     $ButtonEditListOfNamesCreatedBy.Location = New-Object System.Drawing.Point(627,52) #x,y
     $ButtonEditListOfNamesCreatedBy.Size = New-Object System.Drawing.Point(22,23) #width,height
     $ButtonEditListOfNamesCreatedBy.Text = "..."
-    $ButtonEditListOfNamesCreatedBy.Add_Click({})
+    $ButtonEditListOfNamesCreatedBy.Add_Click({Manage-CustomLists -ListType Employees})
     $UpdateNotificationParameters.Controls.Add($ButtonEditListOfNamesCreatedBy)
 
     #Надпись к списку для указания Проверил
@@ -1372,15 +1376,37 @@ Function Custom-Form ()
     $ComboboxCheckedBy.Location = New-Object System.Drawing.Point(422,82) #x,y
     $ComboboxCheckedBy.DropDownStyle = "DropDownList"
     $ComboboxCheckedBy.Width = 200
-    $ListOfNames | % {$ComboboxCheckedBy.Items.Add($_)}
+    if (Test-Path -Path "$PSScriptRoot\Сотрудники.xml") {Populate-List -List $ComboboxCheckedBy -PathToXml "$PSScriptRoot\Сотрудники.xml"}
     $UpdateNotificationParameters.Controls.Add($ComboboxCheckedBy)
     #Кнопка Редактирования списка ФИО
     $ButtonEditListOfNamesCheckedBy = New-Object System.Windows.Forms.Button
     $ButtonEditListOfNamesCheckedBy.Location = New-Object System.Drawing.Point(627,81) #x,y
     $ButtonEditListOfNamesCheckedBy.Size = New-Object System.Drawing.Point(22,23) #width,height
     $ButtonEditListOfNamesCheckedBy.Text = "..."
-    $ButtonEditListOfNamesCheckedBy.Add_Click({})
+    $ButtonEditListOfNamesCheckedBy.Add_Click({Manage-CustomLists -ListType Employees})
     $UpdateNotificationParameters.Controls.Add($ButtonEditListOfNamesCheckedBy)
+
+    #Кнопка запустить
+    $ButtonRun = New-Object System.Windows.Forms.Button
+    $ButtonRun.Location = New-Object System.Drawing.Point(680,580) #x,y
+    $ButtonRun.Size = New-Object System.Drawing.Point(137,22) #width,height
+    $ButtonRun.Text = "Создать ИИ"
+    $ButtonRun.Add_Click({
+    $TextInMessage = "Не указаны или некорректно указаны следующие параметры извещения:`r`n"
+    $ErrorPresent = $false
+    if ($UpdateNotificationNumberInput.Text -eq '  -  -') {$ErrorPresent = $true; $TextInMessage += "`r`nНе указан номер извещения."}
+    if ($UpdateNotificationNumberInput.Text -ne '  -  -') {if ($UpdateNotificationNumberInput.Text -notmatch '\d\d-\d\d-\d\d\d\d') {$ErrorPresent = $true; $TextInMessage += "`r`nНомер извещения указан неполностью, либо содержит недопустимые символы."}}
+    if ($ComboboxCreatedBy.SelectedItem -eq $null) {$ErrorPresent = $true; $TextInMessage += "`r`nНе выбран отдел."}
+    if ($ComboboxCheckedBy.SelectedItem -eq $null) {$ErrorPresent = $true; $TextInMessage += "`r`nНе выбрано ФИО для поля Выпустил."}
+    if ($ComboboxDepartmentName.SelectedItem -eq $null) {$ErrorPresent = $true; $TextInMessage += "`r`nНе выбрано ФИО для поля Проверил."}
+    if ($ErrorPresent -eq $true) {
+        Show-MessageBox -Message $TextInMessage -Title "Невозможно начать генерацию ИИ" -Type OK
+    } else {
+        <#Run da script#>
+    }
+    })
+    
+    $ScriptMainWindow.Controls.Add($ButtonRun)
 
     
     <#
@@ -1410,4 +1436,4 @@ Function Custom-Form ()
     $CreatePropertiesPage.Controls.Add($CreatePropertyTest)#>
     $ScriptMainWindow.ShowDialog()
 }
-Custom-Form
+Custom-Form | Out-Null
