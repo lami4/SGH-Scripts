@@ -1253,7 +1253,9 @@ Start-Sleep -Seconds 2
 $document.Close()
 Start-Sleep -Seconds 2
 $word.Quit()
-Start-Sleep -Seconds 5
+Start-Sleep -Seconds 3
+Kill -Name WINWORD -ErrorAction SilentlyContinue
+Start-Sleep -Seconds 3
 }
 
 Function Add-Data ($TableObject, $List)
