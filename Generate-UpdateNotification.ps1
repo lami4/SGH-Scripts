@@ -583,10 +583,8 @@ Function Generate-XmlList ($List, [ValidateSet("Departments", "Employees")]$List
     $XmlList.CreateXmlDeclaration("1.0","UTF-8",$null)
     $XmlList.AppendChild($XmlList.CreateXmlDeclaration("1.0","UTF-8",$null))
 $CommentForXml = @"
-
 Автоматически сгенерированный список
 Сгенерирован: $(Get-Date)
-
 "@
     $XmlList.AppendChild($XmlList.CreateComment($CommentForXml))
     if ($ListType -eq "Departments") {$RootElement = $XmlList.CreateNode("element","departments",$null)}
@@ -1021,6 +1019,8 @@ $document.PageSetup.DifferentFirstPageHeaderFooter = -1
 $document.Sections.Item(1).Headers.Item(2).Shapes.AddShape(1, 10, 10, 200, 20).TextFrame.TextRange.Text = "Конфиденциально"
 $shapeTop = $document.Sections.Item(1).Headers.Item(2).Shapes.Item(1)
 $shapeTop.Height = $word.CentimetersToPoints(0.8)
+Start-Sleep -Seconds 15
+$shapeTop.Height = $word.CentimetersToPoints(0.8)
 $shapeTop.Width = $word.CentimetersToPoints(8.5)
 $shapeTop.TextFrame.TextRange.ParagraphFormat.Alignment = 2
 $shapeTop.TextFrame.TextRange.Font.Size = 16
@@ -1266,11 +1266,11 @@ Function Add-Data ($TableObject, $List)
         $script:CounterForWordItems += 1
         if ($Item.Subitems[2].Text -eq "Программа") {
             $TableObject.Cell($RowCounter, 2).Range.Text = "-"
-            $TableObject.Cell($RowCounter, 3).Range.Text = $Item.Text
-            $TableObject.Cell($RowCounter, 4).Range.Text = $Item.Subitems[1].Text
+            $TableObject.Cell($RowCounter, 3).Range.Text = "$($Item.Text)"
+            $TableObject.Cell($RowCounter, 4).Range.Text = "$($Item.Subitems[1].Text)"
         } else {
-            $TableObject.Cell($RowCounter, 2).Range.Text = $Item.Subitems[1].Text
-            $TableObject.Cell($RowCounter, 3).Range.Text = $Item.Text
+            $TableObject.Cell($RowCounter, 2).Range.Text = "$($Item.Subitems[1].Text)"
+            $TableObject.Cell($RowCounter, 3).Range.Text = "$($Item.Text)"
         }
         $TableObject.Rows.Add()
         $RowCounter += 1
