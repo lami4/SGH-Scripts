@@ -818,11 +818,15 @@ Function Apply-FormattingInListTable($TableObject, $WordApp)
     #Сделать границы таблицы видимыми
     $TableObject.Borders.Enable = $true
     #Ширина таблицы (19,4 см)
-    $TableObject.Columns.Item(1).Width = $WordApp.CentimetersToPoints(18)
+    $TableObject.Columns.Item(1).Width = $WordApp.CentimetersToPoints(19.4)
     #Отсутуп от левого края в ячейках
-    $TableObject.LeftPadding = $WordApp.CentimetersToPoints(0.1)
+    $TableObject.LeftPadding = $WordApp.CentimetersToPoints(0.2)
     #Отсутуп от правого края в ячейках
-    $TableObject.RightPadding = $WordApp.CentimetersToPoints(0.1)
+    $TableObject.RightPadding = $WordApp.CentimetersToPoints(0.2)
+    #Отсутуп от верхнего края в ячейках
+    $TableObject.TopPadding = $WordApp.CentimetersToPoints(0.05)
+    #Отсутуп от нижнего края в ячейках
+    $TableObject.BottomPadding = $WordApp.CentimetersToPoints(0.05)
     #Установить вертикальное выравнивание по центру для всех ячеек
     $TableObject.Cell(1, 1).VerticalAlignment = 1
     #Настройка шрифта в таблице
@@ -837,10 +841,10 @@ Function Apply-FormattingInListTable($TableObject, $WordApp)
     $TableObject.Rows.Height = $word.CentimetersToPoints(0.5)
     #Разбить таблицу на 4 столбца и установить их ширину
     $TableObject.Cell(1, 1).Split(1, 4)
-    $TableObject.Cell(1, 1).Column.Width = $WordApp.CentimetersToPoints(1.5)
-    $TableObject.Cell(1, 2).Column.Width = $WordApp.CentimetersToPoints(1.5)
-    $TableObject.Cell(1, 3).Column.Width = $WordApp.CentimetersToPoints(7.5)
-    $TableObject.Cell(1, 4).Column.Width = $WordApp.CentimetersToPoints(7.5)
+    $TableObject.Cell(1, 1).Column.Width = $WordApp.CentimetersToPoints(1.7)
+    $TableObject.Cell(1, 2).Column.Width = $WordApp.CentimetersToPoints(1.7)
+    $TableObject.Cell(1, 3).Column.Width = $WordApp.CentimetersToPoints(8)
+    $TableObject.Cell(1, 4).Column.Width = $WordApp.CentimetersToPoints(8)
     #Добавить надписи в таблицу
     $TableObject.Cell(1, 1).Range.Text = "Поз."
     $TableObject.Cell(1, 2).Range.Text = "Изм."
@@ -848,16 +852,12 @@ Function Apply-FormattingInListTable($TableObject, $WordApp)
     $TableObject.Cell(1, 4).Range.Text = "Примечание"
     #Установить выравниевание по центру для заголовка
     $TableObject.Rows.Item(1).Range.ParagraphFormat.Alignment = 1
-    #Выровнять таблицу по центру в документу
-    $TableObject.Rows.Alignment = 1
     #Добавить строку для входных данных
     $TableObject.Rows.Add()
     #Запретить переносить ячейку на селдующую страницу
     $TableObject.Rows.Item(2).AllowBreakAcrossPages = $false
     #Отформатировать строку для входных данных
     $TableObject.Cell(2, 3).Range.ParagraphFormat.Alignment = 0
-    $TableObject.Cell(2, 2).LeftPadding = $word.CentimetersToPoints(0.1)
-    $TableObject.Cell(2, 2).RightPadding = $word.CentimetersToPoints(0.1)
 }
 
 Function Generate-UpdateNotification ($NotificationName)
@@ -1018,7 +1018,7 @@ $table.Cell(1, 1).Borders.Item(-4).LineStyle = 0
 $document.PageSetup.DifferentFirstPageHeaderFooter = -1
 $document.Sections.Item(1).Headers.Item(2).Shapes.AddShape(1, 10, 10, 200, 20).TextFrame.TextRange.Text = "Конфиденциально"
 $shapeTop = $document.Sections.Item(1).Headers.Item(2).Shapes.Item(1)
-$shapeTop.Height = $word.CentimetersToPoints(0.8)
+try {$shapeTop.Height = $word.CentimetersToPoints(0.8)} catch {Out-Null}
 Start-Sleep -Seconds 15
 $shapeTop.Height = $word.CentimetersToPoints(0.8)
 $shapeTop.Width = $word.CentimetersToPoints(8.5)
@@ -1226,27 +1226,24 @@ $shapeBotPageTwo.TextFrame.MarginLeft = $word.CentimetersToPoints(0.1)
 $shapeBotPageTwo.TextFrame.MarginRight = $word.CentimetersToPoints(0.1)
 $shapeBotPageTwo.TextFrame.MarginTop = $word.CentimetersToPoints(0)
 
-for ($i = 0; $i -lt 29; $i++) {
+for ($i = 0; $i -lt 30; $i++) {
 $table.Cell(15, 1).Delete()
 }
 
-
-#Отключить фиксированную высоту для ячейки, которая содержит перечень фдокументов и программ
-$table.Cell(15, 1).HeightRule = 1
-#Вставить таблицы со списками для аннлирования, замены и публикации
-$document.Tables.Item(1).Cell(15, 1).TopPadding = $word.CentimetersToPoints(0.2)
-$document.Tables.Item(1).Cell(15, 1).BottomPadding = $word.CentimetersToPoints(0.2)
-$document.Tables.Item(1).Cell(15, 1).Range = [char]10 + [char]10 + "Заменить:" + [char]10 + [char]10 + [char]10 + [char]10 + "Аннулировать:" + [char]10 + [char]10 + [char]10 + [char]10 + "Выпустить:" + [char]10 + [char]10 + [char]10  + [char]10
-$document.Tables.Item(1).Cell(15, 1).Range.Paragraphs.Item(4).Range.Select()
+$document.Paragraphs.Item(52).Range.Font.Name = "Arial"
+$document.Paragraphs.Item(52).Range.Font.Size = 9
+$document.Paragraphs.Item(52).Range.ParagraphFormat.SpaceAfter = 0
+$document.Paragraphs.Item(52).Range.ParagraphFormat.LineSpacingRule = 0
+$document.Paragraphs.Item(52).Range = [char]10 + [char]10 + "Заменить:" + [char]10 + [char]10 + [char]10 + [char]10 + "Аннулировать:" + [char]10 + [char]10 + [char]10 + [char]10 + "Выпустить:" + [char]10 + [char]10 + [char]10  + [char]10
+$document.Paragraphs.Item(55).Range.Select()
 $document.Tables.Add($word.Selection.Range, 1, 1)
-$document.Tables.Item(1).Cell(15, 1).Range.Paragraphs.Item(9).Range.Select()
+$document.Paragraphs.Item(60).Range.Select()
 $document.Tables.Add($word.Selection.Range, 1, 1)
-$document.Tables.Item(1).Cell(15, 1).Range.Paragraphs.Item(14).Range.Select()
+$document.Paragraphs.Item(65).Range.Select()
 $document.Tables.Add($word.Selection.Range, 1, 1)
-$document.Tables.Item(1).Cell(15, 1).Range.ParagraphFormat.Alignment = 1
-Apply-FormattingInListTable -TableObject $document.Tables.Item(1).Tables.Item(1) -WordApp $word
-Apply-FormattingInListTable -TableObject $document.Tables.Item(1).Tables.Item(2) -WordApp $word
-Apply-FormattingInListTable -TableObject $document.Tables.Item(1).Tables.Item(3) -WordApp $word
+Apply-FormattingInListTable -TableObject $document.Tables.Item(2) -WordApp $word
+Apply-FormattingInListTable -TableObject $document.Tables.Item(3) -WordApp $word
+Apply-FormattingInListTable -TableObject $document.Tables.Item(4) -WordApp $word
 Start-Sleep -Seconds 2
 $document.SaveAs([ref]"$PSScriptRoot\$NotificationName.docx")
 Start-Sleep -Seconds 2
@@ -1275,6 +1272,7 @@ Function Add-Data ($TableObject, $List)
         $TableObject.Rows.Add()
         $RowCounter += 1
     }
+    $TableObject.Rows.Last.Delete()
 }
 
 Function Move-ListsToWordDocument ($NotificationName)
@@ -1288,11 +1286,11 @@ $DocumentToPopulate = $WordToPopulate.Documents.Open("$PSScriptRoot\$Notificatio
 $WordToPopulate.Visible = $false
 Start-Sleep -Seconds 5
 Write-Host "Заполняю таблицу Выпустить..."
-Add-Data -TableObject $DocumentToPopulate.Tables.Item(1).Tables.Item(1) -List $ListViewAdd
+Add-Data -TableObject $DocumentToPopulate.Tables.Item(2) -List $ListViewAdd
 Write-Host "Заполняю таблицу Заменитить..."
-Add-Data -TableObject $DocumentToPopulate.Tables.Item(1).Tables.Item(2) -List $ListViewReplace
+Add-Data -TableObject $DocumentToPopulate.Tables.Item(3) -List $ListViewReplace
 Write-Host "Заполняю таблицу Аннулировать..."
-Add-Data -TableObject $DocumentToPopulate.Tables.Item(1).Tables.Item(3) -List $ListViewRemove
+Add-Data -TableObject $DocumentToPopulate.Tables.Item(4) -List $ListViewRemove
 Write-Host "Обновляю поля в Word документе..."
 #Вставить поля
 $HeaderTablePopulate = $DocumentToPopulate.Sections.Item(1).Headers.Item(1).Range.Tables.Item(1)
