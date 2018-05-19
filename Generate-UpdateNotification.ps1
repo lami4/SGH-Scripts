@@ -1,4 +1,18 @@
 clear
+#Глобальные переменные
+#Значение для поля 'Причина'
+$script:GlobalReasonField = "Обновление документации"
+#Значение для поля 'Указание о заделе'
+$script:GlobalInStoreField = "Задела нет"
+#Значение для поля 'Указание о внедрении'
+$script:GlobalStartUsageField = "С момента выпуска"
+#Значение для поля 'Применяемость'
+$script:GlobalApplicableToField = "---"
+#Значение для поля 'Разослать'
+$script:GlobalSendToField = "По списку рассылки"
+#Значение для поля 'Приложение'
+$script:GlobalAppendixField = "Нет"
+
 Function Add-HeaderToViewList ($ListView, $HeaderText, $Width)
 {
     $ColumnHeader = New-Object System.Windows.Forms.ColumnHeader
@@ -62,6 +76,135 @@ Function Update-ListCounters ($AddListCounter, $AddList, $ReplaceListCounter, $R
     $AddListCounter.Text = "Выпустить ($($AddList.Items.Count)):"
     $ReplaceListCounter.Text = "Заменить ($($ReplaceList.Items.Count)):"
     $RemoveListCounter.Text = "Аннулировать ($($RemoveList.Items.Count)):"
+}
+
+Function Setup-OtherFields ()
+{
+    $SetupOtherFieldsForm = New-Object System.Windows.Forms.Form
+    $SetupOtherFieldsForm.Padding = New-Object System.Windows.Forms.Padding(0,0,10,10)
+    $SetupOtherFieldsForm.ShowIcon = $false
+    $SetupOtherFieldsForm.AutoSize = $true
+    $SetupOtherFieldsForm.Text = "Остальные поля"
+    $SetupOtherFieldsForm.AutoSizeMode = "GrowAndShrink"
+    $SetupOtherFieldsForm.WindowState = "Normal"
+    $SetupOtherFieldsForm.SizeGripStyle = "Hide"
+    $SetupOtherFieldsForm.ShowInTaskbar = $true
+    $SetupOtherFieldsForm.StartPosition = "CenterScreen"
+    $SetupOtherFieldsForm.MinimizeBox = $false
+    $SetupOtherFieldsForm.MaximizeBox = $false
+    
+    #Надпись к полю для ввода Причины
+    $SetupOtherFieldsFormReasonLabel = New-Object System.Windows.Forms.Label
+    $SetupOtherFieldsFormReasonLabel.Location =  New-Object System.Drawing.Point(10,15) #x,y
+    $SetupOtherFieldsFormReasonLabel.Width = 140
+    $SetupOtherFieldsFormReasonLabel.Text = "Причина (до 130 знаков):"
+    $SetupOtherFieldsFormReasonLabel.TextAlign = "TopRight"
+    $SetupOtherFieldsForm.Controls.Add($SetupOtherFieldsFormReasonLabel)
+    #Поле для ввода Причины
+    $SetupOtherFieldsFormReasonInput = New-Object System.Windows.Forms.TextBox 
+    $SetupOtherFieldsFormReasonInput.Location = New-Object System.Drawing.Point(155,13) #x,y
+    $SetupOtherFieldsFormReasonInput.Width = 450
+    $SetupOtherFieldsFormReasonInput.Text = $script:GlobalReasonField
+    $SetupOtherFieldsFormReasonInput.MaxLength = 130
+    $SetupOtherFieldsFormReasonInput.TabStop = $false
+    $SetupOtherFieldsForm.Controls.Add($SetupOtherFieldsFormReasonInput)
+    #Надпись к полю для Указания о заделе
+    $SetupOtherFieldsFormZadelLabel = New-Object System.Windows.Forms.Label
+    $SetupOtherFieldsFormZadelLabel.Location =  New-Object System.Drawing.Point(10,45) #x,y
+    $SetupOtherFieldsFormZadelLabel.Width = 140
+    $SetupOtherFieldsFormZadelLabel.Text = "Указание о заделе:"
+    $SetupOtherFieldsFormZadelLabel.TextAlign = "TopRight"
+    $SetupOtherFieldsForm.Controls.Add($SetupOtherFieldsFormZadelLabel)
+    #Поле для ввода обозначение
+    $SetupOtherFieldsFormZadelInput = New-Object System.Windows.Forms.TextBox 
+    $SetupOtherFieldsFormZadelInput.Location = New-Object System.Drawing.Point(155,43) #x,y
+    $SetupOtherFieldsFormZadelInput.Width = 450
+    $SetupOtherFieldsFormZadelInput.Text = $script:GlobalInStoreField
+    $SetupOtherFieldsFormZadelInput.TabStop = $false
+    $SetupOtherFieldsForm.Controls.Add($SetupOtherFieldsFormZadelInput)
+    #Надпись к полю для Указания о внедрении
+    $SetupOtherFieldsFormUsageStartLabel = New-Object System.Windows.Forms.Label
+    $SetupOtherFieldsFormUsageStartLabel.Location =  New-Object System.Drawing.Point(10,75) #x,y
+    $SetupOtherFieldsFormUsageStartLabel.Width = 140
+    $SetupOtherFieldsFormUsageStartLabel.Text = "Указание о внедрении:"
+    $SetupOtherFieldsFormUsageStartLabel.TextAlign = "TopRight"
+    $SetupOtherFieldsForm.Controls.Add($SetupOtherFieldsFormUsageStartLabel)
+    #Поле для ввода Указания о внедрении
+    $SetupOtherFieldsFormUsageStartInput = New-Object System.Windows.Forms.TextBox 
+    $SetupOtherFieldsFormUsageStartInput.Location = New-Object System.Drawing.Point(155,73) #x,y
+    $SetupOtherFieldsFormUsageStartInput.Width = 450
+    $SetupOtherFieldsFormUsageStartInput.Text = $script:GlobalStartUsageField
+    $SetupOtherFieldsFormUsageStartInput.TabStop = $false
+    $SetupOtherFieldsForm.Controls.Add($SetupOtherFieldsFormUsageStartInput)
+    #Надпись к полю Применяемость
+    $SetupOtherFieldsFormApplicableToLabel = New-Object System.Windows.Forms.Label
+    $SetupOtherFieldsFormApplicableToLabel.Location =  New-Object System.Drawing.Point(10,105) #x,y
+    $SetupOtherFieldsFormApplicableToLabel.Width = 140
+    $SetupOtherFieldsFormApplicableToLabel.Text = "Применяемость:"
+    $SetupOtherFieldsFormApplicableToLabel.TextAlign = "TopRight"
+    $SetupOtherFieldsForm.Controls.Add($SetupOtherFieldsFormApplicableToLabel)
+    #Поле для ввода Применяемость
+    $SetupOtherFieldsFormApplicableToInput = New-Object System.Windows.Forms.TextBox 
+    $SetupOtherFieldsFormApplicableToInput.Location = New-Object System.Drawing.Point(155,103) #x,y
+    $SetupOtherFieldsFormApplicableToInput.Width = 450
+    $SetupOtherFieldsFormApplicableToInput.Text = $script:GlobalApplicableToField
+    $SetupOtherFieldsFormApplicableToInput.TabStop = $false
+    $SetupOtherFieldsForm.Controls.Add($SetupOtherFieldsFormApplicableToInput)
+    #Надпись к полю Разослать
+    $SetupOtherFieldsFormSendToLabel = New-Object System.Windows.Forms.Label
+    $SetupOtherFieldsFormSendToLabel.Location =  New-Object System.Drawing.Point(10,135) #x,y
+    $SetupOtherFieldsFormSendToLabel.Width = 140
+    $SetupOtherFieldsFormSendToLabel.Text = "Разослать:"
+    $SetupOtherFieldsFormSendToLabel.TextAlign = "TopRight"
+    $SetupOtherFieldsForm.Controls.Add($SetupOtherFieldsFormSendToLabel)
+    #Поле для ввода Разослать
+    $SetupOtherFieldsFormSendToInput = New-Object System.Windows.Forms.TextBox 
+    $SetupOtherFieldsFormSendToInput.Location = New-Object System.Drawing.Point(155,133) #x,y
+    $SetupOtherFieldsFormSendToInput.Width = 450
+    $SetupOtherFieldsFormSendToInput.Text = $script:GlobalSendToField
+    $SetupOtherFieldsFormSendToInput.TabStop = $false
+    $SetupOtherFieldsForm.Controls.Add($SetupOtherFieldsFormSendToInput)
+    #Надпись к полю Разослать
+    $SetupOtherFieldsFormAppendixLabel = New-Object System.Windows.Forms.Label
+    $SetupOtherFieldsFormAppendixLabel.Location =  New-Object System.Drawing.Point(10,165) #x,y
+    $SetupOtherFieldsFormAppendixLabel.Width = 140
+    $SetupOtherFieldsFormAppendixLabel.Text = "Приложение:"
+    $SetupOtherFieldsFormAppendixLabel.TextAlign = "TopRight"
+    $SetupOtherFieldsForm.Controls.Add($SetupOtherFieldsFormAppendixLabel)
+    #Поле для ввода Разослать
+    $SetupOtherFieldsFormAppendixInput = New-Object System.Windows.Forms.TextBox 
+    $SetupOtherFieldsFormAppendixInput.Location = New-Object System.Drawing.Point(155,163) #x,y
+    $SetupOtherFieldsFormAppendixInput.Width = 450
+    $SetupOtherFieldsFormAppendixInput.Text = $script:GlobalAppendixField
+    $SetupOtherFieldsFormAppendixInput.TabStop = $false
+    $SetupOtherFieldsForm.Controls.Add($SetupOtherFieldsFormAppendixInput)
+    #Кнопка Применить
+    $SetupOtherFieldsFormApplyButton = New-Object System.Windows.Forms.Button
+    $SetupOtherFieldsFormApplyButton.Location = New-Object System.Drawing.Point(10,193) #x,y
+    $SetupOtherFieldsFormApplyButton.Size = New-Object System.Drawing.Point(80,22) #width,height
+    $SetupOtherFieldsFormApplyButton.Text = "Применить"
+    $SetupOtherFieldsFormApplyButton.TabStop = $false
+    $SetupOtherFieldsFormApplyButton.Add_Click({
+    $script:GlobalReasonField = $SetupOtherFieldsFormReasonInput.Text
+    $script:GlobalInStoreField = $SetupOtherFieldsFormZadelInput.Text
+    $script:GlobalStartUsageField = $SetupOtherFieldsFormUsageStartInput.Text
+    $script:GlobalApplicableToField = $SetupOtherFieldsFormApplicableToInput.Text
+    $script:GlobalSendToField = $SetupOtherFieldsFormSendToInput.Text
+    $script:GlobalAppendixField = $SetupOtherFieldsFormAppendixInput.Text
+    $SetupOtherFieldsForm.Close()
+    })
+    $SetupOtherFieldsForm.Controls.Add($SetupOtherFieldsFormApplyButton)
+    #Кнопка Закрыть
+    $SetupOtherFieldsFormCloseButton = New-Object System.Windows.Forms.Button
+    $SetupOtherFieldsFormCloseButton.Location = New-Object System.Drawing.Point(100,193) #x,y
+    $SetupOtherFieldsFormCloseButton.Size = New-Object System.Drawing.Point(80,22) #width,height
+    $SetupOtherFieldsFormCloseButton.Text = "Закрыть"
+    $SetupOtherFieldsFormCloseButton.TabStop = $false
+    $SetupOtherFieldsFormCloseButton.Add_Click({
+    $SetupOtherFieldsForm.Close()
+    })
+    $SetupOtherFieldsForm.Controls.Add($SetupOtherFieldsFormCloseButton)
+    $SetupOtherFieldsForm.ShowDialog()
 }
 
 Function Add-ItemToList ()
@@ -820,24 +963,23 @@ Function Apply-FormattingInListTable($TableObject, $WordApp)
     #Ширина таблицы (19,4 см)
     $TableObject.Columns.Item(1).Width = $WordApp.CentimetersToPoints(19.4)
     #Отсутуп от левого края в ячейках
-    $TableObject.LeftPadding = $WordApp.CentimetersToPoints(0.2)
+    $TableObject.LeftPadding = $WordApp.CentimetersToPoints(0.05)
     #Отсутуп от правого края в ячейках
-    $TableObject.RightPadding = $WordApp.CentimetersToPoints(0.2)
-    #Отсутуп от верхнего края в ячейках
-    $TableObject.TopPadding = $WordApp.CentimetersToPoints(0.05)
-    #Отсутуп от нижнего края в ячейках
-    $TableObject.BottomPadding = $WordApp.CentimetersToPoints(0.05)
+    $TableObject.RightPadding = $WordApp.CentimetersToPoints(0.05)
     #Установить вертикальное выравнивание по центру для всех ячеек
     $TableObject.Cell(1, 1).VerticalAlignment = 1
     #Настройка шрифта в таблице
     $TableObject.Cell(1, 1).Range.Font.Name = "Arial"
     $TableObject.Cell(1, 1).Range.Font.Size = 9
     #Интервал после (0 пт) для каждой ячейки таблицы
-    $TableObject.Range.ParagraphFormat.SpaceAfter = 0
+    $TableObject.Range.ParagraphFormat.SpaceAfter = 2
+    $TableObject.Range.ParagraphFormat.SpaceBefore = 2
+    $TableObject.Range.ParagraphFormat.LeftIndent = $WordApp.CentimetersToPoints(0.05)
+    $TableObject.Range.ParagraphFormat.RightIndent = $WordApp.CentimetersToPoints(0.05)
     #Междустрочный интервал (одинарный) для каждой ячейки таблицы
     $TableObject.Range.ParagraphFormat.LineSpacingRule = 0
     #Установить высоту на минимум
-    $TableObject.Cell(15, 1).HeightRule = 1
+    $TableObject.Cell(1, 1).HeightRule = 1
     $TableObject.Rows.Height = $word.CentimetersToPoints(0.5)
     #Разбить таблицу на 4 столбца и установить их ширину
     $TableObject.Cell(1, 1).Split(1, 4)
@@ -1234,13 +1376,19 @@ $document.Paragraphs.Item(52).Range.Font.Name = "Arial"
 $document.Paragraphs.Item(52).Range.Font.Size = 9
 $document.Paragraphs.Item(52).Range.ParagraphFormat.SpaceAfter = 0
 $document.Paragraphs.Item(52).Range.ParagraphFormat.LineSpacingRule = 0
-$document.Paragraphs.Item(52).Range = [char]10 + [char]10 + "Заменить:" + [char]10 + [char]10 + [char]10 + [char]10 + "Аннулировать:" + [char]10 + [char]10 + [char]10 + [char]10 + "Выпустить:" + [char]10 + [char]10 + [char]10  + [char]10
+$document.Paragraphs.Item(52).Range = [char]10 + [char]10 + "Заменить:" + [char]10 + [char]10 + [char]10 + [char]10 + "Аннулировать:" + [char]10 + [char]10 + [char]10 + [char]10 + "Выпустить:" + [char]10
+#Сделать надписи к спискам жирными
+$document.Paragraphs.Item(54).Range.Font.Bold = $true
+$document.Paragraphs.Item(58).Range.Font.Bold = $true
+$document.Paragraphs.Item(62).Range.Font.Bold = $true
+#Вставить таблицы
 $document.Paragraphs.Item(55).Range.Select()
 $document.Tables.Add($word.Selection.Range, 1, 1)
 $document.Paragraphs.Item(60).Range.Select()
 $document.Tables.Add($word.Selection.Range, 1, 1)
 $document.Paragraphs.Item(65).Range.Select()
 $document.Tables.Add($word.Selection.Range, 1, 1)
+#Отформатировать таблицы
 Apply-FormattingInListTable -TableObject $document.Tables.Item(2) -WordApp $word
 Apply-FormattingInListTable -TableObject $document.Tables.Item(3) -WordApp $word
 Apply-FormattingInListTable -TableObject $document.Tables.Item(4) -WordApp $word
@@ -1285,6 +1433,7 @@ $DocumentToPopulate = $WordToPopulate.Documents.Open("$PSScriptRoot\$Notificatio
 #Сделать вызванное приложение невидемым
 $WordToPopulate.Visible = $false
 Start-Sleep -Seconds 5
+#Заполнить таблицы
 Write-Host "Заполняю таблицу Выпустить..."
 Add-Data -TableObject $DocumentToPopulate.Tables.Item(2) -List $ListViewAdd
 Write-Host "Заполняю таблицу Заменитить..."
@@ -1292,9 +1441,36 @@ Add-Data -TableObject $DocumentToPopulate.Tables.Item(3) -List $ListViewReplace
 Write-Host "Заполняю таблицу Аннулировать..."
 Add-Data -TableObject $DocumentToPopulate.Tables.Item(4) -List $ListViewRemove
 Write-Host "Обновляю поля в Word документе..."
-#Вставить поля
+#Обращаемся к элементам таблицы
 $HeaderTablePopulate = $DocumentToPopulate.Sections.Item(1).Headers.Item(1).Range.Tables.Item(1)
+$FooterFirstPageTablePopulate = $DocumentToPopulate.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1)
 $TablePopulate = $DocumentToPopulate.Tables.Item(1)
+
+#Вставить название отдела
+$TablePopulate.Cell(2, 2).Range.Text = "$($ComboboxDepartmentName.SelectedItem)"
+$TablePopulate.Cell(2, 2).Range.Font.Bold = $true
+
+#Вставить номер извещения
+$TablePopulate.Cell(3, 3).Range.Text = "$($UpdateNotificationNumberInput.Text)"
+$TablePopulate.Cell(3, 3).Range.Font.Bold = $true
+$HeaderTablePopulate.Cell(2, 2).Range.Text = "$($UpdateNotificationNumberInput.Text)"
+$HeaderTablePopulate.Cell(2, 2).Range.Font.Bold = $true
+
+#Вставить "См. содержание изменения"
+$TablePopulate.Cell(3, 4).Range.Text = "См. содержание изменения"
+$TablePopulate.Cell(3, 4).Range.Font.Bold = $true
+
+#Вставить дату выпуска
+$TablePopulate.Cell(5, 1).Range.Text = "$($CalendarIssueDateInput.Text)"
+$TablePopulate.Cell(5, 1).Range.Font.Bold = $true
+$FooterFirstPageTablePopulate.Cell(2, 4).Range.Text = "$($CalendarIssueDateInput.Text)"
+$FooterFirstPageTablePopulate.Cell(3, 4).Range.Text = "$($CalendarIssueDateInput.Text)"
+
+#Вставить дату срока внесения изменений
+$TablePopulate.Cell(5, 2).Range.Text = "$($CalendarApplyUpdatesUntilInput.Text)"
+$TablePopulate.Cell(5, 2).Range.Font.Bold = $true
+
+#Вставить поля
 $TablePopulate.Cell(5, 4).Range.Select()
 $DocumentToPopulate.Application.Selection.Collapse(1)
 $myField = $DocumentToPopulate.Fields.Add($DocumentToPopulate.Application.Selection.Range, 26)
@@ -1308,7 +1484,10 @@ $TablePopulate.Cell(5, 3).Range.Select()
 $DocumentToPopulate.Application.Selection.Collapse(1)
 $myField = $DocumentToPopulate.Fields.Add($DocumentToPopulate.Application.Selection.Range, 33)
 $TablePopulate.Cell(5, 3).Range.ParagraphFormat.Alignment = 1
+
 Start-Sleep -Seconds 2
+#Обновить поля
+$DocumentToPopulate.Fields.Update()
 $DocumentToPopulate.Save()
 Start-Sleep -Seconds 2
 $DocumentToPopulate.Close()
@@ -1779,7 +1958,7 @@ Function Custom-Form ()
     #Группа элементов Параметры извещения
     $UpdateNotificationParameters = New-Object System.Windows.Forms.GroupBox
     $UpdateNotificationParameters.Location = New-Object System.Drawing.Point(10,575) #x,y
-    $UpdateNotificationParameters.Size = New-Object System.Drawing.Point(659,115) #width,height
+    $UpdateNotificationParameters.Size = New-Object System.Drawing.Point(659,145) #width,height
     $UpdateNotificationParameters.Text = "Параметры извещения"
     $ScriptMainWindow.Controls.Add($UpdateNotificationParameters)
     #Надпись к полю Номер извещения
@@ -1825,6 +2004,15 @@ Function Custom-Form ()
     $CalendarApplyUpdatesUntilInput.Width = 110
     #$CalendarApplyUpdatesUntilInput.Text = "03.02.1990"
     $UpdateNotificationParameters.Controls.Add($CalendarApplyUpdatesUntilInput)
+    #Кнопка Остальные поля
+    $ButtonOtherFields = New-Object System.Windows.Forms.Button
+    $ButtonOtherFields.Location = New-Object System.Drawing.Point(135,110) #x,y
+    $ButtonOtherFields.Size = New-Object System.Drawing.Point(137,22) #width,height
+    $ButtonOtherFields.Text = "Остальные поля..."
+    $ButtonOtherFields.Add_Click({Setup-OtherFields})
+    $UpdateNotificationParameters.Controls.Add($ButtonOtherFields)
+
+
     #Надпись к списку для указания Название отдела
     $ComboboxDepartmentNameLabel = New-Object System.Windows.Forms.Label
     $ComboboxDepartmentNameLabel.Location = New-Object System.Drawing.Point(317,25) #x,y
@@ -1892,6 +2080,29 @@ Function Custom-Form ()
     $ButtonEditListOfNamesCheckedBy.Add_Click({Manage-CustomLists -ListType Employees})
     $UpdateNotificationParameters.Controls.Add($ButtonEditListOfNamesCheckedBy)
 
+    #Надпись к списку для указания Кода
+    $ComboboxCodeLabel = New-Object System.Windows.Forms.Label
+    $ComboboxCodeLabel.Location = New-Object System.Drawing.Point(317,115) #x,y
+    $ComboboxCodeLabel.Width = 100
+    $ComboboxCodeLabel.Text = "Код:"
+    $ComboboxCodeLabel.TextAlign = "TopRight"
+    $UpdateNotificationParameters.Controls.Add($ComboboxCodeLabel)
+    #Список содержащий доступные коды
+    $ListOfСodes = @("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16")
+    $ComboboxCodes = New-Object System.Windows.Forms.ComboBox
+    $ComboboxCodes.Location = New-Object System.Drawing.Point(422,112) #x,y
+    $ComboboxCodes.DropDownStyle = "DropDownList"
+    $ComboboxCodes.Width = 200
+    $ListOfСodes | % {$ComboboxCodes.Items.Add($_)}
+    $UpdateNotificationParameters.Controls.Add($ComboboxCodes)
+    #Кнопка Редактирования списка ФИО
+    $ButtonCodesHelp = New-Object System.Windows.Forms.Button
+    $ButtonCodesHelp.Location = New-Object System.Drawing.Point(627,111) #x,y
+    $ButtonCodesHelp.Size = New-Object System.Drawing.Point(22,23) #width,height
+    $ButtonCodesHelp.Text = "?"
+    $ButtonCodesHelp.Add_Click({Manage-CustomLists -ListType Employees})
+    $UpdateNotificationParameters.Controls.Add($ButtonCodesHelp)
+
     #Кнопка запустить
     $ButtonRun = New-Object System.Windows.Forms.Button
     $ButtonRun.Location = New-Object System.Drawing.Point(680,580) #x,y
@@ -1905,6 +2116,7 @@ Function Custom-Form ()
     if ($ComboboxCreatedBy.SelectedItem -eq $null) {$ErrorPresent = $true; $TextInMessage += "`r`nНе выбран отдел."}
     if ($ComboboxCheckedBy.SelectedItem -eq $null) {$ErrorPresent = $true; $TextInMessage += "`r`nНе выбрано ФИО для поля Выпустил."}
     if ($ComboboxDepartmentName.SelectedItem -eq $null) {$ErrorPresent = $true; $TextInMessage += "`r`nНе выбрано ФИО для поля Проверил."}
+    if ($ComboboxCodes.SelectedItem -eq $null) {$ErrorPresent = $true; $TextInMessage += "`r`nНе выбран код."}
     if ($ErrorPresent -eq $true) {
         Show-MessageBox -Message $TextInMessage -Title "Невозможно начать генерацию ИИ" -Type OK
     } else {
