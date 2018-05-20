@@ -1099,7 +1099,6 @@ $table.Rows.Add()
 }
 
 #Вставить текст
-$table.Cell(1, 2).Range.Text = "БТД"
 $table.Cell(1, 3).Range.Text = "Извещение"
 $table.Cell(1, 4).Range.Text = "Обозначение изменяемого документа"
 $table.Cell(3, 1).Range.Text = "Дата выпуска"
@@ -1161,7 +1160,7 @@ $document.PageSetup.DifferentFirstPageHeaderFooter = -1
 $document.Sections.Item(1).Headers.Item(2).Shapes.AddShape(1, 10, 10, 200, 20).TextFrame.TextRange.Text = "Конфиденциально"
 $shapeTop = $document.Sections.Item(1).Headers.Item(2).Shapes.Item(1)
 try {$shapeTop.Height = $word.CentimetersToPoints(0.8)} catch {Out-Null}
-Start-Sleep -Seconds 15
+Start-Sleep -Seconds 3
 $shapeTop.Height = $word.CentimetersToPoints(0.8)
 $shapeTop.Width = $word.CentimetersToPoints(8.5)
 $shapeTop.TextFrame.TextRange.ParagraphFormat.Alignment = 2
@@ -1470,11 +1469,44 @@ $FooterFirstPageTablePopulate.Cell(3, 4).Range.Text = "$($CalendarIssueDateInput
 $TablePopulate.Cell(5, 2).Range.Text = "$($CalendarApplyUpdatesUntilInput.Text)"
 $TablePopulate.Cell(5, 2).Range.Font.Bold = $true
 
+#Вставить код
+$TablePopulate.Cell(7, 3).Range.Text = "$($ComboboxCodes.SelectedItem)"
+$TablePopulate.Cell(7, 3).Range.Font.Bold = $true
+$TablePopulate.Cell(7, 3).Range.ParagraphFormat.Alignment = 1
+
+#Вставить причину
+$TablePopulate.Cell(6, 2).Range.Text = "$script:GlobalReasonField"
+$TablePopulate.Cell(6, 2).Range.Font.Bold = $true
+
+#Вставить указание о заделе
+$TablePopulate.Cell(8, 2).Range.Text = "$script:GlobalInStoreField"
+$TablePopulate.Cell(8, 2).Range.Font.Bold = $true
+
+#Вставить указание о внедрении
+$TablePopulate.Cell(9, 2).Range.Text = "$script:GlobalStartUsageField"
+$TablePopulate.Cell(9, 2).Range.Font.Bold = $true
+
+#Вставить применяемость
+$TablePopulate.Cell(10, 2).Range.Text = "$script:GlobalApplicableToField"
+$TablePopulate.Cell(10, 2).Range.Font.Bold = $true
+
+#Вставить разослать
+$TablePopulate.Cell(11, 2).Range.Text = "$script:GlobalSendToField"
+$TablePopulate.Cell(11, 2).Range.Font.Bold = $true
+
+#Вставить приложение
+$TablePopulate.Cell(12, 2).Range.Text = "$script:GlobalAppendixField"
+$TablePopulate.Cell(12, 2).Range.Font.Bold = $true
+
 #Вставить поля
 $TablePopulate.Cell(5, 4).Range.Select()
 $DocumentToPopulate.Application.Selection.Collapse(1)
 $myField = $DocumentToPopulate.Fields.Add($DocumentToPopulate.Application.Selection.Range, 26)
 $TablePopulate.Cell(5, 4).Range.ParagraphFormat.Alignment = 1
+
+#Вставить ФИО
+$FooterFirstPageTablePopulate.Cell(2, 2).Range.Text = "$($ComboboxCreatedBy.SelectedItem)"
+$FooterFirstPageTablePopulate.Cell(3, 2).Range.Text = "$($ComboboxCheckedBy.SelectedItem)"
 
 $HeaderTablePopulate.Cell(2, 4).Range.Select()
 $DocumentToPopulate.Application.Selection.Collapse(1)
@@ -1910,14 +1942,20 @@ Function Custom-Form ()
     $ButtonClearLists.Location = New-Object System.Drawing.Point(10,17) #x,y
     $ButtonClearLists.Size = New-Object System.Drawing.Point(137,22) #width,height
     $ButtonClearLists.Text = "Очистить..."
-    $ButtonClearLists.Add_Click({Clear-Lists})
+    $ButtonClearLists.Add_Click({
+    Unselect-ItemsInOtherLists -List3 $ListViewAdd -List1 $ListViewReplace -List2 $ListViewRemove
+    Clear-Lists
+    })
     $ListSettingsListActions.Controls.Add($ButtonClearLists)
     #Отменить выделение
     $ButtonRemoveColoringLists = New-Object System.Windows.Forms.Button
     $ButtonRemoveColoringLists.Location = New-Object System.Drawing.Point(10,43) #x,y
     $ButtonRemoveColoringLists.Size = New-Object System.Drawing.Point(137,22) #width,height
     $ButtonRemoveColoringLists.Text = "Отменить выделение..."
-    $ButtonRemoveColoringLists.Add_Click({Discard-Coloring})
+    $ButtonRemoveColoringLists.Add_Click({
+    Unselect-ItemsInOtherLists -List3 $ListViewAdd -List1 $ListViewReplace -List2 $ListViewRemove
+    Discard-Coloring
+    })
     $ListSettingsListActions.Controls.Add($ButtonRemoveColoringLists)
     #Чекбокс Отобразить сетку
     $CheckboxDisplayGrid = New-Object System.Windows.Forms.CheckBox
@@ -2009,7 +2047,9 @@ Function Custom-Form ()
     $ButtonOtherFields.Location = New-Object System.Drawing.Point(135,110) #x,y
     $ButtonOtherFields.Size = New-Object System.Drawing.Point(137,22) #width,height
     $ButtonOtherFields.Text = "Остальные поля..."
-    $ButtonOtherFields.Add_Click({Setup-OtherFields})
+    $ButtonOtherFields.Add_Click({
+    Setup-OtherFields
+    })
     $UpdateNotificationParameters.Controls.Add($ButtonOtherFields)
 
 
@@ -2065,7 +2105,6 @@ Function Custom-Form ()
     $ComboboxCheckedByLabel.TextAlign = "TopRight"
     $UpdateNotificationParameters.Controls.Add($ComboboxCheckedByLabel)
     #Список содержащий доступные ФИО
-    $ListOfNames = @("С. Селюто","В. Горемыкин","И. Чижиков")
     $ComboboxCheckedBy = New-Object System.Windows.Forms.ComboBox
     $ComboboxCheckedBy.Location = New-Object System.Drawing.Point(422,82) #x,y
     $ComboboxCheckedBy.DropDownStyle = "DropDownList"
@@ -2120,9 +2159,19 @@ Function Custom-Form ()
     if ($ErrorPresent -eq $true) {
         Show-MessageBox -Message $TextInMessage -Title "Невозможно начать генерацию ИИ" -Type OK
     } else {
-        $script:CounterForWordItems = 1
-        Generate-UpdateNotification -NotificationName $UpdateNotificationNumberInput.Text
-        Move-ListsToWordDocument -NotificationName $UpdateNotificationNumberInput.Text
+        if (Test-Path -Path "$PSScriptRoot\$($UpdateNotificationNumberInput.Text).docx") {
+            if ((Show-MessageBox -Message "Извещение с номером $($UpdateNotificationNumberInput.Text) уже существует в папке.`r`n`r`nНажмите Да, чтобы продолжить (извещение будет перезаписано).`r`nНажмите Нет, чтобы приостановить генерацию извещения." -Title "Извещение уже существует" -Type YesNo) -eq "Yes") {
+                Remove-Item -Path "$PSScriptRoot\$($UpdateNotificationNumberInput.Text).docx"
+                Start-Sleep -Seconds 2
+                $script:CounterForWordItems = 1
+                Generate-UpdateNotification -NotificationName $UpdateNotificationNumberInput.Text
+                Move-ListsToWordDocument -NotificationName $UpdateNotificationNumberInput.Text
+            }
+        } else {
+            $script:CounterForWordItems = 1
+            Generate-UpdateNotification -NotificationName $UpdateNotificationNumberInput.Text
+            Move-ListsToWordDocument -NotificationName $UpdateNotificationNumberInput.Text
+        }
     }
     })
     
