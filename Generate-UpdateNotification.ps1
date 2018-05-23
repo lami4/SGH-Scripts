@@ -1047,7 +1047,7 @@ $word = New-Object -ComObject Word.Application
 $document = $word.Documents.Add()
 #Сделать вызванное приложение невидемым
 $word.Visible = $false
-Start-Sleep -Seconds 5
+Start-Sleep -Seconds 15
 #НАСТРОЙКА ПОЛЕЙ ДОКУМЕНТА
 #Левое поле (сантиметры)
 $document.PageSetup.LeftMargin = $word.CentimetersToPoints(1)
