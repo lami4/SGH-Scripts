@@ -13,6 +13,40 @@ $script:GlobalSendToField = "По списку рассылки"
 #Значение для поля 'Приложение'
 $script:GlobalAppendixField = "Нет"
 
+Function BulkImport ()
+{
+    $BulkImportForm = New-Object System.Windows.Forms.Form
+    $BulkImportForm.Padding = New-Object System.Windows.Forms.Padding(0,0,10,10)
+    $BulkImportForm.ShowIcon = $false
+    $BulkImportForm.AutoSize = $true
+    $BulkImportForm.Text = "Пакетный импорт"
+    $BulkImportForm.AutoSizeMode = "GrowAndShrink"
+    $BulkImportForm.WindowState = "Normal"
+    $BulkImportForm.SizeGripStyle = "Hide"
+    $BulkImportForm.ShowInTaskbar = $true
+    $BulkImportForm.StartPosition = "CenterScreen"
+    $BulkImportForm.MinimizeBox = $false
+    $BulkImportForm.MaximizeBox = $false
+    
+    #Кнопка обзор
+    $BulkImportFormBrowseButton = New-Object System.Windows.Forms.Button
+    $BulkImportFormBrowseButton.Location = New-Object System.Drawing.Point(10,10) #x,y
+    $BulkImportFormBrowseButton.Size = New-Object System.Drawing.Point(80,22) #width,height
+    $BulkImportFormBrowseButton.Text = "Обзор..."
+    $BulkImportFormBrowseButton.TabStop = $false
+    $BulkImportFormBrowseButton.Add_Click({})
+    $BulkImportForm.Controls.Add($BulkImportFormBrowseButton)
+    #Поле к кнопке Обзор
+    $BulkImportFormBrowseButtonLabel = New-Object System.Windows.Forms.Label
+    $BulkImportFormBrowseButtonLabel.Location =  New-Object System.Drawing.Point(95,14) #x,y
+    $BulkImportFormBrowseButtonLabel.Width = 300
+    $BulkImportFormBrowseButtonLabel.Text = "Выберите публикуемые файлы"
+    $BulkImportFormBrowseButtonLabel.TextAlign = "TopLeft"
+    $BulkImportForm.Controls.Add($BulkImportFormBrowseButtonLabel)
+
+    $BulkImportForm.ShowDialog()
+}
+
 Function Add-HeaderToViewList ($ListView, $HeaderText, $Width)
 {
     $ColumnHeader = New-Object System.Windows.Forms.ColumnHeader
@@ -1990,7 +2024,7 @@ Function Custom-Form ()
     $ButtonBatchFileImport.Location = New-Object System.Drawing.Point(167,69) #x,y
     $ButtonBatchFileImport.Size = New-Object System.Drawing.Point(137,22) #width,height
     $ButtonBatchFileImport.Text = "Пакетный импорт..."
-    $ButtonBatchFileImport.Add_Click({})
+    $ButtonBatchFileImport.Add_Click({BulkImport})
     $ListSettingsListActions.Controls.Add($ButtonBatchFileImport)
 
     #Группа элементов Параметры извещения
@@ -2042,11 +2076,20 @@ Function Custom-Form ()
     $CalendarApplyUpdatesUntilInput.Width = 110
     #$CalendarApplyUpdatesUntilInput.Text = "03.02.1990"
     $UpdateNotificationParameters.Controls.Add($CalendarApplyUpdatesUntilInput)
+
+    #Надпись к кнопке Остальные поля
+    $CalendarApplyUpdatesOtherFieldsLabel = New-Object System.Windows.Forms.Label
+    $CalendarApplyUpdatesOtherFieldsLabel.Location =  New-Object System.Drawing.Point(10,115) #x,y
+    $CalendarApplyUpdatesOtherFieldsLabel.Width = 147
+    $CalendarApplyUpdatesOtherFieldsLabel.Text = "Остальные поля:"
+    $CalendarApplyUpdatesOtherFieldsLabel.TextAlign = "TopRight"
+    $UpdateNotificationParameters.Controls.Add($CalendarApplyUpdatesOtherFieldsLabel)
+
     #Кнопка Остальные поля
     $ButtonOtherFields = New-Object System.Windows.Forms.Button
-    $ButtonOtherFields.Location = New-Object System.Drawing.Point(135,110) #x,y
-    $ButtonOtherFields.Size = New-Object System.Drawing.Point(137,22) #width,height
-    $ButtonOtherFields.Text = "Остальные поля..."
+    $ButtonOtherFields.Location = New-Object System.Drawing.Point(161,111) #x,y
+    $ButtonOtherFields.Size = New-Object System.Drawing.Point(112,22) #width,height
+    $ButtonOtherFields.Text = "Настроить..."
     $ButtonOtherFields.Add_Click({
     Setup-OtherFields
     })
