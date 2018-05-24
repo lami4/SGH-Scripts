@@ -13,6 +13,26 @@ $script:GlobalSendToField = "По списку рассылки"
 #Значение для поля 'Приложение'
 $script:GlobalAppendixField = "Нет"
 
+Function Open-File ($Filter)
+{
+    Add-Type -AssemblyName System.Windows.Forms
+    $OpenFileDialog = New-Object Windows.Forms.OpenFileDialog
+    $OpenFileDialog.Filter = $Filter
+    $OpenFileDialog.Multiselect = $true
+    $DialogResult = $OpenFileDialog.ShowDialog()
+    if ($DialogResult -eq "OK") {return $OpenFileDialog.FileNames} else {return $null}
+}
+
+Function Select-Folder ($Description)
+{
+    Add-Type -AssemblyName System.Windows.Forms
+    $SelectFolderDialog = New-Object System.Windows.Forms.FolderBrowserDialog
+    $SelectFolderDialog.Rootfolder = "Desktop"
+    $SelectFolderDialog.Description = $Description
+    $DialogResult = $SelectFolderDialog.ShowDialog()
+    if ($DialogResult -eq "OK") {return $SelectFolderDialog.SelectedPath} else {return $null}
+}
+
 Function BulkImport ()
 {
     $BulkImportForm = New-Object System.Windows.Forms.Form
@@ -27,14 +47,13 @@ Function BulkImport ()
     $BulkImportForm.StartPosition = "CenterScreen"
     $BulkImportForm.MinimizeBox = $false
     $BulkImportForm.MaximizeBox = $false
-    
     #Кнопка обзор
     $BulkImportFormBrowseButton = New-Object System.Windows.Forms.Button
     $BulkImportFormBrowseButton.Location = New-Object System.Drawing.Point(10,10) #x,y
     $BulkImportFormBrowseButton.Size = New-Object System.Drawing.Point(80,22) #width,height
     $BulkImportFormBrowseButton.Text = "Обзор..."
     $BulkImportFormBrowseButton.TabStop = $false
-    $BulkImportFormBrowseButton.Add_Click({})
+    $BulkImportFormBrowseButton.Add_Click({Write-Host $((Open-File -Filter "All files (*.*)| *.*").Count)})
     $BulkImportForm.Controls.Add($BulkImportFormBrowseButton)
     #Поле к кнопке Обзор
     $BulkImportFormBrowseButtonLabel = New-Object System.Windows.Forms.Label
@@ -43,7 +62,91 @@ Function BulkImport ()
     $BulkImportFormBrowseButtonLabel.Text = "Выберите публикуемые файлы"
     $BulkImportFormBrowseButtonLabel.TextAlign = "TopLeft"
     $BulkImportForm.Controls.Add($BulkImportFormBrowseButtonLabel)
-
+    #Чекбокс 'Распределить файлы по спискам автоматически'
+    $BulkImportFormDistributeAutomatically = New-Object System.Windows.Forms.CheckBox
+    $BulkImportFormDistributeAutomatically.Width = 410
+    $BulkImportFormDistributeAutomatically.Text = "Автоматически распределить файлы по спискам Выпустить и Заменить"
+    $BulkImportFormDistributeAutomatically.Location = New-Object System.Drawing.Point(10,43) #x,y
+    $BulkImportFormDistributeAutomatically.Enabled = $true
+    $BulkImportFormDistributeAutomatically.Checked = $false
+    Write-Host $BulkImportFormDistributeAutomatically.Height
+    $BulkImportFormDistributeAutomatically.Add_CheckStateChanged({
+    if ($BulkImportFormDistributeAutomatically.Checked -eq $false) {
+        $BulkImportFormRadioButtonRemove.Enabled = $true
+        $BulkImportFormRadioButtonReplace.Enabled = $true
+        $BulkImportFormRadioButtonAdd.Enabled = $true
+        $BulkImportFormButtonGroupLabel.Enabled = $true
+        $BulkImportFormBrowseCurrentVersionButtonLabel.Enabled = $false
+        $BulkImportFormBrowseCurrentVersionButton.Enabled = $false
+    } else {
+        $BulkImportFormRadioButtonRemove.Enabled = $false
+        $BulkImportFormRadioButtonReplace.Enabled = $false
+        $BulkImportFormRadioButtonAdd.Enabled = $false
+        $BulkImportFormButtonGroupLabel.Enabled = $false
+        $BulkImportFormBrowseCurrentVersionButtonLabel.Enabled = $true
+        $BulkImportFormBrowseCurrentVersionButton.Enabled = $true
+    }
+    })
+    $BulkImportForm.Controls.Add($BulkImportFormDistributeAutomatically)
+    #Кнопка обзор для текущей версии проекта
+    $BulkImportFormBrowseCurrentVersionButton = New-Object System.Windows.Forms.Button
+    $BulkImportFormBrowseCurrentVersionButton.Location = New-Object System.Drawing.Point(30,70) #x,y
+    $BulkImportFormBrowseCurrentVersionButton.Size = New-Object System.Drawing.Point(80,22) #width,height
+    $BulkImportFormBrowseCurrentVersionButton.Text = "Обзор..."
+    $BulkImportFormBrowseCurrentVersionButton.TabStop = $false
+    $BulkImportFormBrowseCurrentVersionButton.Enabled = $false
+    $BulkImportFormBrowseCurrentVersionButton.Add_Click({Write-Host $(Select-Folder -Description "Укажите путь к папке с текущей версией проекта")})
+    $BulkImportForm.Controls.Add($BulkImportFormBrowseCurrentVersionButton)
+    #Поле к кнопке обзор для текущей версии проекта
+    $BulkImportFormBrowseCurrentVersionButtonLabel = New-Object System.Windows.Forms.Label
+    $BulkImportFormBrowseCurrentVersionButtonLabel.Location =  New-Object System.Drawing.Point(115,74) #x,y
+    $BulkImportFormBrowseCurrentVersionButtonLabel.Width = 300
+    $BulkImportFormBrowseCurrentVersionButtonLabel.Text = "Укажите путь к папке с текущей версией проекта"
+    $BulkImportFormBrowseCurrentVersionButtonLabel.TextAlign = "TopLeft"
+    $BulkImportFormBrowseCurrentVersionButtonLabel.Enabled = $false
+    $BulkImportForm.Controls.Add($BulkImportFormBrowseCurrentVersionButtonLabel)
+    #Надпись к группе радиокнопок для выбора списка
+    $BulkImportFormButtonGroupLabel = New-Object System.Windows.Forms.Label
+    $BulkImportFormButtonGroupLabel.Location =  New-Object System.Drawing.Point(10,107) #x,y
+    $BulkImportFormButtonGroupLabel.Width = 81
+    $BulkImportFormButtonGroupLabel.Text = "Добавить в:"
+    $BulkImportFormButtonGroupLabel.TextAlign = "TopLeft"
+    $BulkImportForm.Controls.Add($BulkImportFormButtonGroupLabel)
+    #Группа радиокнопок для выбора списка
+    $BulkImportFormRadioButtonAdd = New-Object System.Windows.Forms.RadioButton
+    $BulkImportFormRadioButtonAdd.Location = New-Object System.Drawing.Point(95,106)
+    $BulkImportFormRadioButtonAdd.Size = New-Object System.Drawing.Size(250,20)
+    $BulkImportFormRadioButtonAdd.Checked = $true 
+    $BulkImportFormRadioButtonAdd.Text = "Выпустить"
+    $BulkImportForm.Controls.Add($BulkImportFormRadioButtonAdd)
+    $BulkImportFormRadioButtonReplace = New-Object System.Windows.Forms.RadioButton
+    $BulkImportFormRadioButtonReplace.Location = New-Object System.Drawing.Point(95,126)
+    $BulkImportFormRadioButtonReplace.Size = New-Object System.Drawing.Size(250,20)
+    $BulkImportFormRadioButtonReplace.Checked = $false
+    $BulkImportFormRadioButtonReplace.Text = "Заменить"
+    $BulkImportForm.Controls.Add($BulkImportFormRadioButtonReplace)
+    $BulkImportFormRadioButtonRemove = New-Object System.Windows.Forms.RadioButton
+    $BulkImportFormRadioButtonRemove.Location = New-Object System.Drawing.Point(95,146)
+    $BulkImportFormRadioButtonRemove.Size = New-Object System.Drawing.Size(250,20)
+    $BulkImportFormRadioButtonRemove.Checked = $false
+    $BulkImportFormRadioButtonRemove.Text = "Аннулировать"
+    $BulkImportForm.Controls.Add($BulkImportFormRadioButtonRemove)
+    #Кнопка добавить
+    $BulkImportFormApplyButton = New-Object System.Windows.Forms.Button
+    $BulkImportFormApplyButton.Location = New-Object System.Drawing.Point(10,184) #x,y
+    $BulkImportFormApplyButton.Size = New-Object System.Drawing.Point(80,22) #width,height
+    $BulkImportFormApplyButton.Text = "Импорт"
+    $BulkImportFormApplyButton.Add_Click({})
+    $BulkImportForm.Controls.Add($BulkImportFormApplyButton)
+    #Кнопка закрыть
+    $BulkImportFormCancelButton = New-Object System.Windows.Forms.Button
+    $BulkImportFormCancelButton.Location = New-Object System.Drawing.Point(100,184) #x,y
+    $BulkImportFormCancelButton.Size = New-Object System.Drawing.Point(80,22) #width,height
+    $BulkImportFormCancelButton.Text = "Закрыть"
+    $BulkImportFormCancelButton.Add_Click({
+        $BulkImportForm.Close()
+    })
+    $BulkImportForm.Controls.Add($BulkImportFormCancelButton)
     $BulkImportForm.ShowDialog()
 }
 
