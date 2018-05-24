@@ -13,6 +13,17 @@ $script:GlobalSendToField = "По списку рассылки"
 #Значение для поля 'Приложение'
 $script:GlobalAppendixField = "Нет"
 
+Function BulkImport ($ListOfSelectedFiles)
+{
+    $ListOfSelectedFiles | % {
+        if ($_ -match '([A-Z0-9]{6})-([A-Z]{2})-([A-Z]{2})-\d\d\.\d\d\.\d\d\.([a-z]{1})([A-Z]{3})\.\d\d\.\d\d') {
+            Write-Host $([System.IO.Path]::GetFileNameWithoutExtension($_)) "is a document"
+        } else {
+            Write-Host $([System.IO.Path]::GetFileNameWithoutExtension($_)) "is a software"
+        }
+    }
+}
+
 Function Open-File ($Filter)
 {
     Add-Type -AssemblyName System.Windows.Forms
@@ -33,8 +44,9 @@ Function Select-Folder ($Description)
     if ($DialogResult -eq "OK") {return $SelectFolderDialog.SelectedPath} else {return $null}
 }
 
-Function BulkImport ()
+Function BulkImportForm ()
 {
+    $script:ImportFilesArray = @()
     $BulkImportForm = New-Object System.Windows.Forms.Form
     $BulkImportForm.Padding = New-Object System.Windows.Forms.Padding(0,0,10,10)
     $BulkImportForm.ShowIcon = $false
@@ -53,13 +65,15 @@ Function BulkImport ()
     $BulkImportFormBrowseButton.Size = New-Object System.Drawing.Point(80,22) #width,height
     $BulkImportFormBrowseButton.Text = "Обзор..."
     $BulkImportFormBrowseButton.TabStop = $false
-    $BulkImportFormBrowseButton.Add_Click({Write-Host $((Open-File -Filter "All files (*.*)| *.*").Count)})
+    $BulkImportFormBrowseButton.Add_Click({
+    $script:ImportFilesArray = Open-File -Filter "All files (*.*)| *.*"
+    })
     $BulkImportForm.Controls.Add($BulkImportFormBrowseButton)
     #Поле к кнопке Обзор
     $BulkImportFormBrowseButtonLabel = New-Object System.Windows.Forms.Label
     $BulkImportFormBrowseButtonLabel.Location =  New-Object System.Drawing.Point(95,14) #x,y
     $BulkImportFormBrowseButtonLabel.Width = 300
-    $BulkImportFormBrowseButtonLabel.Text = "Выберите публикуемые файлы"
+    $BulkImportFormBrowseButtonLabel.Text = "Выберите файлы для импорта"
     $BulkImportFormBrowseButtonLabel.TextAlign = "TopLeft"
     $BulkImportForm.Controls.Add($BulkImportFormBrowseButtonLabel)
     #Чекбокс 'Распределить файлы по спискам автоматически'
@@ -69,7 +83,6 @@ Function BulkImport ()
     $BulkImportFormDistributeAutomatically.Location = New-Object System.Drawing.Point(10,43) #x,y
     $BulkImportFormDistributeAutomatically.Enabled = $true
     $BulkImportFormDistributeAutomatically.Checked = $false
-    Write-Host $BulkImportFormDistributeAutomatically.Height
     $BulkImportFormDistributeAutomatically.Add_CheckStateChanged({
     if ($BulkImportFormDistributeAutomatically.Checked -eq $false) {
         $BulkImportFormRadioButtonRemove.Enabled = $true
@@ -131,12 +144,12 @@ Function BulkImport ()
     $BulkImportFormRadioButtonRemove.Checked = $false
     $BulkImportFormRadioButtonRemove.Text = "Аннулировать"
     $BulkImportForm.Controls.Add($BulkImportFormRadioButtonRemove)
-    #Кнопка добавить
+    #Кнопка Импорт
     $BulkImportFormApplyButton = New-Object System.Windows.Forms.Button
     $BulkImportFormApplyButton.Location = New-Object System.Drawing.Point(10,184) #x,y
     $BulkImportFormApplyButton.Size = New-Object System.Drawing.Point(80,22) #width,height
     $BulkImportFormApplyButton.Text = "Импорт"
-    $BulkImportFormApplyButton.Add_Click({})
+    $BulkImportFormApplyButton.Add_Click({BulkImport -ListOfSelectedFiles $script:ImportFilesArray})
     $BulkImportForm.Controls.Add($BulkImportFormApplyButton)
     #Кнопка закрыть
     $BulkImportFormCancelButton = New-Object System.Windows.Forms.Button
@@ -2127,7 +2140,7 @@ Function Custom-Form ()
     $ButtonBatchFileImport.Location = New-Object System.Drawing.Point(167,69) #x,y
     $ButtonBatchFileImport.Size = New-Object System.Drawing.Point(137,22) #width,height
     $ButtonBatchFileImport.Text = "Пакетный импорт..."
-    $ButtonBatchFileImport.Add_Click({BulkImport})
+    $ButtonBatchFileImport.Add_Click({BulkImportForm})
     $ListSettingsListActions.Controls.Add($ButtonBatchFileImport)
 
     #Группа элементов Параметры извещения
@@ -2320,35 +2333,7 @@ Function Custom-Form ()
         }
     }
     })
-    
     $ScriptMainWindow.Controls.Add($ButtonRun)
-
-    
-    <#
-    #Button 'Export'
-    $CreatePropertiesPageButtonExportList = New-Object System.Windows.Forms.Button
-    $CreatePropertiesPageButtonExportList.Location = New-Object System.Drawing.Point(362,230) #x,y
-    $CreatePropertiesPageButtonExportList.Size = New-Object System.Drawing.Point(70,22) #width,height
-    $CreatePropertiesPageButtonExportList.Text = "Export list"
-    $CreatePropertiesPageButtonExportList.Add_Click({
-    #$CreatePropertyListView.Items[0].SubItems | % {Write-Host $_.Text}
-    Write-Host $CreatePropertyListView.Items.Count
-    $CreatePropertyListView.Items | % {$_.SubItems | % {Write-Host $_.Text}}
-    $PathToExportedList = Save-File
-            if ($PathToExportedList -ne $null) {
-            if (Test-Path -Path $PathToExportedList) {Remove-Item -Path $PathToExportedList -Force}
-            $CreatePropertyListView.Items | % {$ExportedString = ""; $_.SubItems | % {$ExportedString += "$($_.Text);"}; $ExportedString = $ExportedString.TrimEnd(";"); Add-Content -Path $PathToExportedList -Value $ExportedString}
-        }
-    })
-    $CreatePropertiesPageListSettings.Controls.Add($CreatePropertiesPageButtonExportList)
-    #Button 'Import'
-    $CreatePropertiesPageButtonImportList = New-Object System.Windows.Forms.Button
-    $CreatePropertiesPageButtonImportList.Location = New-Object System.Drawing.Point(450,230) #x,y
-    $CreatePropertiesPageButtonImportList.Size = New-Object System.Drawing.Point(70,22) #width,height
-    $CreatePropertiesPageButtonImportList.Text = "Import list"
-    $CreatePropertiesPageButtonImportList.Add_Click({})
-    $CreatePropertiesPageListSettings.Controls.Add($CreatePropertiesPageButtonImportList)
-    $CreatePropertiesPage.Controls.Add($CreatePropertyTest)#>
     $ScriptMainWindow.ShowDialog()
 }
 
