@@ -162,29 +162,16 @@ Function BulkImport-InputFileDataForm ($FileName, $FileType, $FormTitle) {
 
 Function BulkImport ($ListOfSelectedFiles)
 {
+    #Создать экземпляр приложения MS Word
+    $WordReadData = New-Object -ComObject Word.Application
+    #Сделать вызванное приложение невидемым
+    $WordReadData.Visible = $false
     $ItemsOnTheList = @()
     $ListViewAdd.Items | % {$ItemsOnTheList += $_.Text}
     $ListViewReplace.Items | % {$ItemsOnTheList += $_.Text}
     $ListViewRemove.Items | % {$ItemsOnTheList += $_.Text}
     $ListOfSelectedFiles | % {
-        #$DoReplace = $false
         $FileNameWOExtension = [System.IO.Path]::GetFileNameWithoutExtension($_)
-        <#Проверка. Существует ли добавляемый файл в списках. Если существует, то отображается диалоговое окно с вопросом.
-        if ($ItemsOnTheList -contains "$FileNameWOExtension") {
-            if ((Show-MessageBox -Message "Файл с обозначением $FileNameWOExtension содежится в списках.`r`n`r`nНажмите Да, чтобы продолжить и перезаписать существующую запись.`r`nНажмите Нет, чтобы продолжить без внесения изменений." -Title "Выберите действие" -Type YesNo) -eq "No") {
-                #Ответ нет. Скрипт переходит к следующему фалйлу в конвеере. Существующа запись остается без изменений.
-                return
-            } else {
-                #Ответ да. Скрипт меняет значение флага "ПРоизвести замену" на true
-                $DoReplace = $true
-            }
-        }
-        #Удаление записи из списка
-        if ($DoReplace -eq $true) {
-        $ListViewAdd.Items | % {if ($_.Text -eq "$FileNameWOExtension") {$_.Remove()}}
-        $ListViewReplace.Items | % {if ($_.Text -eq "$FileNameWOExtension") {$_.Remove()}}
-        $ListViewRemove.Items | % {if ($_.Text -eq "$FileNameWOExtension") {$_.Remove()}}
-        }#>
         #Проверка на тип файла (документ)
         if ($_ -match '([A-Z0-9]{6})-([A-Z]{2})-([A-Z]{2})-\d\d\.\d\d\.\d\d\.([a-z]{1})([A-Z]{3})\.\d\d\.\d\d') {
             Write-Host $FileNameWOExtension "is a document"
@@ -200,7 +187,19 @@ Function BulkImport ($ListOfSelectedFiles)
             } else {
                 #Отбрасываем PDF файлы
                 if ($([System.IO.Path]::GetExtension($_)) -ne '.pdf') {
-                Write-Host "Hi Sereja"
+                    $DocumentReadData = $WordReadData.Documents.Open($_)
+                    if ($_ -match '\d\d\.([a-z]{1})(SPC)\.\d\d' -or $_ -match '\d\d\.([a-z]{1})(LPD)\.\d\d') {
+                        [string]$ValueOfVersionNumber = ($DocumentReadData.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(1, 1).Range.Text).Trim([char]0x0007)
+                        Write-Host "Version number value $($ValueOfVersionNumber.Length):" $ValueOfVersionNumber
+                        if ($ValueOfVersionNumber -eq 0) {$ValueOfVersionNumber = "-"}
+                        BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $ValueOfVersionNumber -FileType "Документ" -HighlightFlag 0
+                    } else {
+                        [string]$ValueOfVersionNumber = ($DocumentReadData.Tables.Item(1).Cell(7, 3).Range.Text).Trim([char]0x0007)
+                        Write-Host "Version number value $($ValueOfVersionNumber.Length):" $ValueOfVersionNumber
+                        if ($ValueOfVersionNumber -eq 0) {$ValueOfVersionNumber = "-"}
+                        BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $ValueOfVersionNumber -FileType "Документ" -HighlightFlag 0
+                    }
+                    $DocumentReadData.Close([ref]0)
                 }
             }
         #Проверка на тип файлам (программа)
