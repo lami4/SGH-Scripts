@@ -13,13 +13,199 @@ $script:GlobalSendToField = "По списку рассылки"
 #Значение для поля 'Приложение'
 $script:GlobalAppendixField = "Нет"
 
+#Служебная переменная
+$script:VerNumber = ""
+$script:HighlightChecboxStatus = $true
+
+Function BulkImportAdd-ItemToList ($FileName, $VersionNumber, $FileType, $HighlightFlag)
+{
+    $ItemsOnTheList = @()
+    $ListViewAdd.Items | % {$ItemsOnTheList += $_.Text}
+    $ListViewReplace.Items | % {$ItemsOnTheList += $_.Text}
+    $ListViewRemove.Items | % {$ItemsOnTheList += $_.Text}
+    if ($ItemsOnTheList -contains "$($FileName)") {
+        if ((Show-MessageBox -Message "Файл с обозначением $($FileName) уже содержится в списках.`r`n`r`nНажмите Да, чтобы продолжить и перезаписать существующую запись.`r`nНажмите Нет, чтобы продолжить без внесения изменений." -Title "Выберите действие" -Type YesNo) -eq "Yes") {
+            #Ответ да. Скрипт меняет удаляет существующую запись и добавляет новую в указанный список
+            $ListViewAdd.Items | % {if ($_.Text -eq "$($FileName)") {$_.Remove()}}
+            $ListViewReplace.Items | % {if ($_.Text -eq "$($FileName)") {$_.Remove()}}
+            $ListViewRemove.Items | % {if ($_.Text -eq "$($FileName)") {$_.Remove()}}
+            $ItemToAdd = New-Object System.Windows.Forms.ListViewItem("$($FileName)")
+            $ItemToAdd.SubItems.Add("$($VersionNumber)")
+            $ItemToAdd.SubItems.Add("$($FileType)")
+            $ItemToAdd.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
+            if ($HighlightFlag -eq 1) {
+                if ($script:HighlightChecboxStatus -eq $true) {$ItemToAdd.BackColor = [System.Drawing.Color]::FromArgb(255, 15, 177, 255)}
+            }
+            if ($BulkImportFormRadioButtonAdd.Checked -eq $true) {$ListViewAdd.Items.Insert(0, $ItemToAdd)}
+            if ($BulkImportFormRadioButtonReplace.Checked -eq $true) {$ListViewReplace.Items.Insert(0, $ItemToAdd)}
+            if ($BulkImportFormRadioButtonRemove.Checked -eq $true) {$ListViewRemove.Items.Insert(0, $ItemToAdd)}
+            Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
+            Unselect-ItemsInOtherLists -List3 $ListViewAdd -List1 $ListViewReplace -List2 $ListViewRemove 
+        }
+    } else {
+            $ItemToAdd = New-Object System.Windows.Forms.ListViewItem("$($FileName)")
+            $ItemToAdd.SubItems.Add("$($VersionNumber)")
+            $ItemToAdd.SubItems.Add("$($FileType)")
+            $ItemToAdd.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
+            if ($HighlightFlag -eq 1) {
+                if ($script:HighlightChecboxStatus -eq $true) {$ItemToAdd.BackColor = [System.Drawing.Color]::FromArgb(255, 15, 177, 255)}
+            }
+            if ($BulkImportFormRadioButtonAdd.Checked -eq $true) {$ListViewAdd.Items.Insert(0, $ItemToAdd)}
+            if ($BulkImportFormRadioButtonReplace.Checked -eq $true) {$ListViewReplace.Items.Insert(0, $ItemToAdd)}
+            if ($BulkImportFormRadioButtonRemove.Checked -eq $true) {$ListViewRemove.Items.Insert(0, $ItemToAdd)}
+            Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
+            Unselect-ItemsInOtherLists -List3 $ListViewAdd -List1 $ListViewReplace -List2 $ListViewRemove 
+    }
+}
+
+Function BulkImport-InputFileDataForm ($FileName, $FileType, $FormTitle) {
+    $InputFileDataForm = New-Object System.Windows.Forms.Form
+    $InputFileDataForm.Padding = New-Object System.Windows.Forms.Padding(0,0,10,10)
+    $InputFileDataForm.ShowIcon = $false
+    $InputFileDataForm.AutoSize = $true
+    $InputFileDataForm.Text = $FormTitle
+    $InputFileDataForm.AutoSizeMode = "GrowAndShrink"
+    $InputFileDataForm.WindowState = "Normal"
+    $InputFileDataForm.SizeGripStyle = "Hide"
+    $InputFileDataForm.ShowInTaskbar = $true
+    $InputFileDataForm.StartPosition = "CenterScreen"
+    $InputFileDataForm.MinimizeBox = $false
+    $InputFileDataForm.MaximizeBox = $false
+    #Надпись к поля для ввода обозначение
+    $InputFileDataFormFileNameLabel = New-Object System.Windows.Forms.Label
+    $InputFileDataFormFileNameLabel.Location =  New-Object System.Drawing.Point(10,15) #x,y
+    $InputFileDataFormFileNameLabel.Width = 81
+    $InputFileDataFormFileNameLabel.Text = "Обозначение:"
+    $InputFileDataFormFileNameLabel.TextAlign = "TopLeft"
+    $InputFileDataForm.Controls.Add($InputFileDataFormFileNameLabel)
+    
+    #Поле для ввода обозначение
+    $InputFileDataFormFileNameInput = New-Object System.Windows.Forms.TextBox 
+    $InputFileDataFormFileNameInput.Location = New-Object System.Drawing.Point(95,13) #x,y
+    $InputFileDataFormFileNameInput.Width = 270
+    $InputFileDataFormFileNameInput.Text = "$($FileName)"
+    $InputFileDataFormFileNameInput.ForeColor = "Gray"
+    $InputFileDataFormFileNameInput.Enabled = $false
+    $InputFileDataForm.Controls.Add($InputFileDataFormFileNameInput)
+    
+    #Надпись к списку для указания типа файла
+    $InputFileDataFormFileTypeLabel = New-Object System.Windows.Forms.Label
+    $InputFileDataFormFileTypeLabel.Location = New-Object System.Drawing.Point(10,45) #x,y
+    $InputFileDataFormFileTypeLabel.Width = 81
+    $InputFileDataFormFileTypeLabel.Text = "Тип файла:"
+    $InputFileDataFormFileTypeLabel.TextAlign = "TopLeft"
+    $InputFileDataForm.Controls.Add($InputFileDataFormFileTypeLabel)
+    
+    #Список содержащий доступные типы файлов
+    $DataTypes = @("Документ","Программа")
+    $InputFileDataFormFileTypeCombobox = New-Object System.Windows.Forms.ComboBox
+    $InputFileDataFormFileTypeCombobox.Location = New-Object System.Drawing.Point(95,43) #x,y
+    $InputFileDataFormFileTypeCombobox.DropDownStyle = "DropDownList"
+    $InputFileDataFormFileTypeCombobox.Enabled = $false
+    $DataTypes | % {$InputFileDataFormFileTypeCombobox.Items.add($_)}
+    if ($FileType -eq "Документ") {$InputFileDataFormFileTypeCombobox.SelectedIndex = 0} else {$InputFileDataFormFileTypeCombobox.SelectedIndex = 1}
+    $InputFileDataForm.Controls.Add($InputFileDataFormFileTypeCombobox)
+    
+    #Надпись к полю для ввода MD5 и Изм.
+    $InputFileDataFormAttributeValueLabel = New-Object System.Windows.Forms.Label
+    $InputFileDataFormAttributeValueLabel.Location =  New-Object System.Drawing.Point(10,75) #x,y
+    $InputFileDataFormAttributeValueLabel.Width = 81
+    $InputFileDataFormAttributeValueLabel.Text = "Изм./MD5:"
+    $InputFileDataFormAttributeValueLabel.TextAlign = "TopLeft"
+    $InputFileDataForm.Controls.Add($InputFileDataFormAttributeValueLabel)
+    
+    #Поле для ввода MD5 и Изм.
+    $InputFileDataFormAttributeValueInput = New-Object System.Windows.Forms.TextBox 
+    $InputFileDataFormAttributeValueInput.Location = New-Object System.Drawing.Point(95,73) #x,y
+    $InputFileDataFormAttributeValueInput.Width = 270
+    $InputFileDataFormAttributeValueInput.Text = "Укажите Изм. или MD5..."
+    $InputFileDataFormAttributeValueInput.ForeColor = "Gray"
+    $InputFileDataFormAttributeValueInput.Add_GotFocus({
+        if ($InputFileDataFormAttributeValueInput.Text -eq "Укажите Изм. или MD5...") {
+            $InputFileDataFormAttributeValueInput.Text = ""
+            $InputFileDataFormAttributeValueInput.ForeColor = "Black"
+        }
+        })
+    $InputFileDataFormAttributeValueInput.Add_LostFocus({
+        if ($InputFileDataFormAttributeValueInput.Text -eq "") {
+            $InputFileDataFormAttributeValueInput.Text = "Укажите Изм. или MD5..."
+            $InputFileDataFormAttributeValueInput.ForeColor = "Gray"
+        }
+        })
+    $InputFileDataForm.Controls.Add($InputFileDataFormAttributeValueInput)
+    #Выделить цветом
+    $InputFileDataFormHighlightCheckbox = New-Object System.Windows.Forms.CheckBox
+    $InputFileDataFormHighlightCheckbox.Width = 410
+    $InputFileDataFormHighlightCheckbox.Text = "Выделить запись цветом"
+    $InputFileDataFormHighlightCheckbox.Location = New-Object System.Drawing.Point(10,100) #x,y
+    $InputFileDataFormHighlightCheckbox.Enabled = $true
+    $InputFileDataFormHighlightCheckbox.Checked = $true
+    $InputFileDataForm.Controls.Add($InputFileDataFormHighlightCheckbox)
+    #Кнопка добавить
+    $InputFileDataFormAddButton = New-Object System.Windows.Forms.Button
+    $InputFileDataFormAddButton.Location = New-Object System.Drawing.Point(10,130) #x,y
+    $InputFileDataFormAddButton.Size = New-Object System.Drawing.Point(80,22) #width,height
+    $InputFileDataFormAddButton.Text = "Добавить"
+    $InputFileDataFormAddButton.Add_Click({
+    if ($InputFileDataFormAttributeValueInput.Text -eq "Укажите Изм. или MD5...") {
+        Show-MessageBox -Message "Пожалуйста, укажите Изм./MD5 для файла." -Title "Значения указаны не во всех полях" -Type OK
+    } else {
+        if ($InputFileDataFormHighlightCheckbox.Checked -eq $true) {$script:HighlightChecboxStatus = $true} else {$script:HighlightChecboxStatus = $false}
+        $script:VerNumber = $InputFileDataFormAttributeValueInput.Text
+        $InputFileDataForm.Close()
+    }
+    })
+    $InputFileDataForm.Controls.Add($InputFileDataFormAddButton)
+    $InputFileDataForm.ActiveControl = $InputFileDataFormFileTypeLabel
+    $InputFileDataForm.ShowDialog()
+}
+
 Function BulkImport ($ListOfSelectedFiles)
 {
+    $ItemsOnTheList = @()
+    $ListViewAdd.Items | % {$ItemsOnTheList += $_.Text}
+    $ListViewReplace.Items | % {$ItemsOnTheList += $_.Text}
+    $ListViewRemove.Items | % {$ItemsOnTheList += $_.Text}
     $ListOfSelectedFiles | % {
+        #$DoReplace = $false
+        $FileNameWOExtension = [System.IO.Path]::GetFileNameWithoutExtension($_)
+        <#Проверка. Существует ли добавляемый файл в списках. Если существует, то отображается диалоговое окно с вопросом.
+        if ($ItemsOnTheList -contains "$FileNameWOExtension") {
+            if ((Show-MessageBox -Message "Файл с обозначением $FileNameWOExtension содежится в списках.`r`n`r`nНажмите Да, чтобы продолжить и перезаписать существующую запись.`r`nНажмите Нет, чтобы продолжить без внесения изменений." -Title "Выберите действие" -Type YesNo) -eq "No") {
+                #Ответ нет. Скрипт переходит к следующему фалйлу в конвеере. Существующа запись остается без изменений.
+                return
+            } else {
+                #Ответ да. Скрипт меняет значение флага "ПРоизвести замену" на true
+                $DoReplace = $true
+            }
+        }
+        #Удаление записи из списка
+        if ($DoReplace -eq $true) {
+        $ListViewAdd.Items | % {if ($_.Text -eq "$FileNameWOExtension") {$_.Remove()}}
+        $ListViewReplace.Items | % {if ($_.Text -eq "$FileNameWOExtension") {$_.Remove()}}
+        $ListViewRemove.Items | % {if ($_.Text -eq "$FileNameWOExtension") {$_.Remove()}}
+        }#>
+        #Проверка на тип файла (документ)
         if ($_ -match '([A-Z0-9]{6})-([A-Z]{2})-([A-Z]{2})-\d\d\.\d\d\.\d\d\.([a-z]{1})([A-Z]{3})\.\d\d\.\d\d') {
-            Write-Host $([System.IO.Path]::GetFileNameWithoutExtension($_)) "is a document"
+            Write-Host $FileNameWOExtension "is a document"
+            #Проверка на дизайн гайд
+            if ($_ -match '\d\d\.([a-z]{1})(DSG)\.\d\d') {
+                BulkImport-InputFileDataForm -FileName $FileNameWOExtension -FileType "Документ" -FormTitle "Введите номер Изм. для DSG документа"
+                BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $script:VerNumber -FileType "Документ" -HighlightFlag 1
+            #Проверка на эксель   
+            } elseif ($([System.IO.Path]::GetExtension($_)) -eq '.xlsx' -or $([System.IO.Path]::GetExtension($_)) -eq '.xls') {
+                BulkImport-InputFileDataForm -FileName $FileNameWOExtension -FileType "Документ" -FormTitle "Введите номер Изм. для Excel документа"
+                BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $script:VerNumber -FileType "Документ" -HighlightFlag 1
+            #Проверки пройдены -- можно считать данные у файла
+            } else {
+                #Отбрасываем PDF файлы
+                if ($([System.IO.Path]::GetExtension($_)) -ne '.pdf') {
+                Write-Host "Hi Sereja"
+                }
+            }
+        #Проверка на тип файлам (программа)
         } else {
-            Write-Host $([System.IO.Path]::GetFileNameWithoutExtension($_)) "is a software"
+            Write-Host $FileNameWOExtension "is a software"
         }
     }
 }
@@ -149,7 +335,10 @@ Function BulkImportForm ()
     $BulkImportFormApplyButton.Location = New-Object System.Drawing.Point(10,184) #x,y
     $BulkImportFormApplyButton.Size = New-Object System.Drawing.Point(80,22) #width,height
     $BulkImportFormApplyButton.Text = "Импорт"
-    $BulkImportFormApplyButton.Add_Click({BulkImport -ListOfSelectedFiles $script:ImportFilesArray})
+    $BulkImportFormApplyButton.Add_Click({
+    $BulkImportForm.Close()
+    BulkImport -ListOfSelectedFiles $script:ImportFilesArray
+    })
     $BulkImportForm.Controls.Add($BulkImportFormApplyButton)
     #Кнопка закрыть
     $BulkImportFormCancelButton = New-Object System.Windows.Forms.Button
@@ -486,11 +675,11 @@ Function Add-ItemToList ()
             Show-MessageBox -Message "Пожалуйста, укажите Изм./MD5 для файла." -Title "Значения указаны не во всех полях" -Type OK
         } else {
                 $ItemsOnTheList = @()
-                if ($AddItemFormRadioButtonAdd.Checked -eq $true) {$ListViewAdd.Items | % {$ItemsOnTheList += $_.Text}}
-                if ($AddItemFormRadioButtonReplace.Checked -eq $true) {$ListViewReplace.Items | % {$ItemsOnTheList += $_.Text}}
-                if ($AddItemFormRadioButtonRemove.Checked -eq $true) {$ListViewRemove.Items | % {$ItemsOnTheList += $_.Text}}
+                $ListViewAdd.Items | % {$ItemsOnTheList += $_.Text}
+                $ListViewReplace.Items | % {$ItemsOnTheList += $_.Text}
+                $ListViewRemove.Items | % {$ItemsOnTheList += $_.Text}
                 if ($ItemsOnTheList -contains $AddItemFormFileNameInput.Text) {
-                Show-MessageBox -Message "Файл с таким обозначением уже содежится в указанном списке." -Title "Невозможно выполнить действие" -Type OK
+                Show-MessageBox -Message "Файл с таким обозначением уже содежится в списках." -Title "Невозможно выполнить действие" -Type OK
             } else {
                 if ($AddItemFormFileTypeCombobox.SelectedItem -eq "Документ" -and $AddItemFormAttributeValueInput.Text.Length -gt 5) {
                     if ((Show-MessageBox -Message "Указанный Изм. содержит больше пяти символов. Возможно вы ошибочно указали MD5 или выбрали неверный тип файла.`r`nВсе равно продолжить?" -Title "Для файла указан подозрительный Изм." -Type YesNo) -eq "Yes") {
@@ -2036,6 +2225,7 @@ Function Custom-Form ()
     $ButtonSelectColor.Add_Click({
     $ColorDialog.ShowDialog()
     $ButtonSelectColor.BackColor = $ColorDialog.Color
+    Write-Host $ColorDialog.Color
     })
     $ListSettingsItemActions.Controls.Add($ButtonSelectColor)
     #Отменить выделение
