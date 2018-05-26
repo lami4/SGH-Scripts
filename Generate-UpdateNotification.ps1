@@ -171,6 +171,7 @@ Function BulkImport ($ListOfSelectedFiles)
     $ListViewReplace.Items | % {$ItemsOnTheList += $_.Text}
     $ListViewRemove.Items | % {$ItemsOnTheList += $_.Text}
     $ListOfSelectedFiles | % {
+        Write-Host $_
         $FileNameWOExtension = [System.IO.Path]::GetFileNameWithoutExtension($_)
         #Проверка на тип файла (документ)
         if ($_ -match '([A-Z0-9]{6})-([A-Z]{2})-([A-Z]{2})-\d\d\.\d\d\.\d\d\.([a-z]{1})([A-Z]{3})\.\d\d\.\d\d') {
@@ -188,23 +189,39 @@ Function BulkImport ($ListOfSelectedFiles)
                 #Отбрасываем PDF файлы
                 if ($([System.IO.Path]::GetExtension($_)) -ne '.pdf') {
                     $DocumentReadData = $WordReadData.Documents.Open($_)
+                    #Код для спецификаци и списка проектной документации
                     if ($_ -match '\d\d\.([a-z]{1})(SPC)\.\d\d' -or $_ -match '\d\d\.([a-z]{1})(LPD)\.\d\d') {
-                        [string]$ValueOfVersionNumber = ($DocumentReadData.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(1, 1).Range.Text).Trim([char]0x0007)
-                        Write-Host "Version number value $($ValueOfVersionNumber.Length):" $ValueOfVersionNumber
-                        if ($ValueOfVersionNumber -eq 0) {$ValueOfVersionNumber = "-"}
-                        BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $ValueOfVersionNumber -FileType "Документ" -HighlightFlag 0
-                    } else {
-                        [string]$ValueOfVersionNumber = ($DocumentReadData.Tables.Item(1).Cell(7, 3).Range.Text).Trim([char]0x0007)
-                        Write-Host "Version number value $($ValueOfVersionNumber.Length):" $ValueOfVersionNumber
-                        if ($ValueOfVersionNumber -eq 0) {$ValueOfVersionNumber = "-"}
-                        BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $ValueOfVersionNumber -FileType "Документ" -HighlightFlag 0
+                        [string]$ValueOfVersionNumber = try {($DocumentReadData.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(1, 1).Range.Text).Trim([char]0x0007) -replace [char]13, ''} catch {"error"}
+                        if ($ValueOfVersionNumber -eq "error") {
+                            BulkImport-InputFileDataForm -FileName $FileNameWOExtension -FileType "Документ" -FormTitle "Введите номер Изм. для Word документа"
+                            BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $script:VerNumber -FileType "Документ" -HighlightFlag 1  
+                        } else {
+                            Write-Host "Version number value $($ValueOfVersionNumber.Length):" $ValueOfVersionNumber
+                            if ($ValueOfVersionNumber -eq "") {[int]$ValueOfVersionNumber = 0} else {[int]$ValueOfVersionNumber}
+                            if ($BulkImportFormRadioButtonReplace.Checked -eq $true) {$ValueOfVersionNumber = $ValueOfVersionNumber - 1}
+                            if ($ValueOfVersionNumber -eq 0) {[string]$ValueOfVersionNumber = "-"}
+                            BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $ValueOfVersionNumber -FileType "Документ" -HighlightFlag 0
+                        }
+                #Код для шаблонов в Word документах
+                } else {
+                        [string]$ValueOfVersionNumber = try {($DocumentReadData.Tables.Item(1).Cell(7, 3).Range.Text).Trim([char]0x0007) -replace [char]13, ''} catch {"error"}
+                        if ($ValueOfVersionNumber -eq "error") {
+                            BulkImport-InputFileDataForm -FileName $FileNameWOExtension -FileType "Документ" -FormTitle "Введите номер Изм. для Word документа"
+                            BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $script:VerNumber -FileType "Документ" -HighlightFlag 1  
+                        } else {
+                            Write-Host "Version number value $($ValueOfVersionNumber.Length):" $ValueOfVersionNumber
+                            if ($ValueOfVersionNumber -eq "") {[int]$ValueOfVersionNumber = 0} else {[int]$ValueOfVersionNumber}
+                            if ($BulkImportFormRadioButtonReplace.Checked -eq $true) {$ValueOfVersionNumber = $ValueOfVersionNumber - 1}
+                            if ($ValueOfVersionNumber -eq 0) {[string]$ValueOfVersionNumber = "-"}
+                            BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $ValueOfVersionNumber -FileType "Документ" -HighlightFlag 0
+                        }
                     }
                     $DocumentReadData.Close([ref]0)
                 }
             }
         #Проверка на тип файлам (программа)
         } else {
-            Write-Host $FileNameWOExtension "is a software"
+            BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber (Get-FileHash -Path $_ -Algorithm MD5).Hash -FileType "Программа" -HighlightFlag 0
         }
     }
 }
