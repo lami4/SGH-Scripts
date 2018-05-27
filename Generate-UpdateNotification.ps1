@@ -1963,10 +1963,12 @@ $TablePopulate.Cell(5, 3).Range.Select()
 $DocumentToPopulate.Application.Selection.Collapse(1)
 $myField = $DocumentToPopulate.Fields.Add($DocumentToPopulate.Application.Selection.Range, 33)
 $TablePopulate.Cell(5, 3).Range.ParagraphFormat.Alignment = 1
-
 Start-Sleep -Seconds 2
 #Обновить поля
 $DocumentToPopulate.Fields.Update()
+$Wholestory = $DocumentToPopulate.Range()
+$TotalPages = $Wholestory.Information(4)
+$TablePopulate.Cell(5, 4).Range.Text = $TotalPages
 $DocumentToPopulate.Save()
 Start-Sleep -Seconds 2
 $DocumentToPopulate.Close()
