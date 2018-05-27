@@ -16,7 +16,7 @@ $script:GlobalAppendixField = "Нет"
 #Служебные переменные
 $script:VerNumber = ""
 $script:HighlightChecboxStatus = $true
-$script:PathToCurrentVrsion = ""
+$script:PathToCurrentVrsion = $null
 
 Function BulkImportAdd-ItemToList ($FileName, $VersionNumber, $FileType, $HighlightFlag, $TestPathFullName)
 {
@@ -301,6 +301,27 @@ Function BulkImportForm ()
     $BulkImportFormBrowseButton.TabStop = $false
     $BulkImportFormBrowseButton.Add_Click({
     $script:ImportFilesArray = Open-File -Filter "All files (*.*)| *.*"
+    if ($script:ImportFilesArray.Count -eq 0) {
+        $BulkImportFormBrowseButtonLabel.Text = "Выберите файлы для импорта"
+    }
+    if ($script:ImportFilesArray.Count -ne 0) {
+        $BulkImportFormBrowseButtonLabel.Text = "Выбрано файлов: $($script:ImportFilesArray.Count)"
+    }
+    if ($script:ImportFilesArray.Count -ne 0 -and $BulkImportFormDistributeAutomatically.Checked -eq $false) {
+        $BulkImportFormApplyButton.Enabled = $true
+    }
+    if ($script:ImportFilesArray.Count -eq 0 -and $BulkImportFormDistributeAutomatically.Checked -eq $false) {
+        $BulkImportFormApplyButton.Enabled = $false
+    }
+    if ($script:ImportFilesArray.Count -ne 0 -and $BulkImportFormDistributeAutomatically.Checked -eq $true -and $script:PathToCurrentVrsion -eq $null) {
+        $BulkImportFormApplyButton.Enabled = $false
+    }
+    if ($script:ImportFilesArray.Count -ne 0 -and $BulkImportFormDistributeAutomatically.Checked -eq $true -and $script:PathToCurrentVrsion -ne $null) {
+        $BulkImportFormApplyButton.Enabled = $true
+    }
+    if ($script:ImportFilesArray.Count -eq 0 -and $BulkImportFormDistributeAutomatically.Checked -eq $true -and $script:PathToCurrentVrsion -ne $null) {
+        $BulkImportFormApplyButton.Enabled = $false
+    }
     })
     $BulkImportForm.Controls.Add($BulkImportFormBrowseButton)
     #Поле к кнопке Обзор
@@ -333,6 +354,15 @@ Function BulkImportForm ()
         $BulkImportFormBrowseCurrentVersionButtonLabel.Enabled = $true
         $BulkImportFormBrowseCurrentVersionButton.Enabled = $true
     }
+    if ($BulkImportFormDistributeAutomatically.Checked -eq $false -and $script:ImportFilesArray.Count -ne 0) {
+        $BulkImportFormApplyButton.Enabled = $true
+    }
+    if ($BulkImportFormDistributeAutomatically.Checked -eq $true -and $script:ImportFilesArray.Count -ne 0 -and $script:PathToCurrentVrsion -ne $null) {
+        $BulkImportFormApplyButton.Enabled = $true
+    }
+    if ($BulkImportFormDistributeAutomatically.Checked -eq $true -and $script:ImportFilesArray.Count -ne 0 -and $script:PathToCurrentVrsion -eq $null) {
+        $BulkImportFormApplyButton.Enabled = $false
+    }
     })
     $BulkImportForm.Controls.Add($BulkImportFormDistributeAutomatically)
     #Кнопка обзор для текущей версии проекта
@@ -342,13 +372,41 @@ Function BulkImportForm ()
     $BulkImportFormBrowseCurrentVersionButton.Text = "Обзор..."
     $BulkImportFormBrowseCurrentVersionButton.TabStop = $false
     $BulkImportFormBrowseCurrentVersionButton.Enabled = $false
-    $BulkImportFormBrowseCurrentVersionButton.Add_Click({$script:PathToCurrentVrsion = Select-Folder -Description "Укажите путь к папке с текущей версией проекта"})
+    $BulkImportFormBrowseCurrentVersionButton.Add_Click({
+    $script:PathToCurrentVrsion = Select-Folder -Description "Укажите путь к папке с текущей версией проекта"
+    if ($script:ImportFilesArray.Count -ne 0 -and $BulkImportFormDistributeAutomatically.Checked -eq $true -and $script:PathToCurrentVrsion -eq $null) {
+        $BulkImportFormApplyButton.Enabled = $false
+    }
+    if ($script:ImportFilesArray.Count -ne 0 -and $BulkImportFormDistributeAutomatically.Checked -eq $true -and $script:PathToCurrentVrsion -ne $null) {
+        $BulkImportFormApplyButton.Enabled = $true
+    }
+    if ($script:ImportFilesArray.Count -eq 0 -and $BulkImportFormDistributeAutomatically.Checked -eq $true -and $script:PathToCurrentVrsion -ne $null) {
+        $BulkImportFormApplyButton.Enabled = $false
+    }
+    if ($script:PathToCurrentVrsion -ne $null) {
+        [string]$ThreeDirectories = "..."
+        #$ThreeDirectories += "\$(Split-Path (Split-Path (Split-Path "$script:PathToCurrentVrsion" -Parent) -Parent) -Leaf)"
+        $ThreeDirectories += "\$(Split-Path (Split-Path "$script:PathToCurrentVrsion" -Parent) -Leaf)"
+        $ThreeDirectories += "\$((Get-Item "$script:PathToCurrentVrsion").Name)"
+        $BulkImportFormBrowseCurrentVersionButtonLabel.Text = "Указанный путь: $ThreeDirectories"
+    } else {
+        $BulkImportFormBrowseCurrentVersionButtonLabel.Text = "Укажите путь к папке с текущей версией проекта"
+    }
+    })
     $BulkImportForm.Controls.Add($BulkImportFormBrowseCurrentVersionButton)
     #Поле к кнопке обзор для текущей версии проекта
     $BulkImportFormBrowseCurrentVersionButtonLabel = New-Object System.Windows.Forms.Label
     $BulkImportFormBrowseCurrentVersionButtonLabel.Location =  New-Object System.Drawing.Point(115,74) #x,y
     $BulkImportFormBrowseCurrentVersionButtonLabel.Width = 300
-    $BulkImportFormBrowseCurrentVersionButtonLabel.Text = "Укажите путь к папке с текущей версией проекта"
+    if ($script:PathToCurrentVrsion -ne $null) {
+        [string]$ThreeDirectories = "..."
+        #$ThreeDirectories += "\$(Split-Path (Split-Path (Split-Path "$script:PathToCurrentVrsion" -Parent) -Parent) -Leaf)"
+        $ThreeDirectories += "\$(Split-Path (Split-Path "$script:PathToCurrentVrsion" -Parent) -Leaf)"
+        $ThreeDirectories += "\$((Get-Item "$script:PathToCurrentVrsion").Name)"
+        $BulkImportFormBrowseCurrentVersionButtonLabel.Text = "Указанный путь: $ThreeDirectories"
+    } else {
+        $BulkImportFormBrowseCurrentVersionButtonLabel.Text = "Укажите путь к папке с текущей версией проекта"
+    }
     $BulkImportFormBrowseCurrentVersionButtonLabel.TextAlign = "TopLeft"
     $BulkImportFormBrowseCurrentVersionButtonLabel.Enabled = $false
     $BulkImportForm.Controls.Add($BulkImportFormBrowseCurrentVersionButtonLabel)
@@ -383,9 +441,11 @@ Function BulkImportForm ()
     $BulkImportFormApplyButton.Location = New-Object System.Drawing.Point(10,184) #x,y
     $BulkImportFormApplyButton.Size = New-Object System.Drawing.Point(80,22) #width,height
     $BulkImportFormApplyButton.Text = "Импорт"
+    $BulkImportFormApplyButton.Enabled = $false
     $BulkImportFormApplyButton.Add_Click({
     $BulkImportForm.Close()
     BulkImport -ListOfSelectedFiles $script:ImportFilesArray
+    $script:PathToCurrentVrsion = $null
     })
     $BulkImportForm.Controls.Add($BulkImportFormApplyButton)
     #Кнопка закрыть
