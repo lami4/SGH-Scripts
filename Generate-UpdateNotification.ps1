@@ -13,11 +13,12 @@ $script:GlobalSendToField = "По списку рассылки"
 #Значение для поля 'Приложение'
 $script:GlobalAppendixField = "Нет"
 
-#Служебная переменная
+#Служебные переменные
 $script:VerNumber = ""
 $script:HighlightChecboxStatus = $true
+$script:PathToCurrentVrsion = ""
 
-Function BulkImportAdd-ItemToList ($FileName, $VersionNumber, $FileType, $HighlightFlag)
+Function BulkImportAdd-ItemToList ($FileName, $VersionNumber, $FileType, $HighlightFlag, $TestPathFullName)
 {
     $ItemsOnTheList = @()
     $ListViewAdd.Items | % {$ItemsOnTheList += $_.Text}
@@ -36,11 +37,21 @@ Function BulkImportAdd-ItemToList ($FileName, $VersionNumber, $FileType, $Highli
             if ($HighlightFlag -eq 1) {
                 if ($script:HighlightChecboxStatus -eq $true) {$ItemToAdd.BackColor = [System.Drawing.Color]::FromArgb(255, 15, 177, 255)}
             }
-            if ($BulkImportFormRadioButtonAdd.Checked -eq $true) {$ListViewAdd.Items.Insert(0, $ItemToAdd)}
-            if ($BulkImportFormRadioButtonReplace.Checked -eq $true) {$ListViewReplace.Items.Insert(0, $ItemToAdd)}
-            if ($BulkImportFormRadioButtonRemove.Checked -eq $true) {$ListViewRemove.Items.Insert(0, $ItemToAdd)}
+            if ($BulkImportFormDistributeAutomatically.Checked -eq $true) {
+                if (Test-Path -Path $TestPathFullName) {
+                #Если файл существует в папке с текущей версией проекта, то заменяем
+                    $ListViewReplace.Items.Insert(0, $ItemToAdd)
+                } else {
+                #Если файл не существует в папке с текущей версией проекта, то выпускаем
+                    $ListViewAdd.Items.Insert(0, $ItemToAdd)
+                }
+            } else {
+                if ($BulkImportFormRadioButtonAdd.Checked -eq $true) {$ListViewAdd.Items.Insert(0, $ItemToAdd)}
+                if ($BulkImportFormRadioButtonReplace.Checked -eq $true) {$ListViewReplace.Items.Insert(0, $ItemToAdd)}
+                if ($BulkImportFormRadioButtonRemove.Checked -eq $true) {$ListViewRemove.Items.Insert(0, $ItemToAdd)}
+            }
             Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
-            Unselect-ItemsInOtherLists -List3 $ListViewAdd -List1 $ListViewReplace -List2 $ListViewRemove 
+            Unselect-ItemsInOtherLists -List3 $ListViewAdd -List1 $ListViewReplace -List2 $ListViewRemove
         }
     } else {
             $ItemToAdd = New-Object System.Windows.Forms.ListViewItem("$($FileName)")
@@ -50,11 +61,21 @@ Function BulkImportAdd-ItemToList ($FileName, $VersionNumber, $FileType, $Highli
             if ($HighlightFlag -eq 1) {
                 if ($script:HighlightChecboxStatus -eq $true) {$ItemToAdd.BackColor = [System.Drawing.Color]::FromArgb(255, 15, 177, 255)}
             }
-            if ($BulkImportFormRadioButtonAdd.Checked -eq $true) {$ListViewAdd.Items.Insert(0, $ItemToAdd)}
-            if ($BulkImportFormRadioButtonReplace.Checked -eq $true) {$ListViewReplace.Items.Insert(0, $ItemToAdd)}
-            if ($BulkImportFormRadioButtonRemove.Checked -eq $true) {$ListViewRemove.Items.Insert(0, $ItemToAdd)}
+            if ($BulkImportFormDistributeAutomatically.Checked -eq $true) {
+                if (Test-Path -Path $TestPathFullName) {
+                #Если файл существует в папке с текущей версией проекта, то заменяем
+                    $ListViewReplace.Items.Insert(0, $ItemToAdd)
+                } else {
+                #Если файл не существует в папке с текущей версией проекта, то выпускаем
+                    $ListViewAdd.Items.Insert(0, $ItemToAdd)
+                }
+            } else {
+                if ($BulkImportFormRadioButtonAdd.Checked -eq $true) {$ListViewAdd.Items.Insert(0, $ItemToAdd)}
+                if ($BulkImportFormRadioButtonReplace.Checked -eq $true) {$ListViewReplace.Items.Insert(0, $ItemToAdd)}
+                if ($BulkImportFormRadioButtonRemove.Checked -eq $true) {$ListViewRemove.Items.Insert(0, $ItemToAdd)}
+            }
             Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
-            Unselect-ItemsInOtherLists -List3 $ListViewAdd -List1 $ListViewReplace -List2 $ListViewRemove 
+            Unselect-ItemsInOtherLists -List3 $ListViewAdd -List1 $ListViewReplace -List2 $ListViewRemove
     }
 }
 
@@ -179,11 +200,11 @@ Function BulkImport ($ListOfSelectedFiles)
             #Проверка на дизайн гайд
             if ($_ -match '\d\d\.([a-z]{1})(DSG)\.\d\d') {
                 BulkImport-InputFileDataForm -FileName $FileNameWOExtension -FileType "Документ" -FormTitle "Введите номер Изм. для DSG документа"
-                BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $script:VerNumber -FileType "Документ" -HighlightFlag 1
+                BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $script:VerNumber -FileType "Документ" -HighlightFlag 1 -TestPathFullName "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))"
             #Проверка на эксель   
             } elseif ($([System.IO.Path]::GetExtension($_)) -eq '.xlsx' -or $([System.IO.Path]::GetExtension($_)) -eq '.xls') {
                 BulkImport-InputFileDataForm -FileName $FileNameWOExtension -FileType "Документ" -FormTitle "Введите номер Изм. для Excel документа"
-                BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $script:VerNumber -FileType "Документ" -HighlightFlag 1
+                BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $script:VerNumber -FileType "Документ" -HighlightFlag 1 -TestPathFullName "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))"
             #Проверки пройдены -- можно считать данные у файла
             } else {
                 #Отбрасываем PDF файлы
@@ -194,26 +215,36 @@ Function BulkImport ($ListOfSelectedFiles)
                         [string]$ValueOfVersionNumber = try {($DocumentReadData.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(1, 1).Range.Text).Trim([char]0x0007) -replace [char]13, ''} catch {"error"}
                         if ($ValueOfVersionNumber -eq "error") {
                             BulkImport-InputFileDataForm -FileName $FileNameWOExtension -FileType "Документ" -FormTitle "Введите номер Изм. для Word документа"
-                            BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $script:VerNumber -FileType "Документ" -HighlightFlag 1  
+                            BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $script:VerNumber -FileType "Документ" -HighlightFlag 1 -TestPathFullName "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))" 
                         } else {
                             Write-Host "Version number value $($ValueOfVersionNumber.Length):" $ValueOfVersionNumber
                             if ($ValueOfVersionNumber -eq "") {[int]$ValueOfVersionNumber = 0} else {[int]$ValueOfVersionNumber}
-                            if ($BulkImportFormRadioButtonReplace.Checked -eq $true) {$ValueOfVersionNumber = $ValueOfVersionNumber - 1}
+                            if ($BulkImportFormRadioButtonReplace.Checked -eq $true -and $BulkImportFormDistributeAutomatically.Checked -eq $false) {$ValueOfVersionNumber = $ValueOfVersionNumber - 1}
+                            if ($BulkImportFormDistributeAutomatically.Checked -eq $true) {
+                                if (Test-Path -Path "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))") {
+                                    $ValueOfVersionNumber = $ValueOfVersionNumber - 1
+                                }
+                            }
                             if ($ValueOfVersionNumber -eq 0) {[string]$ValueOfVersionNumber = "-"}
-                            BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $ValueOfVersionNumber -FileType "Документ" -HighlightFlag 0
+                            BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $ValueOfVersionNumber -FileType "Документ" -HighlightFlag 0 -TestPathFullName "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))"
                         }
                 #Код для шаблонов в Word документах
                 } else {
                         [string]$ValueOfVersionNumber = try {($DocumentReadData.Tables.Item(1).Cell(7, 3).Range.Text).Trim([char]0x0007) -replace [char]13, ''} catch {"error"}
                         if ($ValueOfVersionNumber -eq "error") {
                             BulkImport-InputFileDataForm -FileName $FileNameWOExtension -FileType "Документ" -FormTitle "Введите номер Изм. для Word документа"
-                            BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $script:VerNumber -FileType "Документ" -HighlightFlag 1  
+                            BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $script:VerNumber -FileType "Документ" -HighlightFlag 1 -TestPathFullName "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))"
                         } else {
                             Write-Host "Version number value $($ValueOfVersionNumber.Length):" $ValueOfVersionNumber
                             if ($ValueOfVersionNumber -eq "") {[int]$ValueOfVersionNumber = 0} else {[int]$ValueOfVersionNumber}
-                            if ($BulkImportFormRadioButtonReplace.Checked -eq $true) {$ValueOfVersionNumber = $ValueOfVersionNumber - 1}
+                            if ($BulkImportFormRadioButtonReplace.Checked -eq $true -and $BulkImportFormDistributeAutomatically.Checked -eq $false) {$ValueOfVersionNumber = $ValueOfVersionNumber - 1}
+                            if ($BulkImportFormDistributeAutomatically.Checked -eq $true) {
+                                if (Test-Path -Path "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))") {
+                                    $ValueOfVersionNumber = $ValueOfVersionNumber - 1
+                                }
+                            }
                             if ($ValueOfVersionNumber -eq 0) {[string]$ValueOfVersionNumber = "-"}
-                            BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $ValueOfVersionNumber -FileType "Документ" -HighlightFlag 0
+                            BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $ValueOfVersionNumber -FileType "Документ" -HighlightFlag 0 -TestPathFullName "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))"
                         }
                     }
                     $DocumentReadData.Close([ref]0)
@@ -221,7 +252,7 @@ Function BulkImport ($ListOfSelectedFiles)
             }
         #Проверка на тип файлам (программа)
         } else {
-            BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber (Get-FileHash -Path $_ -Algorithm MD5).Hash -FileType "Программа" -HighlightFlag 0
+            BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber (Get-FileHash -Path $_ -Algorithm MD5).Hash -FileType "Программа" -HighlightFlag 0 -TestPathFullName "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))"
         }
     }
 }
@@ -310,7 +341,7 @@ Function BulkImportForm ()
     $BulkImportFormBrowseCurrentVersionButton.Text = "Обзор..."
     $BulkImportFormBrowseCurrentVersionButton.TabStop = $false
     $BulkImportFormBrowseCurrentVersionButton.Enabled = $false
-    $BulkImportFormBrowseCurrentVersionButton.Add_Click({Write-Host $(Select-Folder -Description "Укажите путь к папке с текущей версией проекта")})
+    $BulkImportFormBrowseCurrentVersionButton.Add_Click({$script:PathToCurrentVrsion = Select-Folder -Description "Укажите путь к папке с текущей версией проекта"})
     $BulkImportForm.Controls.Add($BulkImportFormBrowseCurrentVersionButton)
     #Поле к кнопке обзор для текущей версии проекта
     $BulkImportFormBrowseCurrentVersionButtonLabel = New-Object System.Windows.Forms.Label
