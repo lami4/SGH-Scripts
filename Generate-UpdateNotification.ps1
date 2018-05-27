@@ -25,7 +25,7 @@ Function BulkImportAdd-ItemToList ($FileName, $VersionNumber, $FileType, $Highli
     $ListViewReplace.Items | % {$ItemsOnTheList += $_.Text}
     $ListViewRemove.Items | % {$ItemsOnTheList += $_.Text}
     if ($ItemsOnTheList -contains "$($FileName)") {
-        if ((Show-MessageBox -Message "Файл с обозначением $($FileName) уже содержится в списках.`r`n`r`nНажмите Да, чтобы продолжить и перезаписать существующую запись.`r`nНажмите Нет, чтобы продолжить без внесения изменений." -Title "Выберите действие" -Type YesNo) -eq "Yes") {
+        if ((Show-MessageBox -Message "Файл с обозначением $($FileName) уже содержится в списках. Перезаписать?`r`n`r`nНажмите Да, чтобы удалить существующую запись и добавить новую.`r`nНажмите Нет, чтобы продолжить без внесения изменений." -Title "Выберите действие" -Type YesNo) -eq "Yes") {
             #Ответ да. Скрипт меняет удаляет существующую запись и добавляет новую в указанный список
             $ListViewAdd.Items | % {if ($_.Text -eq "$($FileName)") {$_.Remove()}}
             $ListViewReplace.Items | % {if ($_.Text -eq "$($FileName)") {$_.Remove()}}
@@ -92,6 +92,7 @@ Function BulkImport-InputFileDataForm ($FileName, $FileType, $FormTitle) {
     $InputFileDataForm.StartPosition = "CenterScreen"
     $InputFileDataForm.MinimizeBox = $false
     $InputFileDataForm.MaximizeBox = $false
+    $InputFileDataForm.ControlBox = $false
     #Надпись к поля для ввода обозначение
     $InputFileDataFormFileNameLabel = New-Object System.Windows.Forms.Label
     $InputFileDataFormFileNameLabel.Location =  New-Object System.Drawing.Point(10,15) #x,y
@@ -726,7 +727,7 @@ Function Add-ItemToList ()
                 $ListViewReplace.Items | % {$ItemsOnTheList += $_.Text}
                 $ListViewRemove.Items | % {$ItemsOnTheList += $_.Text}
                 if ($ItemsOnTheList -contains $AddItemFormFileNameInput.Text) {
-                Show-MessageBox -Message "Файл с таким обозначением уже содежится в списках." -Title "Невозможно выполнить действие" -Type OK
+                Show-MessageBox -Message "Файл с указанным обозначением уже содержится в списках." -Title "Невозможно выполнить действие" -Type OK
             } else {
                 if ($AddItemFormFileTypeCombobox.SelectedItem -eq "Документ" -and $AddItemFormAttributeValueInput.Text.Length -gt 5) {
                     if ((Show-MessageBox -Message "Указанный Изм. содержит больше пяти символов. Возможно вы ошибочно указали MD5 или выбрали неверный тип файла.`r`nВсе равно продолжить?" -Title "Для файла указан подозрительный Изм." -Type YesNo) -eq "Yes") {
@@ -888,7 +889,7 @@ Function Edit-ItemOnList ($ListObject)
                 $ItemsOnTheList = @()
                 $ListObject.Items | % {$ItemsOnTheList += $_.Text}
                 if ($ItemsOnTheList -contains $EditItemFormFileNameInput.Text -and $EditItemFormFileNameInput.Text -ne $ListObject.Items[$ListObject.SelectedIndices[0]].Text) {
-                Show-MessageBox -Message "Файл с таким обозначением уже содежится в списке." -Title "Невозможно выполнить действие" -Type OK
+                Show-MessageBox -Message "Файл с указанным обозначением уже содержится в списке." -Title "Невозможно выполнить действие" -Type OK
             } else {
                 if ($EditItemFormFileTypeCombobox.SelectedItem -eq "Документ" -and $EditItemFormAttributeValueInput.Text.Length -gt 5) {
                     if ((Show-MessageBox -Message "Указанный Изм. содержит больше пяти символов. Возможно вы ошибочно указали MD5 или выбрали неверный тип файла.`r`nВсе равно продолжить?" -Title "Для файла указан подозрительный Изм." -Type YesNo) -eq "Yes") {
@@ -2544,31 +2545,35 @@ Function Custom-Form ()
     $ButtonRun.Size = New-Object System.Drawing.Point(137,22) #width,height
     $ButtonRun.Text = "Создать ИИ"
     $ButtonRun.Add_Click({
-    $TextInMessage = "Не указаны или некорректно указаны следующие параметры извещения:`r`n"
-    $ErrorPresent = $false
-    if ($UpdateNotificationNumberInput.Text -eq '  -  -') {$ErrorPresent = $true; $TextInMessage += "`r`nНе указан номер извещения."}
-    if ($UpdateNotificationNumberInput.Text -ne '  -  -') {if ($UpdateNotificationNumberInput.Text -notmatch '\d\d-\d\d-\d\d\d\d') {$ErrorPresent = $true; $TextInMessage += "`r`nНомер извещения указан неполностью, либо содержит недопустимые символы."}}
-    if ($ComboboxCreatedBy.SelectedItem -eq $null) {$ErrorPresent = $true; $TextInMessage += "`r`nНе выбран отдел."}
-    if ($ComboboxCheckedBy.SelectedItem -eq $null) {$ErrorPresent = $true; $TextInMessage += "`r`nНе выбрано ФИО для поля Выпустил."}
-    if ($ComboboxDepartmentName.SelectedItem -eq $null) {$ErrorPresent = $true; $TextInMessage += "`r`nНе выбрано ФИО для поля Проверил."}
-    if ($ComboboxCodes.SelectedItem -eq $null) {$ErrorPresent = $true; $TextInMessage += "`r`nНе выбран код."}
-    if ($ErrorPresent -eq $true) {
-        Show-MessageBox -Message $TextInMessage -Title "Невозможно начать генерацию ИИ" -Type OK
-    } else {
-        if (Test-Path -Path "$PSScriptRoot\$($UpdateNotificationNumberInput.Text).docx") {
-            if ((Show-MessageBox -Message "Извещение с номером $($UpdateNotificationNumberInput.Text) уже существует в папке.`r`n`r`nНажмите Да, чтобы продолжить (извещение будет перезаписано).`r`nНажмите Нет, чтобы приостановить генерацию извещения." -Title "Извещение уже существует" -Type YesNo) -eq "Yes") {
-                Remove-Item -Path "$PSScriptRoot\$($UpdateNotificationNumberInput.Text).docx"
-                Start-Sleep -Seconds 2
-                $script:CounterForWordItems = 1
-                Generate-UpdateNotification -NotificationName $UpdateNotificationNumberInput.Text
-                Move-ListsToWordDocument -NotificationName $UpdateNotificationNumberInput.Text
-            }
+        $TextInMessage = "Не указаны или некорректно указаны следующие параметры извещения:`r`n"
+        $ErrorPresent = $false
+        if ($UpdateNotificationNumberInput.Text -eq '  -  -') {$ErrorPresent = $true; $TextInMessage += "`r`nНе указан номер извещения."}
+        if ($UpdateNotificationNumberInput.Text -ne '  -  -') {if ($UpdateNotificationNumberInput.Text -notmatch '\d\d-\d\d-\d\d\d\d') {$ErrorPresent = $true; $TextInMessage += "`r`nНомер извещения указан неполностью, либо содержит недопустимые символы."}}
+        if ($ComboboxCreatedBy.SelectedItem -eq $null) {$ErrorPresent = $true; $TextInMessage += "`r`nНе выбран отдел."}
+        if ($ComboboxCheckedBy.SelectedItem -eq $null) {$ErrorPresent = $true; $TextInMessage += "`r`nНе выбрано ФИО для поля Выпустил."}
+        if ($ComboboxDepartmentName.SelectedItem -eq $null) {$ErrorPresent = $true; $TextInMessage += "`r`nНе выбрано ФИО для поля Проверил."}
+        if ($ComboboxCodes.SelectedItem -eq $null) {$ErrorPresent = $true; $TextInMessage += "`r`nНе выбран код."}
+        if ($ErrorPresent -eq $true) {
+            Show-MessageBox -Message $TextInMessage -Title "Невозможно начать генерацию ИИ" -Type OK
         } else {
-            $script:CounterForWordItems = 1
-            Generate-UpdateNotification -NotificationName $UpdateNotificationNumberInput.Text
-            Move-ListsToWordDocument -NotificationName $UpdateNotificationNumberInput.Text
+            if (Test-Path -Path "$PSScriptRoot\$($UpdateNotificationNumberInput.Text).docx") {
+                if ((Show-MessageBox -Message "Извещение с номером $($UpdateNotificationNumberInput.Text) уже существует в папке.`r`n`r`nНажмите Да, чтобы продолжить (извещение будет перезаписано).`r`nНажмите Нет, чтобы приостановить генерацию извещения." -Title "Извещение уже существует" -Type YesNo) -eq "Yes") {
+                    if ((Show-MessageBox -Message "Перед началом генерации ИИ убедитесь в том, что у вас нет открытых Word документов.`r`nВо время работы скрипт закроет все Word документы, не сохраняя их, что может привести к потере данных!`r`nПродолжить?" -Title "Подтвердите действие" -Type YesNo) -eq "Yes") {
+                        Remove-Item -Path "$PSScriptRoot\$($UpdateNotificationNumberInput.Text).docx"
+                        Start-Sleep -Seconds 2
+                        $script:CounterForWordItems = 1
+                        Generate-UpdateNotification -NotificationName $UpdateNotificationNumberInput.Text
+                        Move-ListsToWordDocument -NotificationName $UpdateNotificationNumberInput.Text
+                    }
+                }
+            } else {
+                if ((Show-MessageBox -Message "Перед началом генерации ИИ убедитесь в том, что у вас нет открытых Word документов.`r`nВо время работы скрипт закроет все Word документы, не сохраняя их, что может привести к потере данных!`r`nПродолжить?" -Title "Подтвердите действие" -Type YesNo) -eq "Yes") {
+                    $script:CounterForWordItems = 1
+                    Generate-UpdateNotification -NotificationName $UpdateNotificationNumberInput.Text
+                    Move-ListsToWordDocument -NotificationName $UpdateNotificationNumberInput.Text
+                }
+            }
         }
-    }
     })
     $ScriptMainWindow.Controls.Add($ButtonRun)
     $ScriptMainWindow.ShowDialog()
