@@ -18,6 +18,62 @@ $script:VerNumber = ""
 $script:HighlightChecboxStatus = $true
 $script:PathToCurrentVrsion = $null
 
+Function Export-ToXmlFile ()
+{
+
+    $OutputXmlFile = New-Object System.Xml.XmlDocument
+    $OutputXmlFile.CreateXmlDeclaration("1.0","UTF-8",$null)
+    $OutputXmlFile.AppendChild($OutputXmlFile.CreateXmlDeclaration("1.0","UTF-8",$null))
+$InfoForXml = @"
+Файл сгенерирован: $(Get-Date)
+"@
+    $OutputXmlFile.AppendChild($OutputXmlFile.CreateComment($InfoForXml))
+    $RootElement = $OutputXmlFile.CreateNode("element","script-data",$null)
+    $OutputXmlFile.AppendChild($RootElement)
+    $XmlExportLists = $OutputXmlFile.CreateNode("element","lists",$null)
+    $RootElement.AppendChild($XmlExportLists)
+    $NewList = $OutputXmlFile.CreateNode("element","publish-list",$null)
+    $XmlExportLists.AppendChild($NewList)
+    $NewList = $OutputXmlFile.CreateNode("element","replace-list",$null)
+    $XmlExportLists.AppendChild($NewList)
+    $NewList = $OutputXmlFile.CreateNode("element","remove-list",$null)
+    $XmlExportLists.AppendChild($NewList)
+    Foreach ($ListItem in $ListViewAdd.Items)  {
+        $Element = $OutputXmlFile.CreateNode("element","item",$null)
+        $Element.InnerText = $ListItem.Text
+        $ElementAttribute = $OutputXmlFile.CreateAttribute("version-checksum")
+        $ElementAttribute.Value = $ListItem.SubItems[1].Text
+        $Element.Attributes.Append($ElementAttribute)
+        $ElementAttribute = $OutputXmlFile.CreateAttribute("type")
+        $ElementAttribute.Value = $ListItem.SubItems[2].Text
+        $Element.Attributes.Append($ElementAttribute)
+        $OutputXmlFile.SelectSingleNode("/script-data/lists/publish-list").AppendChild($Element)
+    }
+    Foreach ($ListItem in $ListViewReplace.Items)  {
+        $Element = $OutputXmlFile.CreateNode("element","item",$null)
+        $Element.InnerText = $ListItem.Text
+        $ElementAttribute = $OutputXmlFile.CreateAttribute("version-checksum")
+        $ElementAttribute.Value = $ListItem.SubItems[1].Text
+        $Element.Attributes.Append($ElementAttribute)
+        $ElementAttribute = $OutputXmlFile.CreateAttribute("type")
+        $ElementAttribute.Value = $ListItem.SubItems[2].Text
+        $Element.Attributes.Append($ElementAttribute)
+        $OutputXmlFile.SelectSingleNode("/script-data/lists/replace-list").AppendChild($Element)
+    }
+    Foreach ($ListItem in $ListViewRemove.Items)  {
+        $Element = $OutputXmlFile.CreateNode("element","item",$null)
+        $Element.InnerText = $ListItem.Text
+        $ElementAttribute = $OutputXmlFile.CreateAttribute("version-checksum")
+        $ElementAttribute.Value = $ListItem.SubItems[1].Text
+        $Element.Attributes.Append($ElementAttribute)
+        $ElementAttribute = $OutputXmlFile.CreateAttribute("type")
+        $ElementAttribute.Value = $ListItem.SubItems[2].Text
+        $Element.Attributes.Append($ElementAttribute)
+        $OutputXmlFile.SelectSingleNode("/script-data/lists/remove-list").AppendChild($Element)
+    }
+    $OutputXmlFile.Save("$PSScriptRoot\rep.xml")
+}
+
 Function BulkImportAdd-ItemToList ($FileName, $VersionNumber, $FileType, $HighlightFlag, $TestPathFullName)
 {
     $ItemsOnTheList = @()
@@ -79,7 +135,8 @@ Function BulkImportAdd-ItemToList ($FileName, $VersionNumber, $FileType, $Highli
     }
 }
 
-Function BulkImport-InputFileDataForm ($FileName, $FileType, $FormTitle) {
+Function BulkImport-InputFileDataForm ($FileName, $FileType, $FormTitle)
+{
     $InputFileDataForm = New-Object System.Windows.Forms.Form
     $InputFileDataForm.Padding = New-Object System.Windows.Forms.Padding(0,0,10,10)
     $InputFileDataForm.ShowIcon = $false
@@ -2433,7 +2490,7 @@ Function Custom-Form ()
     $ButtonExportToXml.Location = New-Object System.Drawing.Point(167,43) #x,y
     $ButtonExportToXml.Size = New-Object System.Drawing.Point(137,22) #width,height
     $ButtonExportToXml.Text = "Экспорт в XML..."
-    $ButtonExportToXml.Add_Click({})
+    $ButtonExportToXml.Add_Click({Export-ToXmlFile})
     $ListSettingsListActions.Controls.Add($ButtonExportToXml)
     #Пакетный импорт файлов
     $ButtonBatchFileImport = New-Object System.Windows.Forms.Button
