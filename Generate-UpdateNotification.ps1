@@ -39,6 +39,7 @@ $InfoForXml = @"
     $NewList = $OutputXmlFile.CreateNode("element","remove-list",$null)
     $XmlExportLists.AppendChild($NewList)
     Foreach ($ListItem in $ListViewAdd.Items)  {
+        $ItemBackColor = ""
         $Element = $OutputXmlFile.CreateNode("element","item",$null)
         $Element.InnerText = $ListItem.Text
         $ElementAttribute = $OutputXmlFile.CreateAttribute("version-checksum")
@@ -46,10 +47,18 @@ $InfoForXml = @"
         $Element.Attributes.Append($ElementAttribute)
         $ElementAttribute = $OutputXmlFile.CreateAttribute("type")
         $ElementAttribute.Value = $ListItem.SubItems[2].Text
+        $Element.Attributes.Append($ElementAttribute)
+        $ElementAttribute = $OutputXmlFile.CreateAttribute("color")
+        $ItemBackColor = "$($ListItem.BackColor.A)"
+        $ItemBackColor = $ItemBackColor + ",$($ListItem.BackColor.B)"
+        $ItemBackColor = $ItemBackColor + ",$($ListItem.BackColor.G)"
+        $ItemBackColor = $ItemBackColor + ",$($ListItem.BackColor.R)"
+        $ElementAttribute.Value = $ItemBackColor
         $Element.Attributes.Append($ElementAttribute)
         $OutputXmlFile.SelectSingleNode("/script-data/lists/publish-list").AppendChild($Element)
     }
     Foreach ($ListItem in $ListViewReplace.Items)  {
+        $ItemBackColor = ""
         $Element = $OutputXmlFile.CreateNode("element","item",$null)
         $Element.InnerText = $ListItem.Text
         $ElementAttribute = $OutputXmlFile.CreateAttribute("version-checksum")
@@ -57,10 +66,18 @@ $InfoForXml = @"
         $Element.Attributes.Append($ElementAttribute)
         $ElementAttribute = $OutputXmlFile.CreateAttribute("type")
         $ElementAttribute.Value = $ListItem.SubItems[2].Text
+        $Element.Attributes.Append($ElementAttribute)
+        $ElementAttribute = $OutputXmlFile.CreateAttribute("color")
+        $ItemBackColor = "$($ListItem.BackColor.A)"
+        $ItemBackColor = $ItemBackColor + ",$($ListItem.BackColor.B)"
+        $ItemBackColor = $ItemBackColor + ",$($ListItem.BackColor.G)"
+        $ItemBackColor = $ItemBackColor + ",$($ListItem.BackColor.R)"
+        $ElementAttribute.Value = $ItemBackColor
         $Element.Attributes.Append($ElementAttribute)
         $OutputXmlFile.SelectSingleNode("/script-data/lists/replace-list").AppendChild($Element)
     }
     Foreach ($ListItem in $ListViewRemove.Items)  {
+        $ItemBackColor = ""
         $Element = $OutputXmlFile.CreateNode("element","item",$null)
         $Element.InnerText = $ListItem.Text
         $ElementAttribute = $OutputXmlFile.CreateAttribute("version-checksum")
@@ -69,8 +86,56 @@ $InfoForXml = @"
         $ElementAttribute = $OutputXmlFile.CreateAttribute("type")
         $ElementAttribute.Value = $ListItem.SubItems[2].Text
         $Element.Attributes.Append($ElementAttribute)
+        $ElementAttribute = $OutputXmlFile.CreateAttribute("color")
+        $ItemBackColor = "$($ListItem.BackColor.A)"
+        $ItemBackColor = $ItemBackColor + ",$($ListItem.BackColor.B)"
+        $ItemBackColor = $ItemBackColor + ",$($ListItem.BackColor.G)"
+        $ItemBackColor = $ItemBackColor + ",$($ListItem.BackColor.R)"
+        $ElementAttribute.Value = $ItemBackColor
+        $Element.Attributes.Append($ElementAttribute)
         $OutputXmlFile.SelectSingleNode("/script-data/lists/remove-list").AppendChild($Element)
     }
+    $NotificationSettings = $OutputXmlFile.CreateNode("element","notification-settings",$null)
+    $RootElement.AppendChild($NotificationSettings)
+    $NewSetting = $OutputXmlFile.CreateNode("element","notification-number",$null)
+    $NewSetting.InnerText = $UpdateNotificationNumberInput.Text
+    $NotificationSettings.AppendChild($NewSetting) 
+    $NewSetting = $OutputXmlFile.CreateNode("element","issue-date",$null)
+    $NewSetting.InnerText = $CalendarIssueDateInput.Text
+    $NotificationSettings.AppendChild($NewSetting)
+    $NewSetting = $OutputXmlFile.CreateNode("element","apply-until",$null)
+    $NewSetting.InnerText = $CalendarApplyUpdatesUntilInput.Text
+    $NotificationSettings.AppendChild($NewSetting)
+    $NewSetting = $OutputXmlFile.CreateNode("element","reason",$null)
+    $NewSetting.InnerText = $script:GlobalReasonField
+    $NotificationSettings.AppendChild($NewSetting)
+    $NewSetting = $OutputXmlFile.CreateNode("element","in-store",$null)
+    $NewSetting.InnerText = $script:GlobalInStoreField
+    $NotificationSettings.AppendChild($NewSetting)
+    $NewSetting = $OutputXmlFile.CreateNode("element","start-usage",$null)
+    $NewSetting.InnerText = $script:GlobalStartUsageField
+    $NotificationSettings.AppendChild($NewSetting)
+    $NewSetting = $OutputXmlFile.CreateNode("element","applicable-to",$null)
+    $NewSetting.InnerText = $script:GlobalApplicableToField
+    $NotificationSettings.AppendChild($NewSetting)
+    $NewSetting = $OutputXmlFile.CreateNode("element","send-to",$null)
+    $NewSetting.InnerText = $script:GlobalSendToField
+    $NotificationSettings.AppendChild($NewSetting)
+    $NewSetting = $OutputXmlFile.CreateNode("element","appendix",$null)
+    $NewSetting.InnerText = $script:GlobalAppendixField
+    $NotificationSettings.AppendChild($NewSetting)
+    $NewSetting = $OutputXmlFile.CreateNode("element","department-name",$null)
+    $NewSetting.InnerText = $ComboboxDepartmentName.SelectedItem
+    $NotificationSettings.AppendChild($NewSetting)
+    $NewSetting = $OutputXmlFile.CreateNode("element","created-by",$null)
+    $NewSetting.InnerText = $ComboboxCreatedBy.SelectedItem
+    $NotificationSettings.AppendChild($NewSetting)
+    $NewSetting = $OutputXmlFile.CreateNode("element","checked-by",$null)
+    $NewSetting.InnerText = $ComboboxCheckedBy.SelectedItem
+    $NotificationSettings.AppendChild($NewSetting)
+    $NewSetting = $OutputXmlFile.CreateNode("element","reason-code",$null)
+    $NewSetting.InnerText = $ComboboxCodes.SelectedItem
+    $NotificationSettings.AppendChild($NewSetting)
     $OutputXmlFile.Save("$PSScriptRoot\rep.xml")
 }
 
@@ -534,7 +599,6 @@ Function Move-ItemToAnotherList ($MoveFrom, $MoveTo)
     $ItemToAdd.SubItems.Add("$($MoVeFrom.Items[$MoVeFrom.SelectedIndices[0]].Subitems[2].Text)")
     $ItemToAdd.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
     $ItemToAdd.BackColor = $InheritedColor
-    #$MoveTo.Items.Add($ItemToAdd)
     $MoveTo.Items.Insert(0, $ItemToAdd)
     $MoveFrom.Items[$MoveFrom.SelectedIndices[0]].Remove()
 }
@@ -2288,7 +2352,6 @@ Function Custom-Form ()
     })
     $ListViewRemove.add_ColumnWidthChanged($ListViewRemove_ColumnWidthChanged)
     $ListSettingsGroup.Controls.Add($ListViewRemove)
-    
     #Надпись к Всего файлов в списках
     $ListSettingsGroupTotalEntries = New-Object System.Windows.Forms.Label
     $ListSettingsGroupTotalEntries.Location =  New-Object System.Drawing.Point(10,25) #x,y
