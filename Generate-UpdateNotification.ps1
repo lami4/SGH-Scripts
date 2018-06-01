@@ -18,20 +18,50 @@ $script:VerNumber = ""
 $script:HighlightChecboxStatus = $true
 $script:PathToCurrentVrsion = $null
 
-Function Import-EntryToList ($ItemName, $ItemAttribute, $ItemType, $ItemBackColor, $ListToAdd)
-{
-$ItemToImport = New-Object System.Windows.Forms.ListViewItem("$ItemName")
-$ItemToImport.SubItems.Add("$ItemAttribute")
-$ItemToImport.SubItems.Add("$ItemType")
-$ItemToImport.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
-$ArgbSettings = $ItemBackColor -split ","
-$ItemToImport.BackColor = [System.Drawing.Color]::FromArgb([int]$ArgbSettings[0],[int]$ArgbSettings[1],[int]$ArgbSettings[2],[int]$ArgbSettings[3])
-$ListToAdd.Items.Insert($ListToAdd.Items.Count, $ItemToImport)
+Function Save-File
+{ 
+    Add-Type -AssemblyName System.Windows.Forms
+    $SaveFileDialog = New-Object System.Windows.Forms.SaveFileDialog
+    $SaveFileDialog.Filter = "XML file (*.xml)| *.xml"
+    $DialogResult = $SaveFileDialog.ShowDialog()
+    if ($DialogResult -eq "OK") {return $SaveFileDialog.FileName} else {return $null}
 }
 
-Function Import-FromXml () {
+Function Import-EntryToList ($ItemName, $ItemAttribute, $ItemType, $ItemBackColor, $ListToAdd)
+{
+    $ItemsOnTheList = @()
+    $ListViewAdd.Items | % {$ItemsOnTheList += $_.Text}
+    $ListViewReplace.Items | % {$ItemsOnTheList += $_.Text}
+    $ListViewRemove.Items | % {$ItemsOnTheList += $_.Text}
+    if ($ItemsOnTheList -contains "$ItemName") {
+        if ((Show-MessageBox -Message "Файл с обозначением $($ItemName) уже содержится в списках. Перезаписать?`r`n`r`nНажмите Да, чтобы удалить существующую запись и добавить новую.`r`nНажмите Нет, чтобы продолжить без внесения изменений." -Title "Выберите действие" -Type YesNo) -eq "Yes") {
+            #Ответ да. Скрипт меняет удаляет существующую запись и добавляет новую в указанный список
+            $ListViewAdd.Items | % {if ($_.Text -eq "$ItemName") {$_.Remove()}}
+            $ListViewReplace.Items | % {if ($_.Text -eq "$ItemName") {$_.Remove()}}
+            $ListViewRemove.Items | % {if ($_.Text -eq "$ItemName") {$_.Remove()}}
+            $ItemToImport = New-Object System.Windows.Forms.ListViewItem("$ItemName")
+            $ItemToImport.SubItems.Add("$ItemAttribute")
+            $ItemToImport.SubItems.Add("$ItemType")
+            $ItemToImport.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
+            $ArgbSettings = $ItemBackColor -split ","
+            $ItemToImport.BackColor = [System.Drawing.Color]::FromArgb([int]$ArgbSettings[0],[int]$ArgbSettings[1],[int]$ArgbSettings[2],[int]$ArgbSettings[3])
+            $ListToAdd.Items.Insert($ListToAdd.Items.Count, $ItemToImport)
+        }
+    } else {
+        $ItemToImport = New-Object System.Windows.Forms.ListViewItem("$ItemName")
+        $ItemToImport.SubItems.Add("$ItemAttribute")
+        $ItemToImport.SubItems.Add("$ItemType")
+        $ItemToImport.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
+        $ArgbSettings = $ItemBackColor -split ","
+        $ItemToImport.BackColor = [System.Drawing.Color]::FromArgb([int]$ArgbSettings[0],[int]$ArgbSettings[1],[int]$ArgbSettings[2],[int]$ArgbSettings[3])
+        $ListToAdd.Items.Insert($ListToAdd.Items.Count, $ItemToImport)
+    }
+}
+
+Function Import-FromXml ($SpecifiedFile)
+{
     $InputXmlFile = New-Object System.Xml.XmlDocument
-    $InputXmlFile.Load("$PSScriptRoot\rep.xml")
+    $InputXmlFile.Load("$SpecifiedFile")
     $InputXmlFile.SelectSingleNode("/script-data/lists/publish-list/item").Attributes.GetNamedItem("").Value
     $ImportPublishList = $InputXmlFile.SelectNodes("/script-data/lists/publish-list/item")
     ForEach ($Item in $ImportPublishList) {Import-EntryToList -ListToAdd $ListViewAdd -ItemName $Item.InnerText -ItemAttribute $Item.Attributes.GetNamedItem("version-checksum").Value -ItemType $Item.Attributes.GetNamedItem("type").Value -ItemBackColor $Item.Attributes.GetNamedItem("color").Value}
@@ -39,9 +69,38 @@ Function Import-FromXml () {
     ForEach ($Item in $ImportReplaceList) {Import-EntryToList -ListToAdd $ListViewReplace -ItemName $Item.InnerText -ItemAttribute $Item.Attributes.GetNamedItem("version-checksum").Value -ItemType $Item.Attributes.GetNamedItem("type").Value -ItemBackColor $Item.Attributes.GetNamedItem("color").Value}
     $ImportRemoveList = $InputXmlFile.SelectNodes("/script-data/lists/remove-list/item")
     ForEach ($Item in $ImportRemoveList) {Import-EntryToList -ListToAdd $ListViewRemove -ItemName $Item.InnerText -ItemAttribute $Item.Attributes.GetNamedItem("version-checksum").Value -ItemType $Item.Attributes.GetNamedItem("type").Value -ItemBackColor $Item.Attributes.GetNamedItem("color").Value}
+    $UpdateNotificationNumberInput.Text = $InputXmlFile.SelectSingleNode("/script-data/notification-settings/notification-number").InnerText
+    $CalendarIssueDateInput.Text = $InputXmlFile.SelectSingleNode("/script-data/notification-settings/issue-date").InnerText
+    $CalendarApplyUpdatesUntilInput.Text = $InputXmlFile.SelectSingleNode("/script-data/notification-settings/apply-until").InnerText
+    $script:GlobalReasonField = $InputXmlFile.SelectSingleNode("/script-data/notification-settings/reason").InnerText
+    $script:GlobalInStoreField = $InputXmlFile.SelectSingleNode("/script-data/notification-settings/in-store").InnerText
+    $script:GlobalStartUsageField = $InputXmlFile.SelectSingleNode("/script-data/notification-settings/start-usage").InnerText
+    $script:GlobalApplicableToField = $InputXmlFile.SelectSingleNode("/script-data/notification-settings/applicable-to").InnerText
+    $script:GlobalSendToField = $InputXmlFile.SelectSingleNode("/script-data/notification-settings/send-to").InnerText
+    $script:GlobalAppendixField = $InputXmlFile.SelectSingleNode("/script-data/notification-settings/appendix").InnerText
+    if ($ComboboxDepartmentName.Items.Contains("$($InputXmlFile.SelectSingleNode("/script-data/notification-settings/department-name").InnerText)") -eq $true) {
+        $ComboboxDepartmentName.SelectedItem = $InputXmlFile.SelectSingleNode("/script-data/notification-settings/department-name").InnerText
+    } else {
+        $ComboboxDepartmentName.Items.Add($($InputXmlFile.SelectSingleNode("/script-data/notification-settings/department-name").InnerText))
+        $ComboboxDepartmentName.SelectedItem = $InputXmlFile.SelectSingleNode("/script-data/notification-settings/department-name").InnerText
+    }
+    if ($ComboboxCreatedBy.Items.Contains("$($InputXmlFile.SelectSingleNode("/script-data/notification-settings/created-by").InnerText)") -eq $true) {
+        $ComboboxCreatedBy.SelectedItem = $InputXmlFile.SelectSingleNode("/script-data/notification-settings/created-by").InnerText
+    } else {
+        $ComboboxCreatedBy.Items.Add($($InputXmlFile.SelectSingleNode("/script-data/notification-settings/created-by").InnerText))
+        $ComboboxCreatedBy.SelectedItem = $InputXmlFile.SelectSingleNode("/script-data/notification-settings/created-by").InnerText
+    }
+    if ($ComboboxCheckedBy.Items.Contains("$($InputXmlFile.SelectSingleNode("/script-data/notification-settings/checked-by").InnerText)") -eq $true) {
+        $ComboboxCheckedBy.SelectedItem = $InputXmlFile.SelectSingleNode("/script-data/notification-settings/checked-by").InnerText
+    } else {
+        $ComboboxCheckedBy.Items.Add($($InputXmlFile.SelectSingleNode("/script-data/notification-settings/checked-by").InnerText))
+        $ComboboxCheckedBy.SelectedItem = $InputXmlFile.SelectSingleNode("/script-data/notification-settings/checked-by").InnerText
+    }
+    $ComboboxCodes.SelectedItem = $InputXmlFile.SelectSingleNode("/script-data/notification-settings/reason-code").InnerText
+    Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
 }
 
-Function Export-ToXmlFile ()
+Function Export-ToXmlFile ($SpecifiedFile)
 {
 
     $OutputXmlFile = New-Object System.Xml.XmlDocument
@@ -159,7 +218,7 @@ $InfoForXml = @"
     $NewSetting = $OutputXmlFile.CreateNode("element","reason-code",$null)
     $NewSetting.InnerText = $ComboboxCodes.SelectedItem
     $NotificationSettings.AppendChild($NewSetting)
-    $OutputXmlFile.Save("$PSScriptRoot\rep.xml")
+    $OutputXmlFile.Save("$SpecifiedFile")
 }
 
 Function BulkImportAdd-ItemToList ($FileName, $VersionNumber, $FileType, $HighlightFlag, $TestPathFullName)
@@ -2385,11 +2444,11 @@ Function Custom-Form ()
     $ListSettingsGroupTotalEntries.TextAlign = "TopLeft"
     $ListSettingsGroup.Controls.Add($ListSettingsGroupTotalEntries)
 
-    #Группа элементов Выбранный файл
+    #Группа элементов Выбранная запись
     $ListSettingsSelectedItem = New-Object System.Windows.Forms.GroupBox
     $ListSettingsSelectedItem.Location = New-Object System.Drawing.Point(10,445) #x,y
     $ListSettingsSelectedItem.Size = New-Object System.Drawing.Point(513,100) #width,height
-    $ListSettingsSelectedItem.Text = "Выбранный файл"
+    $ListSettingsSelectedItem.Text = "Выбранная запись"
     $ListSettingsGroup.Controls.Add($ListSettingsSelectedItem)
     #Поле Обозначение для группы элементов Выбранный файл
     $ListSettingsSelectedItemFileName = New-Object System.Windows.Forms.Label
@@ -2569,14 +2628,20 @@ Function Custom-Form ()
     $ButtonImportFromXml.Location = New-Object System.Drawing.Point(167,17) #x,y
     $ButtonImportFromXml.Size = New-Object System.Drawing.Point(137,22) #width,height
     $ButtonImportFromXml.Text = "Загрузить из XML..."
-    $ButtonImportFromXml.Add_Click({Import-FromXml})
+    $ButtonImportFromXml.Add_Click({
+    $SpecifiedFileForImport = Open-File -Filter "XML files (*.xml)| *.xml"
+    if ($SpecifiedFileForImport -ne $null) {Import-FromXml -SpecifiedFile $SpecifiedFileForImport}
+    })
     $ListSettingsListActions.Controls.Add($ButtonImportFromXml)
     #Экспортировать в XML
     $ButtonExportToXml = New-Object System.Windows.Forms.Button
     $ButtonExportToXml.Location = New-Object System.Drawing.Point(167,43) #x,y
     $ButtonExportToXml.Size = New-Object System.Drawing.Point(137,22) #width,height
     $ButtonExportToXml.Text = "Сохранить в XML..."
-    $ButtonExportToXml.Add_Click({Export-ToXmlFile})
+    $ButtonExportToXml.Add_Click({
+    $SpecifiedExportPath = Save-File
+    if ($SpecifiedExportPath -ne $null) {Export-ToXmlFile -SpecifiedFile $SpecifiedExportPath}
+    })
     $ListSettingsListActions.Controls.Add($ButtonExportToXml)
     #Пакетный импорт файлов
     $ButtonBatchFileImport = New-Object System.Windows.Forms.Button
