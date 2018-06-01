@@ -18,6 +18,29 @@ $script:VerNumber = ""
 $script:HighlightChecboxStatus = $true
 $script:PathToCurrentVrsion = $null
 
+Function Import-EntryToList ($ItemName, $ItemAttribute, $ItemType, $ItemBackColor, $ListToAdd)
+{
+$ItemToImport = New-Object System.Windows.Forms.ListViewItem("$ItemName")
+$ItemToImport.SubItems.Add("$ItemAttribute")
+$ItemToImport.SubItems.Add("$ItemType")
+$ItemToImport.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
+$ArgbSettings = $ItemBackColor -split ","
+$ItemToImport.BackColor = [System.Drawing.Color]::FromArgb([int]$ArgbSettings[0],[int]$ArgbSettings[1],[int]$ArgbSettings[2],[int]$ArgbSettings[3])
+$ListToAdd.Items.Insert($ListToAdd.Items.Count, $ItemToImport)
+}
+
+Function Import-FromXml () {
+    $InputXmlFile = New-Object System.Xml.XmlDocument
+    $InputXmlFile.Load("$PSScriptRoot\rep.xml")
+    $InputXmlFile.SelectSingleNode("/script-data/lists/publish-list/item").Attributes.GetNamedItem("").Value
+    $ImportPublishList = $InputXmlFile.SelectNodes("/script-data/lists/publish-list/item")
+    ForEach ($Item in $ImportPublishList) {Import-EntryToList -ListToAdd $ListViewAdd -ItemName $Item.InnerText -ItemAttribute $Item.Attributes.GetNamedItem("version-checksum").Value -ItemType $Item.Attributes.GetNamedItem("type").Value -ItemBackColor $Item.Attributes.GetNamedItem("color").Value}
+    $ImportReplaceList = $InputXmlFile.SelectNodes("/script-data/lists/replace-list/item")
+    ForEach ($Item in $ImportReplaceList) {Import-EntryToList -ListToAdd $ListViewReplace -ItemName $Item.InnerText -ItemAttribute $Item.Attributes.GetNamedItem("version-checksum").Value -ItemType $Item.Attributes.GetNamedItem("type").Value -ItemBackColor $Item.Attributes.GetNamedItem("color").Value}
+    $ImportRemoveList = $InputXmlFile.SelectNodes("/script-data/lists/remove-list/item")
+    ForEach ($Item in $ImportRemoveList) {Import-EntryToList -ListToAdd $ListViewRemove -ItemName $Item.InnerText -ItemAttribute $Item.Attributes.GetNamedItem("version-checksum").Value -ItemType $Item.Attributes.GetNamedItem("type").Value -ItemBackColor $Item.Attributes.GetNamedItem("color").Value}
+}
+
 Function Export-ToXmlFile ()
 {
 
@@ -50,9 +73,9 @@ $InfoForXml = @"
         $Element.Attributes.Append($ElementAttribute)
         $ElementAttribute = $OutputXmlFile.CreateAttribute("color")
         $ItemBackColor = "$($ListItem.BackColor.A)"
-        $ItemBackColor = $ItemBackColor + ",$($ListItem.BackColor.B)"
-        $ItemBackColor = $ItemBackColor + ",$($ListItem.BackColor.G)"
         $ItemBackColor = $ItemBackColor + ",$($ListItem.BackColor.R)"
+        $ItemBackColor = $ItemBackColor + ",$($ListItem.BackColor.G)"
+        $ItemBackColor = $ItemBackColor + ",$($ListItem.BackColor.B)"
         $ElementAttribute.Value = $ItemBackColor
         $Element.Attributes.Append($ElementAttribute)
         $OutputXmlFile.SelectSingleNode("/script-data/lists/publish-list").AppendChild($Element)
@@ -69,9 +92,9 @@ $InfoForXml = @"
         $Element.Attributes.Append($ElementAttribute)
         $ElementAttribute = $OutputXmlFile.CreateAttribute("color")
         $ItemBackColor = "$($ListItem.BackColor.A)"
-        $ItemBackColor = $ItemBackColor + ",$($ListItem.BackColor.B)"
-        $ItemBackColor = $ItemBackColor + ",$($ListItem.BackColor.G)"
         $ItemBackColor = $ItemBackColor + ",$($ListItem.BackColor.R)"
+        $ItemBackColor = $ItemBackColor + ",$($ListItem.BackColor.G)"
+        $ItemBackColor = $ItemBackColor + ",$($ListItem.BackColor.B)"
         $ElementAttribute.Value = $ItemBackColor
         $Element.Attributes.Append($ElementAttribute)
         $OutputXmlFile.SelectSingleNode("/script-data/lists/replace-list").AppendChild($Element)
@@ -88,9 +111,9 @@ $InfoForXml = @"
         $Element.Attributes.Append($ElementAttribute)
         $ElementAttribute = $OutputXmlFile.CreateAttribute("color")
         $ItemBackColor = "$($ListItem.BackColor.A)"
-        $ItemBackColor = $ItemBackColor + ",$($ListItem.BackColor.B)"
-        $ItemBackColor = $ItemBackColor + ",$($ListItem.BackColor.G)"
         $ItemBackColor = $ItemBackColor + ",$($ListItem.BackColor.R)"
+        $ItemBackColor = $ItemBackColor + ",$($ListItem.BackColor.G)"
+        $ItemBackColor = $ItemBackColor + ",$($ListItem.BackColor.B)"
         $ElementAttribute.Value = $ItemBackColor
         $Element.Attributes.Append($ElementAttribute)
         $OutputXmlFile.SelectSingleNode("/script-data/lists/remove-list").AppendChild($Element)
@@ -2545,14 +2568,14 @@ Function Custom-Form ()
     $ButtonImportFromXml = New-Object System.Windows.Forms.Button
     $ButtonImportFromXml.Location = New-Object System.Drawing.Point(167,17) #x,y
     $ButtonImportFromXml.Size = New-Object System.Drawing.Point(137,22) #width,height
-    $ButtonImportFromXml.Text = "Импорт из XML..."
-    $ButtonImportFromXml.Add_Click({})
+    $ButtonImportFromXml.Text = "Загрузить из XML..."
+    $ButtonImportFromXml.Add_Click({Import-FromXml})
     $ListSettingsListActions.Controls.Add($ButtonImportFromXml)
     #Экспортировать в XML
     $ButtonExportToXml = New-Object System.Windows.Forms.Button
     $ButtonExportToXml.Location = New-Object System.Drawing.Point(167,43) #x,y
     $ButtonExportToXml.Size = New-Object System.Drawing.Point(137,22) #width,height
-    $ButtonExportToXml.Text = "Экспорт в XML..."
+    $ButtonExportToXml.Text = "Сохранить в XML..."
     $ButtonExportToXml.Add_Click({Export-ToXmlFile})
     $ListSettingsListActions.Controls.Add($ButtonExportToXml)
     #Пакетный импорт файлов
