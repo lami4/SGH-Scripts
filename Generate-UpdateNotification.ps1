@@ -17,8 +17,7 @@ $script:GlobalAppendixField = "Нет"
 $script:VerNumber = ""
 $script:HighlightChecboxStatus = $true
 $script:PathToCurrentVrsion = $null
-$script:BannedCharacters = @('/', '\', '?', '%', '*', ':', '|', ':', '<', '>')
-$script:BannedCharacterFound = $false
+$script:BannedCharacters = '\/|\\|\?|%|\*|:|\||<|>|"'
 
 Function Save-File
 { 
@@ -286,6 +285,7 @@ Function BulkImportAdd-ItemToList ($FileName, $VersionNumber, $FileType, $Highli
 
 Function BulkImport-InputFileDataForm ($FileName, $FileType, $FormTitle)
 {
+    Write-Host "Пожалуйста, укажите необходимые данные для документа $FileName"
     $InputFileDataForm = New-Object System.Windows.Forms.Form
     $InputFileDataForm.Padding = New-Object System.Windows.Forms.Padding(0,0,10,10)
     $InputFileDataForm.ShowIcon = $false
@@ -346,8 +346,7 @@ Function BulkImport-InputFileDataForm ($FileName, $FileType, $FormTitle)
     $InputFileDataFormAttributeValueInput = New-Object System.Windows.Forms.TextBox 
     $InputFileDataFormAttributeValueInput.Location = New-Object System.Drawing.Point(95,73) #x,y
     $InputFileDataFormAttributeValueInput.Width = 270
-    $InputFileDataFormAttributeValueInput.Text = "Укажите Изм. или MD5..."
-    $InputFileDataFormAttributeValueInput.ForeColor = "Gray"
+    $InputFileDataFormAttributeValueInput.Text = "-"
     $InputFileDataFormAttributeValueInput.Add_GotFocus({
         if ($InputFileDataFormAttributeValueInput.Text -eq "Укажите Изм. или MD5...") {
             $InputFileDataFormAttributeValueInput.Text = ""
@@ -390,6 +389,7 @@ Function BulkImport-InputFileDataForm ($FileName, $FileType, $FormTitle)
 
 Function BulkImport ($ListOfSelectedFiles)
 {
+    Write-Host "Пакетный импорт начат"
     #Создать экземпляр приложения MS Word
     $WordReadData = New-Object -ComObject Word.Application
     #Сделать вызванное приложение невидемым
@@ -399,11 +399,10 @@ Function BulkImport ($ListOfSelectedFiles)
     $ListViewReplace.Items | % {$ItemsOnTheList += $_.Text}
     $ListViewRemove.Items | % {$ItemsOnTheList += $_.Text}
     $ListOfSelectedFiles | % {
-        Write-Host $_
         $FileNameWOExtension = [System.IO.Path]::GetFileNameWithoutExtension($_)
+        Write-Host "Работаю с: " $FileNameWOExtension
         #Проверка на тип файла (документ)
         if ($_ -match '([A-Z0-9]{6})-([A-Z]{2})-([A-Z]{2})-\d\d\.\d\d\.\d\d\.([a-z]{1})([A-Z]{3})\.\d\d\.\d\d') {
-            Write-Host $FileNameWOExtension "is a document"
             #Проверка на дизайн гайд
             if ($_ -match '\d\d\.([a-z]{1})(DSG)\.\d\d') {
                 BulkImport-InputFileDataForm -FileName $FileNameWOExtension -FileType "Документ" -FormTitle "Введите номер Изм. для DSG документа"
@@ -424,7 +423,6 @@ Function BulkImport ($ListOfSelectedFiles)
                             BulkImport-InputFileDataForm -FileName $FileNameWOExtension -FileType "Документ" -FormTitle "Введите номер Изм. для Word документа"
                             BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $script:VerNumber -FileType "Документ" -HighlightFlag 1 -TestPathFullName "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))" 
                         } else {
-                            Write-Host "Version number value $($ValueOfVersionNumber.Length):" $ValueOfVersionNumber
                             if ($ValueOfVersionNumber -eq "") {[int]$ValueOfVersionNumber = 0} else {[int]$ValueOfVersionNumber}
                             if ($BulkImportFormRadioButtonReplace.Checked -eq $true -and $BulkImportFormDistributeAutomatically.Checked -eq $false) {$ValueOfVersionNumber = $ValueOfVersionNumber - 1}
                             if ($BulkImportFormDistributeAutomatically.Checked -eq $true) {
@@ -442,7 +440,6 @@ Function BulkImport ($ListOfSelectedFiles)
                             BulkImport-InputFileDataForm -FileName $FileNameWOExtension -FileType "Документ" -FormTitle "Введите номер Изм. для Word документа"
                             BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $script:VerNumber -FileType "Документ" -HighlightFlag 1 -TestPathFullName "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))"
                         } else {
-                            Write-Host "Version number value $($ValueOfVersionNumber.Length):" $ValueOfVersionNumber
                             if ($ValueOfVersionNumber -eq "") {[int]$ValueOfVersionNumber = 0} else {[int]$ValueOfVersionNumber}
                             if ($BulkImportFormRadioButtonReplace.Checked -eq $true -and $BulkImportFormDistributeAutomatically.Checked -eq $false) {$ValueOfVersionNumber = $ValueOfVersionNumber - 1}
                             if ($BulkImportFormDistributeAutomatically.Checked -eq $true) {
@@ -462,6 +459,8 @@ Function BulkImport ($ListOfSelectedFiles)
             BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber (Get-FileHash -Path $_ -Algorithm MD5).Hash -FileType "Программа" -HighlightFlag 0 -TestPathFullName "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))"
         }
     }
+    $WordReadData.Quit()
+    Write-Host "Пакетный импорт завершен"
 }
 
 Function Open-File ($Filter)
@@ -930,8 +929,7 @@ Function Add-ItemToList ()
     $AddItemFormAttributeValueInput = New-Object System.Windows.Forms.TextBox 
     $AddItemFormAttributeValueInput.Location = New-Object System.Drawing.Point(95,73) #x,y
     $AddItemFormAttributeValueInput.Width = 270
-    $AddItemFormAttributeValueInput.Text = "Укажите Изм. или MD5..."
-    $AddItemFormAttributeValueInput.ForeColor = "Gray"
+    $AddItemFormAttributeValueInput.Text = "-"
     $AddItemFormAttributeValueInput.Add_GotFocus({
         if ($AddItemFormAttributeValueInput.Text -eq "Укажите Изм. или MD5...") {
             $AddItemFormAttributeValueInput.Text = ""
@@ -987,50 +985,54 @@ Function Add-ItemToList ()
         } elseif ($AddItemFormFileNameInput.Text -ne "Укажите обозначение..." -and $AddItemFormAttributeValueInput.Text -eq "Укажите Изм. или MD5...") {
             Show-MessageBox -Message "Пожалуйста, укажите Изм./MD5 для файла." -Title "Значения указаны не во всех полях" -Type OK
         } else {
+            if ($AddItemFormFileNameInput.Text -match $script:BannedCharacters) {
+                Show-MessageBox -Message "В обозначении запрещено использовать следующие символы:`r`n\ / ? % * : | < > """ -Title "Невозможно выполнить действие" -Type OK
+            } else { 
                 $ItemsOnTheList = @()
                 $ListViewAdd.Items | % {$ItemsOnTheList += $_.Text}
                 $ListViewReplace.Items | % {$ItemsOnTheList += $_.Text}
                 $ListViewRemove.Items | % {$ItemsOnTheList += $_.Text}
                 if ($ItemsOnTheList -contains $AddItemFormFileNameInput.Text) {
-                Show-MessageBox -Message "Файл с указанным обозначением уже содержится в списках." -Title "Невозможно выполнить действие" -Type OK
-            } else {
-                if ($AddItemFormFileTypeCombobox.SelectedItem -eq "Документ" -and $AddItemFormAttributeValueInput.Text.Length -gt 5) {
-                    if ((Show-MessageBox -Message "Указанный Изм. содержит больше пяти символов. Возможно вы ошибочно указали MD5 или выбрали неверный тип файла.`r`nВсе равно продолжить?" -Title "Для файла указан подозрительный Изм." -Type YesNo) -eq "Yes") {
-                        $ItemToAdd = New-Object System.Windows.Forms.ListViewItem("$($AddItemFormFileNameInput.Text)")
-                        $ItemToAdd.SubItems.Add("$($AddItemFormAttributeValueInput.Text)")
-                        $ItemToAdd.SubItems.Add("$($AddItemFormFileTypeCombobox.SelectedItem)")
-                        $ItemToAdd.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
-                        if ($AddItemFormRadioButtonAdd.Checked -eq $true) {$ListViewAdd.Items.Insert(0, $ItemToAdd)}
-                        if ($AddItemFormRadioButtonReplace.Checked -eq $true) {$ListViewReplace.Items.Insert(0, $ItemToAdd)}
-                        if ($AddItemFormRadioButtonRemove.Checked -eq $true) {$ListViewRemove.Items.Insert(0, $ItemToAdd)}
-                        Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
-                        Unselect-ItemsInOtherLists -List3 $ListViewAdd -List1 $ListViewReplace -List2 $ListViewRemove 
-                        $AddItemForm.Close()
-                    }
-                } elseif ($AddItemFormFileTypeCombobox.SelectedItem -eq "Программа" -and $AddItemFormAttributeValueInput.Text.Length -ne 32) {
-                    if ((Show-MessageBox -Message "Указанная сумма MD5 некорректна. Возможно вы непольностью указали ее, ошибочно указали Изм. или выбрали неверный тип файла.`r`nВсе равно продолжить?" -Title "Для файла указана подозрительная MD5 сумма" -Type YesNo) -eq "Yes") {
-                        $ItemToAdd = New-Object System.Windows.Forms.ListViewItem("$($AddItemFormFileNameInput.Text)")
-                        $ItemToAdd.SubItems.Add("$($AddItemFormAttributeValueInput.Text)")
-                        $ItemToAdd.SubItems.Add("$($AddItemFormFileTypeCombobox.SelectedItem)")
-                        $ItemToAdd.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
-                        if ($AddItemFormRadioButtonAdd.Checked -eq $true) {$ListViewAdd.Items.Insert(0, $ItemToAdd)}
-                        if ($AddItemFormRadioButtonReplace.Checked -eq $true) {$ListViewReplace.Items.Insert(0, $ItemToAdd)}
-                        if ($AddItemFormRadioButtonRemove.Checked -eq $true) {$ListViewRemove.Items.Insert(0, $ItemToAdd)}
-                        Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
-                        Unselect-ItemsInOtherLists -List3 $ListViewAdd -List1 $ListViewReplace -List2 $ListViewRemove 
-                        $AddItemForm.Close()
-                    }
+                    Show-MessageBox -Message "Файл с указанным обозначением уже содержится в списках." -Title "Невозможно выполнить действие" -Type OK
                 } else {
-                    $ItemToAdd = New-Object System.Windows.Forms.ListViewItem("$($AddItemFormFileNameInput.Text)")
-                    $ItemToAdd.SubItems.Add("$($AddItemFormAttributeValueInput.Text)")
-                    $ItemToAdd.SubItems.Add("$($AddItemFormFileTypeCombobox.SelectedItem)")
-                    $ItemToAdd.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
-                    if ($AddItemFormRadioButtonAdd.Checked -eq $true) {$ListViewAdd.Items.Insert(0, $ItemToAdd)}
-                    if ($AddItemFormRadioButtonReplace.Checked -eq $true) {$ListViewReplace.Items.Insert(0, $ItemToAdd)}
-                    if ($AddItemFormRadioButtonRemove.Checked -eq $true) {$ListViewRemove.Items.Insert(0, $ItemToAdd)}
-                    Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
-                    Unselect-ItemsInOtherLists -List3 $ListViewAdd -List1 $ListViewReplace -List2 $ListViewRemove 
-                    $AddItemForm.Close()
+                    if ($AddItemFormFileTypeCombobox.SelectedItem -eq "Документ" -and $AddItemFormAttributeValueInput.Text.Length -gt 5) {
+                        if ((Show-MessageBox -Message "Указанный Изм. содержит больше пяти символов. Возможно вы ошибочно указали MD5 или выбрали неверный тип файла.`r`nВсе равно продолжить?" -Title "Для файла указан подозрительный Изм." -Type YesNo) -eq "Yes") {
+                            $ItemToAdd = New-Object System.Windows.Forms.ListViewItem("$($AddItemFormFileNameInput.Text)")
+                            $ItemToAdd.SubItems.Add("$($AddItemFormAttributeValueInput.Text)")
+                            $ItemToAdd.SubItems.Add("$($AddItemFormFileTypeCombobox.SelectedItem)")
+                            $ItemToAdd.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
+                            if ($AddItemFormRadioButtonAdd.Checked -eq $true) {$ListViewAdd.Items.Insert(0, $ItemToAdd)}
+                            if ($AddItemFormRadioButtonReplace.Checked -eq $true) {$ListViewReplace.Items.Insert(0, $ItemToAdd)}
+                            if ($AddItemFormRadioButtonRemove.Checked -eq $true) {$ListViewRemove.Items.Insert(0, $ItemToAdd)}
+                            Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
+                            Unselect-ItemsInOtherLists -List3 $ListViewAdd -List1 $ListViewReplace -List2 $ListViewRemove 
+                            $AddItemForm.Close()
+                        }
+                    } elseif ($AddItemFormFileTypeCombobox.SelectedItem -eq "Программа" -and $AddItemFormAttributeValueInput.Text.Length -ne 32) {
+                        if ((Show-MessageBox -Message "Указанная сумма MD5 некорректна. Возможно вы непольностью указали ее, ошибочно указали Изм. или выбрали неверный тип файла.`r`nВсе равно продолжить?" -Title "Для файла указана подозрительная MD5 сумма" -Type YesNo) -eq "Yes") {
+                            $ItemToAdd = New-Object System.Windows.Forms.ListViewItem("$($AddItemFormFileNameInput.Text)")
+                            $ItemToAdd.SubItems.Add("$($AddItemFormAttributeValueInput.Text)")
+                            $ItemToAdd.SubItems.Add("$($AddItemFormFileTypeCombobox.SelectedItem)")
+                            $ItemToAdd.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
+                            if ($AddItemFormRadioButtonAdd.Checked -eq $true) {$ListViewAdd.Items.Insert(0, $ItemToAdd)}
+                            if ($AddItemFormRadioButtonReplace.Checked -eq $true) {$ListViewReplace.Items.Insert(0, $ItemToAdd)}
+                            if ($AddItemFormRadioButtonRemove.Checked -eq $true) {$ListViewRemove.Items.Insert(0, $ItemToAdd)}
+                            Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
+                            Unselect-ItemsInOtherLists -List3 $ListViewAdd -List1 $ListViewReplace -List2 $ListViewRemove 
+                            $AddItemForm.Close()
+                        }
+                    } else {
+                        $ItemToAdd = New-Object System.Windows.Forms.ListViewItem("$($AddItemFormFileNameInput.Text)")
+                        $ItemToAdd.SubItems.Add("$($AddItemFormAttributeValueInput.Text)")
+                        $ItemToAdd.SubItems.Add("$($AddItemFormFileTypeCombobox.SelectedItem)")
+                        $ItemToAdd.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
+                        if ($AddItemFormRadioButtonAdd.Checked -eq $true) {$ListViewAdd.Items.Insert(0, $ItemToAdd)}
+                        if ($AddItemFormRadioButtonReplace.Checked -eq $true) {$ListViewReplace.Items.Insert(0, $ItemToAdd)}
+                        if ($AddItemFormRadioButtonRemove.Checked -eq $true) {$ListViewRemove.Items.Insert(0, $ItemToAdd)}
+                        Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
+                        Unselect-ItemsInOtherLists -List3 $ListViewAdd -List1 $ListViewReplace -List2 $ListViewRemove 
+                        $AddItemForm.Close()
+                    }
                 }
             }
         }
@@ -1151,45 +1153,49 @@ Function Edit-ItemOnList ($ListObject)
         } elseif ($EditItemFormFileNameInput.Text -ne "Укажите обозначение..." -and $EditItemFormAttributeValueInput.Text -eq "Укажите Изм. или MD5...") {
             Show-MessageBox -Message "Пожалуйста, укажите Изм./MD5 для файла." -Title "Значения указаны не во всех полях" -Type OK
         } else {
+            if ($EditItemFormFileNameInput.Text -match $script:BannedCharacters) {
+                Show-MessageBox -Message "В обозначении запрещено использовать следующие символы:`r`n\ / ? % * : | < > """ -Title "Невозможно выполнить действие" -Type OK
+            } else {
                 $ItemsOnTheList = @()
                 $ListObject.Items | % {$ItemsOnTheList += $_.Text}
                 if ($ItemsOnTheList -contains $EditItemFormFileNameInput.Text -and $EditItemFormFileNameInput.Text -ne $ListObject.Items[$ListObject.SelectedIndices[0]].Text) {
-                Show-MessageBox -Message "Файл с указанным обозначением уже содержится в списке." -Title "Невозможно выполнить действие" -Type OK
-            } else {
-                if ($EditItemFormFileTypeCombobox.SelectedItem -eq "Документ" -and $EditItemFormAttributeValueInput.Text.Length -gt 5) {
-                    if ((Show-MessageBox -Message "Указанный Изм. содержит больше пяти символов. Возможно вы ошибочно указали MD5 или выбрали неверный тип файла.`r`nВсе равно продолжить?" -Title "Для файла указан подозрительный Изм." -Type YesNo) -eq "Yes") {
-                        $ItemToAdd = New-Object System.Windows.Forms.ListViewItem("$($EditItemFormFileNameInput.Text)")
-                        $ItemToAdd.SubItems.Add("$($EditItemFormAttributeValueInput.Text)")
-                        $ItemToAdd.SubItems.Add("$($EditItemFormFileTypeCombobox.SelectedItem)")
-                        $ItemToAdd.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
-                        $ItemToAdd.BackColor = $ListObject.Items[$ListObject.SelectedIndices[0]].BackColor
-                        $ListObject.Items.Insert($ListObject.Items[$ListObject.SelectedIndices[0]].Index, $ItemToAdd)
-                        $ListObject.Items[$ListObject.SelectedIndices[0]].Remove()
-                        Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
-                        $EditItemForm.Close()
-                    }
-                } elseif ($EditItemFormFileTypeCombobox.SelectedItem -eq "Программа" -and $EditItemFormAttributeValueInput.Text.Length -ne 32) {
-                    if ((Show-MessageBox -Message "Указанная сумма MD5 некорректна. Возможно вы непольностью указали ее, ошибочно указали Изм. или выбрали неверный тип файла.`r`nВсе равно продолжить?" -Title "Для файла указана подозрительная MD5 сумма" -Type YesNo) -eq "Yes") {
-                        $ItemToAdd = New-Object System.Windows.Forms.ListViewItem("$($EditItemFormFileNameInput.Text)")
-                        $ItemToAdd.SubItems.Add("$($EditItemFormAttributeValueInput.Text)")
-                        $ItemToAdd.SubItems.Add("$($EditItemFormFileTypeCombobox.SelectedItem)")
-                        $ItemToAdd.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
-                        $ItemToAdd.BackColor = $ListObject.Items[$ListObject.SelectedIndices[0]].BackColor
-                        $ListObject.Items.Insert($ListObject.Items[$ListObject.SelectedIndices[0]].Index, $ItemToAdd)
-                        $ListObject.Items[$ListObject.SelectedIndices[0]].Remove()
-                        Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
-                        $EditItemForm.Close()
-                    }
+                    Show-MessageBox -Message "Файл с указанным обозначением уже содержится в списке." -Title "Невозможно выполнить действие" -Type OK
                 } else {
-                    $ItemToAdd = New-Object System.Windows.Forms.ListViewItem("$($EditItemFormFileNameInput.Text)")
-                    $ItemToAdd.SubItems.Add("$($EditItemFormAttributeValueInput.Text)")
-                    $ItemToAdd.SubItems.Add("$($EditItemFormFileTypeCombobox.SelectedItem)")
-                    $ItemToAdd.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
-                    $ItemToAdd.BackColor = $ListObject.Items[$ListObject.SelectedIndices[0]].BackColor
-                    $ListObject.Items.Insert($ListObject.Items[$ListObject.SelectedIndices[0]].Index, $ItemToAdd)
-                    $ListObject.Items[$ListObject.SelectedIndices[0]].Remove()
-                    Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
-                    $EditItemForm.Close()
+                    if ($EditItemFormFileTypeCombobox.SelectedItem -eq "Документ" -and $EditItemFormAttributeValueInput.Text.Length -gt 5) {
+                        if ((Show-MessageBox -Message "Указанный Изм. содержит больше пяти символов. Возможно вы ошибочно указали MD5 или выбрали неверный тип файла.`r`nВсе равно продолжить?" -Title "Для файла указан подозрительный Изм." -Type YesNo) -eq "Yes") {
+                            $ItemToAdd = New-Object System.Windows.Forms.ListViewItem("$($EditItemFormFileNameInput.Text)")
+                            $ItemToAdd.SubItems.Add("$($EditItemFormAttributeValueInput.Text)")
+                            $ItemToAdd.SubItems.Add("$($EditItemFormFileTypeCombobox.SelectedItem)")
+                            $ItemToAdd.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
+                            $ItemToAdd.BackColor = $ListObject.Items[$ListObject.SelectedIndices[0]].BackColor
+                            $ListObject.Items.Insert($ListObject.Items[$ListObject.SelectedIndices[0]].Index, $ItemToAdd)
+                            $ListObject.Items[$ListObject.SelectedIndices[0]].Remove()
+                            Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
+                            $EditItemForm.Close()
+                        }
+                    } elseif ($EditItemFormFileTypeCombobox.SelectedItem -eq "Программа" -and $EditItemFormAttributeValueInput.Text.Length -ne 32) {
+                        if ((Show-MessageBox -Message "Указанная сумма MD5 некорректна. Возможно вы непольностью указали ее, ошибочно указали Изм. или выбрали неверный тип файла.`r`nВсе равно продолжить?" -Title "Для файла указана подозрительная MD5 сумма" -Type YesNo) -eq "Yes") {
+                            $ItemToAdd = New-Object System.Windows.Forms.ListViewItem("$($EditItemFormFileNameInput.Text)")
+                            $ItemToAdd.SubItems.Add("$($EditItemFormAttributeValueInput.Text)")
+                            $ItemToAdd.SubItems.Add("$($EditItemFormFileTypeCombobox.SelectedItem)")
+                            $ItemToAdd.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
+                            $ItemToAdd.BackColor = $ListObject.Items[$ListObject.SelectedIndices[0]].BackColor
+                            $ListObject.Items.Insert($ListObject.Items[$ListObject.SelectedIndices[0]].Index, $ItemToAdd)
+                            $ListObject.Items[$ListObject.SelectedIndices[0]].Remove()
+                            Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
+                            $EditItemForm.Close()
+                        }
+                    } else {
+                        $ItemToAdd = New-Object System.Windows.Forms.ListViewItem("$($EditItemFormFileNameInput.Text)")
+                        $ItemToAdd.SubItems.Add("$($EditItemFormAttributeValueInput.Text)")
+                        $ItemToAdd.SubItems.Add("$($EditItemFormFileTypeCombobox.SelectedItem)")
+                        $ItemToAdd.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
+                        $ItemToAdd.BackColor = $ListObject.Items[$ListObject.SelectedIndices[0]].BackColor
+                        $ListObject.Items.Insert($ListObject.Items[$ListObject.SelectedIndices[0]].Index, $ItemToAdd)
+                        $ListObject.Items[$ListObject.SelectedIndices[0]].Remove()
+                        Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
+                        $EditItemForm.Close()
+                    }
                 }
             }
         }
@@ -1410,7 +1416,6 @@ Function Manage-CustomLists ($PathToLost, [ValidateSet("Departments", "Employees
     $ManageCustomListsForm.StartPosition = "CenterScreen"
     $ManageCustomListsForm.MinimizeBox = $false
     $ManageCustomListsForm.MaximizeBox = $false
-    #$ManageCustomListsForm.Size = New-Object System.Drawing.Point(550,300) #width,height 
     #Надпись к списку, который содержит список отделов/сотрудников компании
     $GetPropertyLabelBlacklistListBox = New-Object System.Windows.Forms.Label
     $GetPropertyLabelBlacklistListBox.Location =  New-Object System.Drawing.Point(10,10) #x,y
@@ -1420,16 +1425,13 @@ Function Manage-CustomLists ($PathToLost, [ValidateSet("Departments", "Employees
     if ($ListType -eq "Employees") {$GetPropertyLabelBlacklistListBox.Text = "Список сотрудников компании:"}
     $ManageCustomListsForm.Controls.Add($GetPropertyLabelBlacklistListBox)
     #Список отделов/сотрудников компании
-    #$DefaultBlackList = @("Last author", "Template", "Security", "Revision number", "Application name", "Last print date", "Number of bytes", "Number of characters (with spaces)", "Number of multimedia clips", "Number of hidden Slides", "Number of notes", "Number of slides", "Number of paragraphs", "Number of lines", "Number of characters", "Number of words", "Number of pages", "Total editing time", "Last save time", "Creation date")
     $GetPropertyListBoxBlackList = New-Object System.Windows.Forms.ListBox
     $GetPropertyListBoxBlackList.Location = New-Object System.Drawing.Point(10,25) #x,y
     $GetPropertyListBoxBlackList.Size = New-Object System.Drawing.Point(210,260) #width,height
-    #$DefaultBlackList | % {$GetPropertyListBoxBlackList.Items.Add($_)} | Out-Null
     if ($ListType -eq "Departments") {if (Test-Path "$PSScriptRoot\Отделы.xml") {Populate-List -List $GetPropertyListBoxBlackList -PathToXml "$PSScriptRoot\Отделы.xml"}}
     if ($ListType -eq "Employees") {if (Test-Path "$PSScriptRoot\Сотрудники.xml") {Populate-List -List $GetPropertyListBoxBlackList -PathToXml "$PSScriptRoot\Сотрудники.xml"}}
     $GetPropertyListBoxBlackList.Add_SelectedIndexChanged({
         if ($GetPropertyListBoxBlackList.SelectedIndex -ne -1) {
-            #Write-Host "$($GetPropertyListBoxBlackList.SelectedIndex)"
             $GetPropertyInputboxEditItem.Text = $GetPropertyListBoxBlackList.SelectedItem
         }
         })
@@ -2539,7 +2541,6 @@ Function Custom-Form ()
     $ButtonSelectColor.Add_Click({
     $ColorDialog.ShowDialog()
     $ButtonSelectColor.BackColor = $ColorDialog.Color
-    Write-Host $ColorDialog.Color
     })
     $ListSettingsItemActions.Controls.Add($ButtonSelectColor)
     #Отменить выделение
@@ -2671,7 +2672,6 @@ Function Custom-Form ()
     $UpdateNotificationNumberInput.Location = New-Object System.Drawing.Point(162,23) #x,y
     $UpdateNotificationNumberInput.Width = 62
     $UpdateNotificationNumberInput.Mask = "00-00-0000"
-    #$UpdateNotificationNumberInput.Text = "11-22-3333"
     $UpdateNotificationNumberInput.ForeColor = "Black"
     $UpdateNotificationParameters.Controls.Add($UpdateNotificationNumberInput)
     #Надпись к календарю для указания Даты выпуска
@@ -2700,7 +2700,6 @@ Function Custom-Form ()
     $CalendarApplyUpdatesUntilInput.Location = New-Object System.Drawing.Point(162,82) #x,y
     $CalendarApplyUpdatesUntilInput.Format = [System.Windows.Forms.DateTimePickerFormat]::Short
     $CalendarApplyUpdatesUntilInput.Width = 110
-    #$CalendarApplyUpdatesUntilInput.Text = "03.02.1990"
     $UpdateNotificationParameters.Controls.Add($CalendarApplyUpdatesUntilInput)
 
     #Надпись к кнопке Остальные поля
