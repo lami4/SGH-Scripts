@@ -17,6 +17,8 @@ $script:GlobalAppendixField = "Нет"
 $script:VerNumber = ""
 $script:HighlightChecboxStatus = $true
 $script:PathToCurrentVrsion = $null
+$script:BannedCharacters = @('/', '\', '?', '%', '*', ':', '|', ':', '<', '>')
+$script:BannedCharacterFound = $false
 
 Function Save-File
 { 
@@ -2191,7 +2193,7 @@ Function Custom-Form ()
     $ScriptMainWindow = New-Object System.Windows.Forms.Form
     $ScriptMainWindow.ShowIcon = $false
     $ScriptMainWindow.AutoSize = $true
-    $ScriptMainWindow.Text = "Генерация ИИ"
+    $ScriptMainWindow.Text = "ИИ"
     $ScriptMainWindow.AutoSizeMode = "GrowAndShrink"
     $ScriptMainWindow.WindowState = [System.Windows.Forms.FormWindowState]::Normal
     $ScriptMainWindow.SizeGripStyle = "Hide"
@@ -2552,7 +2554,7 @@ Function Custom-Form ()
     Unselect-ItemsInOtherLists -List3 $ListViewAdd -List1 $ListViewReplace -List2 $ListViewRemove 
     })
     $ListSettingsItemActions.Controls.Add($ButtonRemoveColoring)
-    #Заполнить списки
+    <#Заполнить списки
     $ButtonPopulateLists = New-Object System.Windows.Forms.Button
     $ButtonPopulateLists.Location = New-Object System.Drawing.Point(140,69) #x,y
     $ButtonPopulateLists.Size = New-Object System.Drawing.Point(110,22) #width,height
@@ -2582,7 +2584,7 @@ Function Custom-Form ()
     Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
     })
     $ListSettingsItemActions.Controls.Add($ButtonPopulateLists)
-
+    #>
     #Группа элементов Действия со списками
     $ListSettingsListActions = New-Object System.Windows.Forms.GroupBox
     $ListSettingsListActions.Location = New-Object System.Drawing.Point(898,445) #x,y
@@ -2846,6 +2848,15 @@ Function Custom-Form ()
         }
     })
     $ScriptMainWindow.Controls.Add($ButtonRun)
+    #Кнопка закрыть
+    $ButtonCloseScript = New-Object System.Windows.Forms.Button
+    $ButtonCloseScript.Location = New-Object System.Drawing.Point(680,606) #x,y
+    $ButtonCloseScript.Size = New-Object System.Drawing.Point(137,22) #width,height
+    $ButtonCloseScript.Text = "Закрыть скрипт"
+    $ButtonCloseScript.Add_Click({
+    if ((Show-MessageBox -Message "Закрыть скрипт?" -Title "Подтвердите действие" -Type YesNo) -eq "Yes") {$ScriptMainWindow.Close()}
+    })
+    $ScriptMainWindow.Controls.Add($ButtonCloseScript)
     $ScriptMainWindow.ShowDialog()
 }
 
