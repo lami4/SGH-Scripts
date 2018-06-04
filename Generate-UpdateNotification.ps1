@@ -456,7 +456,7 @@ Function BulkImport ($ListOfSelectedFiles)
             }
         #Проверка на тип файлам (программа)
         } else {
-            BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber (Get-FileHash -Path $_ -Algorithm MD5).Hash -FileType "Программа" -HighlightFlag 0 -TestPathFullName "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))"
+            BulkImportAdd-ItemToList -FileName $([System.IO.Path]::GetFileName($_)) -VersionNumber (Get-FileHash -Path $_ -Algorithm MD5).Hash -FileType "Программа" -HighlightFlag 0 -TestPathFullName "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))"
         }
     }
     $WordReadData.Quit()
@@ -2509,14 +2509,18 @@ Function Custom-Form ()
     $ButtonDeleteItem.Size = New-Object System.Drawing.Point(110,22) #width,height
     $ButtonDeleteItem.Text = "Удалить"
     $ButtonDeleteItem.Add_Click({
-    if ($ListViewAdd.SelectedIndices.Count -gt 0) {$ListViewAdd.Items[$ListViewAdd.SelectedIndices[0]].Remove()}
-    if ($ListViewReplace.SelectedIndices.Count -gt 0) {$ListViewReplace.Items[$ListViewReplace.SelectedIndices[0]].Remove()}
-    if ($ListViewRemove.SelectedIndices.Count -gt 0) {$ListViewRemove.Items[$ListViewRemove.SelectedIndices[0]].Remove()}
-    $ButtonMoveToLeftBetweenAddAndReplace.Enabled = $false
-    $ButtonMoveToRightBetweenAddAndReplace.Enabled = $false
-    $ButtonMoveToLeftBetweenReplaceAndRemove.Enabled = $false
-    $ButtonMoveToRightBetweenReplaceAndRemove.Enabled = $false 
-    Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
+    if ($ListViewAdd.SelectedIndices.Count -ne 0 -or $ListViewReplace.SelectedIndices.Count -ne 0 -or $ListViewRemove.SelectedIndices.Count -ne 0) {
+        if ((Show-MessageBox -Title "Подтвердите действие" -Type YesNo -Message "Вы уверены, что хотите удалить выбранную запись из списка?") -eq "Yes") {
+            if ($ListViewAdd.SelectedIndices.Count -gt 0) {$ListViewAdd.Items[$ListViewAdd.SelectedIndices[0]].Remove()}
+            if ($ListViewReplace.SelectedIndices.Count -gt 0) {$ListViewReplace.Items[$ListViewReplace.SelectedIndices[0]].Remove()}
+            if ($ListViewRemove.SelectedIndices.Count -gt 0) {$ListViewRemove.Items[$ListViewRemove.SelectedIndices[0]].Remove()}
+            $ButtonMoveToLeftBetweenAddAndReplace.Enabled = $false
+            $ButtonMoveToRightBetweenAddAndReplace.Enabled = $false
+            $ButtonMoveToLeftBetweenReplaceAndRemove.Enabled = $false
+            $ButtonMoveToRightBetweenReplaceAndRemove.Enabled = $false 
+            Update-ListCounters -AddListCounter $ListViewAddLabel -AddList $ListViewAdd -ReplaceListCounter $ListViewReplaceLabel -ReplaceList $ListViewReplace -RemoveListCounter $ListViewRemoveLabel -RemoveList $ListViewRemove -TotalEntriesCounter $ListSettingsGroupTotalEntries
+        }
+    }
     })
     $ListSettingsItemActions.Controls.Add($ButtonDeleteItem)
     #Выделить цветом
