@@ -406,10 +406,14 @@ Function BulkImport ($ListOfSelectedFiles)
             #Проверка на дизайн гайд
             if ($_ -match '\d\d\.([a-z]{1})(DSG)\.\d\d') {
                 BulkImport-InputFileDataForm -FileName $FileNameWOExtension -FileType "Документ" -FormTitle "Введите номер Изм. для DSG документа"
+                if ($BulkImportFormRadioButtonReplace.Checked -eq $true -and $BulkImportFormDistributeAutomatically.Checked -eq $false) {$script:VerNumber = $script:VerNumber - 1}
+                if ($script:VerNumber -eq 0) {$script:VerNumber = "-"}
                 BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $script:VerNumber -FileType "Документ" -HighlightFlag 1 -TestPathFullName "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))"
             #Проверка на эксель   
             } elseif ($([System.IO.Path]::GetExtension($_)) -eq '.xlsx' -or $([System.IO.Path]::GetExtension($_)) -eq '.xls') {
                 BulkImport-InputFileDataForm -FileName $FileNameWOExtension -FileType "Документ" -FormTitle "Введите номер Изм. для Excel документа"
+                if ($BulkImportFormRadioButtonReplace.Checked -eq $true -and $BulkImportFormDistributeAutomatically.Checked -eq $false) {$script:VerNumber = $script:VerNumber - 1}
+                if ($script:VerNumber -eq 0) {$script:VerNumber = "-"}
                 BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $script:VerNumber -FileType "Документ" -HighlightFlag 1 -TestPathFullName "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))"
             #Проверки пройдены -- можно считать данные у файла
             } else {
@@ -421,6 +425,9 @@ Function BulkImport ($ListOfSelectedFiles)
                         [string]$ValueOfVersionNumber = try {($DocumentReadData.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(1, 1).Range.Text).Trim([char]0x0007) -replace [char]13, ''} catch {"error"}
                         if ($ValueOfVersionNumber -eq "error") {
                             BulkImport-InputFileDataForm -FileName $FileNameWOExtension -FileType "Документ" -FormTitle "Введите номер Изм. для Word документа"
+                            if (Test-Path -Path "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))") {$script:VerNumber = $script:VerNumber - 1}
+                            if ($BulkImportFormRadioButtonReplace.Checked -eq $true -and $BulkImportFormDistributeAutomatically.Checked -eq $false) {$script:VerNumber = $script:VerNumber - 1}
+                            if ($script:VerNumber -eq 0) {$script:VerNumber = "-"}
                             BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $script:VerNumber -FileType "Документ" -HighlightFlag 1 -TestPathFullName "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))" 
                         } else {
                             if ($ValueOfVersionNumber -eq "") {[int]$ValueOfVersionNumber = 0} else {[int]$ValueOfVersionNumber}
@@ -438,6 +445,9 @@ Function BulkImport ($ListOfSelectedFiles)
                         [string]$ValueOfVersionNumber = try {($DocumentReadData.Tables.Item(1).Cell(7, 3).Range.Text).Trim([char]0x0007) -replace [char]13, ''} catch {"error"}
                         if ($ValueOfVersionNumber -eq "error") {
                             BulkImport-InputFileDataForm -FileName $FileNameWOExtension -FileType "Документ" -FormTitle "Введите номер Изм. для Word документа"
+                            if (Test-Path -Path "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))") {$script:VerNumber = $script:VerNumber - 1}
+                            if ($BulkImportFormRadioButtonReplace.Checked -eq $true -and $BulkImportFormDistributeAutomatically.Checked -eq $false) {$script:VerNumber = $script:VerNumber - 1}
+                            if ($script:VerNumber -eq 0) {$script:VerNumber = "-"}
                             BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $script:VerNumber -FileType "Документ" -HighlightFlag 1 -TestPathFullName "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))"
                         } else {
                             if ($ValueOfVersionNumber -eq "") {[int]$ValueOfVersionNumber = 0} else {[int]$ValueOfVersionNumber}
@@ -507,7 +517,7 @@ Function BulkImportForm ()
     $BulkImportFormBrowseButton.Add_Click({
     $script:ImportFilesArray = Open-File -Filter "All files (*.*)| *.*"
     if ($script:ImportFilesArray.Count -eq 0) {
-        $BulkImportFormBrowseButtonLabel.Text = "Выберите файлы для импорта"
+        $BulkImportFormBrowseButtonLabel.Text = "Выберите файлы для пакетного импорта"
     }
     if ($script:ImportFilesArray.Count -ne 0) {
         $BulkImportFormBrowseButtonLabel.Text = "Выбрано файлов: $($script:ImportFilesArray.Count)"
@@ -533,7 +543,7 @@ Function BulkImportForm ()
     $BulkImportFormBrowseButtonLabel = New-Object System.Windows.Forms.Label
     $BulkImportFormBrowseButtonLabel.Location =  New-Object System.Drawing.Point(95,14) #x,y
     $BulkImportFormBrowseButtonLabel.Width = 300
-    $BulkImportFormBrowseButtonLabel.Text = "Выберите файлы для импорта"
+    $BulkImportFormBrowseButtonLabel.Text = "Выберите файлы для пакетного импорта"
     $BulkImportFormBrowseButtonLabel.TextAlign = "TopLeft"
     $BulkImportForm.Controls.Add($BulkImportFormBrowseButtonLabel)
     #Чекбокс 'Распределить файлы по спискам автоматически'
@@ -645,7 +655,7 @@ Function BulkImportForm ()
     $BulkImportFormApplyButton = New-Object System.Windows.Forms.Button
     $BulkImportFormApplyButton.Location = New-Object System.Drawing.Point(10,184) #x,y
     $BulkImportFormApplyButton.Size = New-Object System.Drawing.Point(80,22) #width,height
-    $BulkImportFormApplyButton.Text = "Импорт"
+    $BulkImportFormApplyButton.Text = "Начать"
     $BulkImportFormApplyButton.Enabled = $false
     $BulkImportFormApplyButton.Add_Click({
     $BulkImportForm.Close()
@@ -2839,6 +2849,7 @@ Function Custom-Form ()
                         $script:CounterForWordItems = 1
                         Generate-UpdateNotification -NotificationName $UpdateNotificationNumberInput.Text
                         Move-ListsToWordDocument -NotificationName $UpdateNotificationNumberInput.Text
+                        Export-ToXmlFile -SpecifiedFile "$PSScriptRoot\$($UpdateNotificationNumberInput.Text).xml"
                     }
                 }
             } else {
@@ -2846,6 +2857,7 @@ Function Custom-Form ()
                     $script:CounterForWordItems = 1
                     Generate-UpdateNotification -NotificationName $UpdateNotificationNumberInput.Text
                     Move-ListsToWordDocument -NotificationName $UpdateNotificationNumberInput.Text
+                    Export-ToXmlFile -SpecifiedFile "$PSScriptRoot\$($UpdateNotificationNumberInput.Text).xml"
                 }
             }
         }
