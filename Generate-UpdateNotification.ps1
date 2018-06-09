@@ -2821,7 +2821,10 @@ Function Custom-Form ()
     $ButtonCodesHelp.Location = New-Object System.Drawing.Point(627,111) #x,y
     $ButtonCodesHelp.Size = New-Object System.Drawing.Point(22,23) #width,height
     $ButtonCodesHelp.Text = "?"
-    $ButtonCodesHelp.Add_Click({Manage-CustomLists -ListType Employees})
+    $ButtonCodesHelp.Add_Click({
+        Invoke-Item "$PSScriptRoot\Help\description_of_codes.html"
+        #$PSScriptRoot\test\index.html
+    })
     $UpdateNotificationParameters.Controls.Add($ButtonCodesHelp)
 
     #Кнопка запустить
@@ -2872,6 +2875,15 @@ Function Custom-Form ()
     if ((Show-MessageBox -Message "Закрыть скрипт?" -Title "Подтвердите действие" -Type YesNo) -eq "Yes") {$ScriptMainWindow.Close()}
     })
     $ScriptMainWindow.Controls.Add($ButtonCloseScript)
+    #Кнопка Справка
+    $ButtonHelp = New-Object System.Windows.Forms.Button
+    $ButtonHelp.Location = New-Object System.Drawing.Point(680,632) #x,y
+    $ButtonHelp.Size = New-Object System.Drawing.Point(137,22) #width,height
+    $ButtonHelp.Text = "Справка"
+    $ButtonHelp.Add_Click({
+    Invoke-Item "$PSScriptRoot\Help\index.html"
+    })
+    $ScriptMainWindow.Controls.Add($ButtonHelp)
     $ScriptMainWindow.ShowDialog()
 }
 
