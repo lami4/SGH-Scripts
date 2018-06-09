@@ -2097,12 +2097,12 @@ $DocumentToPopulate = $WordToPopulate.Documents.Open("$PSScriptRoot\$Notificatio
 $WordToPopulate.Visible = $false
 Start-Sleep -Seconds 5
 #Заполнить таблицы
-Write-Host "Заполняю таблицу Выпустить..."
-Add-Data -TableObject $DocumentToPopulate.Tables.Item(2) -List $ListViewAdd
 Write-Host "Заполняю таблицу Заменитить..."
-Add-Data -TableObject $DocumentToPopulate.Tables.Item(3) -List $ListViewReplace
+Add-Data -TableObject $DocumentToPopulate.Tables.Item(2) -List $ListViewReplace
 Write-Host "Заполняю таблицу Аннулировать..."
-Add-Data -TableObject $DocumentToPopulate.Tables.Item(4) -List $ListViewRemove
+Add-Data -TableObject $DocumentToPopulate.Tables.Item(3) -List $ListViewRemove
+Write-Host "Заполняю таблицу Выпустить..."
+Add-Data -TableObject $DocumentToPopulate.Tables.Item(4) -List $ListViewAdd
 Write-Host "Обновляю поля в Word документе..."
 #Обращаемся к элементам таблицы
 $HeaderTablePopulate = $DocumentToPopulate.Sections.Item(1).Headers.Item(1).Range.Tables.Item(1)
