@@ -1824,7 +1824,7 @@ $document.PageSetup.DifferentFirstPageHeaderFooter = -1
 $document.Sections.Item(1).Headers.Item(2).Shapes.AddShape(1, 10, 10, 200, 20).TextFrame.TextRange.Text = "Конфиденциально"
 $shapeTop = $document.Sections.Item(1).Headers.Item(2).Shapes.Item(1)
 try {$shapeTop.Height = $word.CentimetersToPoints(0.8)} catch {Out-Null}
-Start-Sleep -Seconds 3
+Start-Sleep -Seconds 30
 $shapeTop.Height = $word.CentimetersToPoints(0.8)
 $shapeTop.Width = $word.CentimetersToPoints(8.5)
 $shapeTop.TextFrame.TextRange.ParagraphFormat.Alignment = 2
