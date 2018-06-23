@@ -15,6 +15,7 @@ $script:GlobalAppendixField = "Нет"
 
 #Служебные переменные
 $script:VerNumber = ""
+$script:SuspiciousAction = $false
 $script:HighlightChecboxStatus = $true
 $script:PathToCurrentVrsion = $null
 $script:BannedCharacters = '\/|\\|\?|%|\*|:|\||<|>|"'
@@ -241,6 +242,10 @@ Function BulkImportAdd-ItemToList ($FileName, $VersionNumber, $FileType, $Highli
             if ($HighlightFlag -eq 1) {
                 if ($script:HighlightChecboxStatus -eq $true) {$ItemToAdd.BackColor = [System.Drawing.Color]::FromArgb(255, 15, 177, 255)}
             }
+            if ($script:SuspiciousAction -eq $true) {
+                Show-MessageBox -Message "Документ: $FileName`r`n`r`nДействие: Вы указали '-' в качестве значения для Изм. (т.е. документ новый и никогда не публиковался), но в текущей версии проекта уже существует документ с таким обозначением.`r`n`r`nРеакция: Данная запись будет выделена красным цветом и должна быть проверена после окончания пакетного импорта." -Title "Подозрительное действие" -Type OK
+                $ItemToAdd.BackColor = [System.Drawing.Color]::FromArgb(255, 255, 0, 1)
+            }
             if ($BulkImportFormDistributeAutomatically.Checked -eq $true) {
                 if (Test-Path -Path $TestPathFullName) {
                 #Если файл существует в папке с текущей версией проекта, то заменяем
@@ -264,6 +269,10 @@ Function BulkImportAdd-ItemToList ($FileName, $VersionNumber, $FileType, $Highli
             $ItemToAdd.Font = New-Object System.Drawing.Font("Arial",8,[System.Drawing.FontStyle]::Regular)
             if ($HighlightFlag -eq 1) {
                 if ($script:HighlightChecboxStatus -eq $true) {$ItemToAdd.BackColor = [System.Drawing.Color]::FromArgb(255, 15, 177, 255)}
+            }
+            if ($script:SuspiciousAction -eq $true) {
+                Show-MessageBox -Message "Документ: $FileName`r`n`r`nДействие: Вы указали '-' в качестве значения для Изм. (т.е. документ новый и никогда не публиковался), но в текущей версии проекта уже существует документ с таким обозначением.`r`n`r`nРеакция: Данная запись будет выделена красным цветом и должна быть проверена после окончания пакетного импорта." -Title "Подозрительное действие" -Type OK
+                $ItemToAdd.BackColor = [System.Drawing.Color]::FromArgb(255, 255, 0, 1)
             }
             if ($BulkImportFormDistributeAutomatically.Checked -eq $true) {
                 if (Test-Path -Path $TestPathFullName) {
@@ -399,20 +408,29 @@ Function BulkImport ($ListOfSelectedFiles)
     $ListViewReplace.Items | % {$ItemsOnTheList += $_.Text}
     $ListViewRemove.Items | % {$ItemsOnTheList += $_.Text}
     $ListOfSelectedFiles | % {
+        $script:SuspiciousAction = $false
         $FileNameWOExtension = [System.IO.Path]::GetFileNameWithoutExtension($_)
         Write-Host "Работаю с: " $FileNameWOExtension
         #Проверка на тип файла (документ)
         if ($_ -match '([A-Z0-9]{6})-([A-Z]{2})-([A-Z]{2})-\d\d\.\d\d\.\d\d\.([a-z]{1})([A-Z]{3})\.\d\d\.\d\d') {
             #Проверка на дизайн гайд
             if ($_ -match '\d\d\.([a-z]{1})(DSG)\.\d\d') {
-                BulkImport-InputFileDataForm -FileName $FileNameWOExtension -FileType "Документ" -FormTitle "Введите номер Изм. для DSG документа"
-                if ($BulkImportFormRadioButtonReplace.Checked -eq $true -and $BulkImportFormDistributeAutomatically.Checked -eq $false) {$script:VerNumber = $script:VerNumber - 1}
+                BulkImport-InputFileDataForm -FileName $FileNameWOExtension -FileType "Документ" -FormTitle "Введите номер Изм., присвоенный DSG документу"
+                if ($BulkImportFormDistributeAutomatically.Checked -eq $true) {
+                    if (Test-Path -Path "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))") {
+                       try {$script:VerNumber = $script:VerNumber - 1} catch {$script:SuspiciousAction = $true}
+                    }
+                }
                 if ($script:VerNumber -eq 0) {$script:VerNumber = "-"}
                 BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $script:VerNumber -FileType "Документ" -HighlightFlag 1 -TestPathFullName "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))"
             #Проверка на эксель   
             } elseif ($([System.IO.Path]::GetExtension($_)) -eq '.xlsx' -or $([System.IO.Path]::GetExtension($_)) -eq '.xls') {
-                BulkImport-InputFileDataForm -FileName $FileNameWOExtension -FileType "Документ" -FormTitle "Введите номер Изм. для Excel документа"
-                if ($BulkImportFormRadioButtonReplace.Checked -eq $true -and $BulkImportFormDistributeAutomatically.Checked -eq $false) {$script:VerNumber = $script:VerNumber - 1}
+                BulkImport-InputFileDataForm -FileName $FileNameWOExtension -FileType "Документ" -FormTitle "Введите номер Изм., присвоенный Excel документу"
+                if ($BulkImportFormDistributeAutomatically.Checked -eq $true) {
+                    if (Test-Path -Path "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))") {
+                       try {$script:VerNumber = $script:VerNumber - 1} catch {$script:SuspiciousAction = $true}
+                    }
+                }
                 if ($script:VerNumber -eq 0) {$script:VerNumber = "-"}
                 BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $script:VerNumber -FileType "Документ" -HighlightFlag 1 -TestPathFullName "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))"
             #Проверки пройдены -- можно считать данные у файла
@@ -424,14 +442,16 @@ Function BulkImport ($ListOfSelectedFiles)
                     if ($_ -match '\d\d\.([a-z]{1})(SPC)\.\d\d' -or $_ -match '\d\d\.([a-z]{1})(LPD)\.\d\d') {
                         [string]$ValueOfVersionNumber = try {($DocumentReadData.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(1, 1).Range.Text).Trim([char]0x0007) -replace [char]13, ''} catch {"error"}
                         if ($ValueOfVersionNumber -eq "error") {
-                            BulkImport-InputFileDataForm -FileName $FileNameWOExtension -FileType "Документ" -FormTitle "Введите номер Изм. для Word документа"
-                            if (Test-Path -Path "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))") {$script:VerNumber = $script:VerNumber - 1}
-                            if ($BulkImportFormRadioButtonReplace.Checked -eq $true -and $BulkImportFormDistributeAutomatically.Checked -eq $false) {$script:VerNumber = $script:VerNumber - 1}
+                            BulkImport-InputFileDataForm -FileName $FileNameWOExtension -FileType "Документ" -FormTitle "Введите номер Изм., присвоенный Word документу"
+                            if ($BulkImportFormDistributeAutomatically.Checked -eq $true) {
+                                if (Test-Path -Path "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))") {
+                                   try {$script:VerNumber = $script:VerNumber - 1} catch {$script:SuspiciousAction = $true}
+                                }
+                            }
                             if ($script:VerNumber -eq 0) {$script:VerNumber = "-"}
                             BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $script:VerNumber -FileType "Документ" -HighlightFlag 1 -TestPathFullName "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))" 
                         } else {
                             if ($ValueOfVersionNumber -eq "") {[int]$ValueOfVersionNumber = 0} else {[int]$ValueOfVersionNumber}
-                            if ($BulkImportFormRadioButtonReplace.Checked -eq $true -and $BulkImportFormDistributeAutomatically.Checked -eq $false) {$ValueOfVersionNumber = $ValueOfVersionNumber - 1}
                             if ($BulkImportFormDistributeAutomatically.Checked -eq $true) {
                                 if (Test-Path -Path "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))") {
                                     $ValueOfVersionNumber = $ValueOfVersionNumber - 1
@@ -444,14 +464,16 @@ Function BulkImport ($ListOfSelectedFiles)
                 } else {
                         [string]$ValueOfVersionNumber = try {($DocumentReadData.Tables.Item(1).Cell(7, 3).Range.Text).Trim([char]0x0007) -replace [char]13, ''} catch {"error"}
                         if ($ValueOfVersionNumber -eq "error") {
-                            BulkImport-InputFileDataForm -FileName $FileNameWOExtension -FileType "Документ" -FormTitle "Введите номер Изм. для Word документа"
-                            if (Test-Path -Path "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))") {$script:VerNumber = $script:VerNumber - 1}
-                            if ($BulkImportFormRadioButtonReplace.Checked -eq $true -and $BulkImportFormDistributeAutomatically.Checked -eq $false) {$script:VerNumber = $script:VerNumber - 1}
+                            BulkImport-InputFileDataForm -FileName $FileNameWOExtension -FileType "Документ" -FormTitle "Введите номер Изм., присвоенный Word документу"
+                            if ($BulkImportFormDistributeAutomatically.Checked -eq $true) {
+                                if (Test-Path -Path "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))") {
+                                   try {$script:VerNumber = $script:VerNumber - 1} catch {$script:SuspiciousAction = $true}
+                                }
+                            }
                             if ($script:VerNumber -eq 0) {$script:VerNumber = "-"}
                             BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $script:VerNumber -FileType "Документ" -HighlightFlag 1 -TestPathFullName "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))"
                         } else {
                             if ($ValueOfVersionNumber -eq "") {[int]$ValueOfVersionNumber = 0} else {[int]$ValueOfVersionNumber}
-                            if ($BulkImportFormRadioButtonReplace.Checked -eq $true -and $BulkImportFormDistributeAutomatically.Checked -eq $false) {$ValueOfVersionNumber = $ValueOfVersionNumber - 1}
                             if ($BulkImportFormDistributeAutomatically.Checked -eq $true) {
                                 if (Test-Path -Path "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))") {
                                     $ValueOfVersionNumber = $ValueOfVersionNumber - 1
@@ -466,7 +488,19 @@ Function BulkImport ($ListOfSelectedFiles)
             }
         #Проверка на тип файлам (программа)
         } else {
-            BulkImportAdd-ItemToList -FileName $([System.IO.Path]::GetFileName($_)) -VersionNumber (Get-FileHash -Path $_ -Algorithm MD5).Hash -FileType "Программа" -HighlightFlag 0 -TestPathFullName "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))"
+            #Если пользователь выбрал "Автоматическое распределение файлов по спискам", выполняется код ниже
+            if ($BulkImportFormDistributeAutomatically.Checked -eq $true) {
+                #Если файл существует в папке с текущей версией, то снимаем контрольную сумму ЗАМЕНЯЕМОГО файла
+                if (Test-Path -Path "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))") {
+                    BulkImportAdd-ItemToList -FileName $([System.IO.Path]::GetFileName($_)) -VersionNumber (Get-FileHash -Path "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))" -Algorithm MD5).Hash -FileType "Программа" -HighlightFlag 0 -TestPathFullName "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))"
+                #Если файла НЕ существует в папке с текущей версией, то снимаем контрольную сумму ЗАМЕНЯЮЩЕГО файла
+                } else {
+                    BulkImportAdd-ItemToList -FileName $([System.IO.Path]::GetFileName($_)) -VersionNumber (Get-FileHash -Path $_ -Algorithm MD5).Hash -FileType "Программа" -HighlightFlag 0 -TestPathFullName "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))"
+                }
+            #Если пользователь НЕ выбрал "Автоматическое распределение файлов по спискам", то просто снимаем контрольную сумму указанного файла
+            } else {
+                BulkImportAdd-ItemToList -FileName $([System.IO.Path]::GetFileName($_)) -VersionNumber (Get-FileHash -Path $_ -Algorithm MD5).Hash -FileType "Программа" -HighlightFlag 0 -TestPathFullName "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))"
+            }
         }
     }
     $WordReadData.Quit()
@@ -1666,7 +1700,7 @@ Function Apply-FormattingInListTable($TableObject, $WordApp)
     $TableObject.Cell(2, 3).Range.ParagraphFormat.Alignment = 0
 }
 
-Function Generate-UpdateNotification ($NotificationName)
+<#Function Generate-UpdateNotification ($NotificationName)
 {
 Kill -Name WINWORD -ErrorAction SilentlyContinue
 Write-Host "Генерация шаблона извещения..."
@@ -1824,7 +1858,7 @@ $document.PageSetup.DifferentFirstPageHeaderFooter = -1
 $document.Sections.Item(1).Headers.Item(2).Shapes.AddShape(1, 10, 10, 200, 20).TextFrame.TextRange.Text = "Конфиденциально"
 $shapeTop = $document.Sections.Item(1).Headers.Item(2).Shapes.Item(1)
 try {$shapeTop.Height = $word.CentimetersToPoints(0.8)} catch {Out-Null}
-Start-Sleep -Seconds 30
+Start-Sleep -Seconds 3
 $shapeTop.Height = $word.CentimetersToPoints(0.8)
 $shapeTop.Width = $word.CentimetersToPoints(8.5)
 $shapeTop.TextFrame.TextRange.ParagraphFormat.Alignment = 2
@@ -2064,12 +2098,13 @@ $word.Quit()
 Start-Sleep -Seconds 3
 Kill -Name WINWORD -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 3
-}
+}#>
 
 Function Add-Data ($TableObject, $List)
 {
     $RowCounter = 2
     Foreach ($Item in $List.Items) {
+        $TableObject.Rows.Add()
         $TableObject.Cell($RowCounter, 1).Range.Text = $script:CounterForWordItems
         $script:CounterForWordItems += 1
         if ($Item.Subitems[2].Text -eq "Программа") {
@@ -2080,24 +2115,25 @@ Function Add-Data ($TableObject, $List)
             $TableObject.Cell($RowCounter, 2).Range.Text = "$($Item.Subitems[1].Text)"
             $TableObject.Cell($RowCounter, 3).Range.Text = "$($Item.Text)"
         }
-        $TableObject.Rows.Add()
         $RowCounter += 1
     }
-    $TableObject.Rows.Last.Delete()
 }
 
 Function Move-ListsToWordDocument ($NotificationName)
 {
+Kill -Name WINWORD -ErrorAction SilentlyContinue
+Write-Host "Заполняю шаблон..."
+Start-Sleep -Seconds 3
 $script:counter = 1
 #Создать экземпляр приложения MS Word
 $WordToPopulate = New-Object -ComObject Word.Application
 #Создать документ MS Word
-$DocumentToPopulate = $WordToPopulate.Documents.Open("$PSScriptRoot\$NotificationName.docx")
+$DocumentToPopulate = $WordToPopulate.Documents.Open("$PSScriptRoot\Template.docx")
 #Сделать вызванное приложение невидемым
 $WordToPopulate.Visible = $false
 Start-Sleep -Seconds 5
 #Заполнить таблицы
-Write-Host "Заполняю таблицу Заменитить..."
+Write-Host "Заполняю таблицу Заменить..."
 Add-Data -TableObject $DocumentToPopulate.Tables.Item(2) -List $ListViewReplace
 Write-Host "Заполняю таблицу Аннулировать..."
 Add-Data -TableObject $DocumentToPopulate.Tables.Item(3) -List $ListViewRemove
@@ -2186,12 +2222,12 @@ $DocumentToPopulate.Fields.Update()
 $Wholestory = $DocumentToPopulate.Range()
 $TotalPages = $Wholestory.Information(4)
 $TablePopulate.Cell(5, 4).Range.Text = $TotalPages
-$DocumentToPopulate.Save()
-Start-Sleep -Seconds 2
+$DocumentToPopulate.SaveAs([ref]"$PSScriptRoot\$NotificationName.docx")
+Start-Sleep -Seconds 3
 $DocumentToPopulate.Close()
-Start-Sleep -Seconds 2
+Start-Sleep -Seconds 3
 $WordToPopulate.Quit()
-Start-Sleep -Seconds 2
+Start-Sleep -Seconds 3
 Kill -Name WINWORD -ErrorAction SilentlyContinue
 Write-Host "Извешение сгенерировано. Скрипт закончил работу."
 }
@@ -2850,7 +2886,7 @@ Function Custom-Form ()
                         Remove-Item -Path "$PSScriptRoot\$($UpdateNotificationNumberInput.Text).docx"
                         Start-Sleep -Seconds 2
                         $script:CounterForWordItems = 1
-                        Generate-UpdateNotification -NotificationName $UpdateNotificationNumberInput.Text
+                        #Generate-UpdateNotification -NotificationName $UpdateNotificationNumberInput.Text
                         Move-ListsToWordDocument -NotificationName $UpdateNotificationNumberInput.Text
                         Export-ToXmlFile -SpecifiedFile "$PSScriptRoot\$($UpdateNotificationNumberInput.Text).xml"
                     }
@@ -2858,7 +2894,7 @@ Function Custom-Form ()
             } else {
                 if ((Show-MessageBox -Message "Перед началом генерации ИИ убедитесь в том, что у вас нет открытых Word документов.`r`nВо время работы скрипт закроет все Word документы, не сохраняя их, что может привести к потере данных!`r`nПродолжить?" -Title "Подтвердите действие" -Type YesNo) -eq "Yes") {
                     $script:CounterForWordItems = 1
-                    Generate-UpdateNotification -NotificationName $UpdateNotificationNumberInput.Text
+                    #Generate-UpdateNotification -NotificationName $UpdateNotificationNumberInput.Text
                     Move-ListsToWordDocument -NotificationName $UpdateNotificationNumberInput.Text
                     Export-ToXmlFile -SpecifiedFile "$PSScriptRoot\$($UpdateNotificationNumberInput.Text).xml"
                 }
