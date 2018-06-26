@@ -17,6 +17,7 @@ $script:GlobalAppendixField = "Нет"
 $script:VerNumber = ""
 $script:SuspiciousAction = $false
 $script:IncorrectVersionDiscrepancy = $false
+$script:CurrentVersionDocumentExists = $false
 $script:HighlightChecboxStatus = $true
 $script:PathToCurrentVrsion = $null
 $script:BannedCharacters = '\/|\\|\?|%|\*|:|\||<|>|"'
@@ -427,7 +428,10 @@ Function BulkImport ($ListOfSelectedFiles)
         [string]$script:VerNumber = ""
         $script:SuspiciousAction = $false
         $script:IncorrectVersionDiscrepancy = $false
+        $script:CurrentVersionDocumentExists = $false
         $FileNameWOExtension = [System.IO.Path]::GetFileNameWithoutExtension($_)
+        $FileNameExtension = [System.IO.Path]::GetExtension($_)
+        $CurrentFileNameExtension = [System.IO.Path]::GetExtension($_)
         Write-Host "Работаю с: " $FileNameWOExtension
         #Проверка на тип файла (документ)
         if ($_ -match '([A-Z0-9]{6})-([A-Z]{2})-([A-Z]{2})-\d\d\.\d\d\.\d\d\.([a-z]{1})([A-Z]{3})\.\d\d\.\d\d') {
@@ -462,8 +466,22 @@ Function BulkImport ($ListOfSelectedFiles)
                         if ($ValueOfVersionNumber -eq "error") {
                             BulkImport-InputFileDataForm -FileName $FileNameWOExtension -FileType "Документ" -FormTitle "Введите номер Изм., присвоенный Word документу"
                             if ($BulkImportFormDistributeAutomatically.Checked -eq $true) {
+                                #Проверяет существует ли в папке в текущем проекте файл стаким же обозначением и расширением.
                                 if (Test-Path -Path "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))") {
-                                   $CurrentVersionDocumentReadData = $CurrentVersionWordReadData.Documents.Open("$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))")
+                                    $script:CurrentVersionDocumentExists = $true
+                                #Если не существует, то заменяем расширение, на соответсвующее.
+                                } else {
+                                    #Если проверялся docx файл, то проверяем doc
+                                    if ($FileNameExtension -eq '.docx') {
+                                        if (Test-Path -Path "$($script:PathToCurrentVrsion)\$($FileNameWOExtension).doc") {$script:CurrentVersionDocumentExists = $true; $CurrentFileNameExtension = '.doc'}
+                                    }
+                                    #Если проверялся doc файл, то проверяем docx
+                                    if ($FileNameExtension -eq '.doc') {
+                                        if (Test-Path -Path "$($script:PathToCurrentVrsion)\$($FileNameWOExtension).docx") {$script:CurrentVersionDocumentExists = $true; $CurrentFileNameExtension = '.docx'}
+                                    }
+                                }
+                                if ($script:CurrentVersionDocumentExists -eq $true) {
+                                   $CurrentVersionDocumentReadData = $CurrentVersionWordReadData.Documents.Open("$($script:PathToCurrentVrsion)\$($FileNameWOExtension)$($CurrentFileNameExtension)")
                                    [string]$ValueOfCurrentVersionNumber = try {($CurrentVersionDocumentReadData.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(1, 1).Range.Text).Trim([char]0x0007) -replace [char]13, ''} catch {"error"}
                                    if ($ValueOfCurrentVersionNumber -ne 'error') {
                                        if ($ValueOfCurrentVersionNumber -eq "") {[int]$ValueOfCurrentVersionNumber = 0} else {[int]$ValueOfCurrentVersionNumber = $ValueOfCurrentVersionNumber}
@@ -479,12 +497,26 @@ Function BulkImport ($ListOfSelectedFiles)
                                 }
                             }
                             if ($script:VerNumber -eq 0) {[string]$script:VerNumber = "-"}
-                            BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $script:VerNumber -FileType "Документ" -HighlightFlag 1 -TestPathFullName "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))" 
+                            BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $script:VerNumber -FileType "Документ" -HighlightFlag 1 -TestPathFullName "$($script:PathToCurrentVrsion)\$($FileNameWOExtension)$($CurrentFileNameExtension)" 
                         } else {
                             if ($ValueOfVersionNumber -eq "") {[int]$ValueOfVersionNumber = 0} else {[int]$ValueOfVersionNumber}
                             if ($BulkImportFormDistributeAutomatically.Checked -eq $true) {
+                                #Проверяет существует ли в папке в текущем проекте файл стаким же обозначением и расширением.
                                 if (Test-Path -Path "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))") {
-                                   $CurrentVersionDocumentReadData = $CurrentVersionWordReadData.Documents.Open("$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))")
+                                    $script:CurrentVersionDocumentExists = $true
+                                #Если не существует, то заменяем расширение, на соответсвующее.
+                                } else {
+                                    #Если проверялся docx файл, то проверяем doc
+                                    if ($FileNameExtension -eq '.docx') {
+                                        if (Test-Path -Path "$($script:PathToCurrentVrsion)\$($FileNameWOExtension).doc") {$script:CurrentVersionDocumentExists = $true; $CurrentFileNameExtension = '.doc'}
+                                    }
+                                    #Если проверялся doc файл, то проверяем docx
+                                    if ($FileNameExtension -eq '.doc') {
+                                        if (Test-Path -Path "$($script:PathToCurrentVrsion)\$($FileNameWOExtension).docx") {$script:CurrentVersionDocumentExists = $true; $CurrentFileNameExtension = '.docx'}
+                                    }
+                                }
+                                if ($script:CurrentVersionDocumentExists -eq $true) {
+                                   $CurrentVersionDocumentReadData = $CurrentVersionWordReadData.Documents.Open("$($script:PathToCurrentVrsion)\$($FileNameWOExtension)$($CurrentFileNameExtension)")
                                    [string]$ValueOfCurrentVersionNumber = try {($CurrentVersionDocumentReadData.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(1, 1).Range.Text).Trim([char]0x0007) -replace [char]13, ''} catch {"error"}
                                    if ($ValueOfCurrentVersionNumber -ne 'error') {
                                        if ($ValueOfCurrentVersionNumber -eq "") {[int]$ValueOfCurrentVersionNumber = 0} else {[int]$ValueOfCurrentVersionNumber = $ValueOfCurrentVersionNumber}
@@ -497,7 +529,7 @@ Function BulkImport ($ListOfSelectedFiles)
                                 }
                             }
                             if ($ValueOfVersionNumber -eq 0) {[string]$ValueOfVersionNumber = "-"}
-                            BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $ValueOfVersionNumber -FileType "Документ" -HighlightFlag 0 -TestPathFullName "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))"
+                            BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $ValueOfVersionNumber -FileType "Документ" -HighlightFlag 0 -TestPathFullName "$($script:PathToCurrentVrsion)\$($FileNameWOExtension)$($CurrentFileNameExtension)"
                         }
                 #Код для шаблонов в Word документах
                 } else {
@@ -505,8 +537,22 @@ Function BulkImport ($ListOfSelectedFiles)
                         if ($ValueOfVersionNumber -eq "error") {
                             BulkImport-InputFileDataForm -FileName $FileNameWOExtension -FileType "Документ" -FormTitle "Введите номер Изм., присвоенный Word документу"
                             if ($BulkImportFormDistributeAutomatically.Checked -eq $true) {
+                                #Проверяет существует ли в папке в текущем проекте файл стаким же обозначением и расширением.
                                 if (Test-Path -Path "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))") {
-                                   $CurrentVersionDocumentReadData = $CurrentVersionWordReadData.Documents.Open("$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))")
+                                    $script:CurrentVersionDocumentExists = $true
+                                #Если не существует, то заменяем расширение, на соответсвующее.
+                                } else {
+                                    #Если проверялся docx файл, то проверяем doc
+                                    if ($FileNameExtension -eq '.docx') {
+                                        if (Test-Path -Path "$($script:PathToCurrentVrsion)\$($FileNameWOExtension).doc") {$script:CurrentVersionDocumentExists = $true; $CurrentFileNameExtension = '.doc'}
+                                    }
+                                    #Если проверялся doc файл, то проверяем docx
+                                    if ($FileNameExtension -eq '.doc') {
+                                        if (Test-Path -Path "$($script:PathToCurrentVrsion)\$($FileNameWOExtension).docx") {$script:CurrentVersionDocumentExists = $true; $CurrentFileNameExtension = '.docx'}
+                                    }
+                                }
+                                if ($script:CurrentVersionDocumentExists -eq $true) {
+                                   $CurrentVersionDocumentReadData = $CurrentVersionWordReadData.Documents.Open("$($script:PathToCurrentVrsion)\$($FileNameWOExtension)$($CurrentFileNameExtension)")
                                    [string]$ValueOfCurrentVersionNumber = try {($CurrentVersionDocumentReadData.Tables.Item(1).Cell(7, 3).Range.Text).Trim([char]0x0007) -replace [char]13, ''} catch {"error"}
                                    if ($ValueOfCurrentVersionNumber -ne 'error') {
                                        if ($ValueOfCurrentVersionNumber -eq "") {[int]$ValueOfCurrentVersionNumber = 0} else {[int]$ValueOfCurrentVersionNumber = $ValueOfCurrentVersionNumber}
@@ -522,12 +568,26 @@ Function BulkImport ($ListOfSelectedFiles)
                                 }
                             }
                             if ($script:VerNumber -eq 0) {[string]$script:VerNumber = "-"}
-                            BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $script:VerNumber -FileType "Документ" -HighlightFlag 1 -TestPathFullName "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))"
+                            BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $script:VerNumber -FileType "Документ" -HighlightFlag 1 -TestPathFullName "$($script:PathToCurrentVrsion)\$($FileNameWOExtension)$($CurrentFileNameExtension)"
                         } else {
                             if ($ValueOfVersionNumber -eq "") {[int]$ValueOfVersionNumber = 0} else {[int]$ValueOfVersionNumber}
                             if ($BulkImportFormDistributeAutomatically.Checked -eq $true) {
+                                #Проверяет существует ли в папке в текущем проекте файл стаким же обозначением и расширением.
                                 if (Test-Path -Path "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))") {
-                                   $CurrentVersionDocumentReadData = $CurrentVersionWordReadData.Documents.Open("$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))")
+                                    $script:CurrentVersionDocumentExists = $true
+                                #Если не существует, то заменяем расширение, на соответсвующее.
+                                } else {
+                                    #Если проверялся docx файл, то проверяем doc
+                                    if ($FileNameExtension -eq '.docx') {
+                                        if (Test-Path -Path "$($script:PathToCurrentVrsion)\$($FileNameWOExtension).doc") {$script:CurrentVersionDocumentExists = $true; $CurrentFileNameExtension = '.doc'}
+                                    }
+                                    #Если проверялся doc файл, то проверяем docx
+                                    if ($FileNameExtension -eq '.doc') {
+                                        if (Test-Path -Path "$($script:PathToCurrentVrsion)\$($FileNameWOExtension).docx") {$script:CurrentVersionDocumentExists = $true; $CurrentFileNameExtension = '.docx'}
+                                    }
+                                }
+                                if ($script:CurrentVersionDocumentExists -eq $true) {
+                                   $CurrentVersionDocumentReadData = $CurrentVersionWordReadData.Documents.Open("$($script:PathToCurrentVrsion)\$($FileNameWOExtension)$($CurrentFileNameExtension)")
                                    [string]$ValueOfCurrentVersionNumber = try {($CurrentVersionDocumentReadData.Tables.Item(1).Cell(7, 3).Range.Text).Trim([char]0x0007) -replace [char]13, ''} catch {"error"}
                                    if ($ValueOfCurrentVersionNumber -ne 'error') {
                                        if ($ValueOfCurrentVersionNumber -eq "") {[int]$ValueOfCurrentVersionNumber = 0} else {[int]$ValueOfCurrentVersionNumber = $ValueOfCurrentVersionNumber}
@@ -540,7 +600,7 @@ Function BulkImport ($ListOfSelectedFiles)
                                 }
                             }
                             if ($ValueOfVersionNumber -eq 0) {[string]$ValueOfVersionNumber = "-"}
-                            BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $ValueOfVersionNumber -FileType "Документ" -HighlightFlag 0 -TestPathFullName "$($script:PathToCurrentVrsion)\$([System.IO.Path]::GetFileName($_))"
+                            BulkImportAdd-ItemToList -FileName $FileNameWOExtension -VersionNumber $ValueOfVersionNumber -FileType "Документ" -HighlightFlag 0 -TestPathFullName "$($script:PathToCurrentVrsion)\$($FileNameWOExtension)$($CurrentFileNameExtension)"
                         }
                     }
                     $DocumentReadData.Close([ref]0)
