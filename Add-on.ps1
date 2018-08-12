@@ -393,3 +393,11 @@ Function ApplyChangesForm ()
     $ApplyChangesForm.Controls.Add($ApplyChangesFormCancelButton)
     $ApplyChangesForm.ShowDialog()
 }
+    #Кнопка Внести изменения
+    $MakeChanges = New-Object System.Windows.Forms.Button
+    $MakeChanges.Location = New-Object System.Drawing.Point(680,658) #x,y
+    $MakeChanges.Size = New-Object System.Drawing.Point(137,22) #width,height
+    $MakeChanges.Text = "Внести изменения..."
+    $MakeChanges.Add_Click({
+    ApplyChangesForm
+    })
