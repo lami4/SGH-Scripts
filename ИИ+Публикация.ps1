@@ -2620,6 +2620,8 @@ Function Apply-Changes ($BackupFlag)
             }
         }
     }
+    if (Test-Path -Path "$PSScriptRoot\Отчет.html") {Remove-Item -Path "$PSScriptRoot\Отчет.html"}
+    Start-Sleep -Seconds 3
     Create-HtmlReportForUpdateResults -Errors $ErrorsForHtmlReport
 }
 
@@ -2856,7 +2858,7 @@ Function ApplyChangesForm ()
                     Show-MessageBox -Message "Один и тот же путь указан для двух разных папок." -Title "Невозможно выполнить операцию" -Type OK
                 } else {
                     $CheckResult = Check-Conditions -BackupFlag $MakeChangesBackupFlag
-                    if ($CheckResult -eq $true) {$ApplyChangesFormApplyButton.Enabled = $false; Invoke-Item "$PSScriptRoot\Ошибки.html"} else {Show-MessageBox -Message "Ошибки не обнаружены.`r`nТеперь вы можете начать процедуру внесения изменений по ИИ.`r`nЧтобы начать данную процедуру, закройте данное диалоговое окно и нажмите на кнопку Внести зменения." -Title "Ошибки не обнаружены" -Type OK ;$ApplyChangesFormApplyButton.Enabled = $true}
+                    if ($CheckResult -eq $true) {$ApplyChangesFormApplyButton.Enabled = $false; Invoke-Item "$PSScriptRoot\Ошибки.html"} else {Show-MessageBox -Message "Ошибки не обнаружены.`r`n`r`nТеперь вы можете начать процедуру внесения изменений по ИИ.`r`nЧтобы начать данную процедуру, закройте данное диалоговое окно и нажмите на кнопку Внести изменения." -Title "Ошибки не обнаружены" -Type OK ;$ApplyChangesFormApplyButton.Enabled = $true}
                 }
             }
     })
