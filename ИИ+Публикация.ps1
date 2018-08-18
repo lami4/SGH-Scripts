@@ -2889,6 +2889,123 @@ Function ApplyChangesForm ()
     $ApplyChangesForm.ShowDialog()
 }
 
+Function ClientReleaseForm ()
+{
+    $script:SelectedWordFile = $null
+    $script:SelectedClientFolder = $null
+    $script:ImportFilesArray = @()
+    $ClientReleaseForm = New-Object System.Windows.Forms.Form
+    $ClientReleaseForm.Padding = New-Object System.Windows.Forms.Padding(0,0,10,10)
+    $ClientReleaseForm.ShowIcon = $false
+    $ClientReleaseForm.AutoSize = $true
+    $ClientReleaseForm.Text = "Релиз для клиента"
+    $ClientReleaseForm.AutoSizeMode = "GrowAndShrink"
+    $ClientReleaseForm.WindowState = "Normal"
+    $ClientReleaseForm.SizeGripStyle = "Hide"
+    $ClientReleaseForm.ShowInTaskbar = $true
+    $ClientReleaseForm.StartPosition = "CenterScreen"
+    $ClientReleaseForm.MinimizeBox = $false
+    $ClientReleaseForm.MaximizeBox = $false
+    #TOOLTIP
+    $ToolTip = New-Object System.Windows.Forms.ToolTip
+    #Кнопка обзор для файла
+    $ClientReleaseFormBrowseFileButton = New-Object System.Windows.Forms.Button
+    $ClientReleaseFormBrowseFileButton.Location = New-Object System.Drawing.Point(10,10) #x,y
+    $ClientReleaseFormBrowseFileButton.Size = New-Object System.Drawing.Point(80,22) #width,height
+    $ClientReleaseFormBrowseFileButton.Text = "Обзор..."
+    $ClientReleaseFormBrowseFileButton.TabStop = $false
+    $ClientReleaseFormBrowseFileButton.Add_Click({
+    $script:SelectedWordFile = Open-File -Filter "All files (*.*)| *.*"
+        if ($script:SelectedWordFile -ne $null) {
+            $ClientReleaseFormBrowseButtonFileLabel.Text = "Указанная папка: $(Split-Path -Path $script:SelectedWordFile -Leaf). Наведите курсором, чтобы увидеть полный путь."
+            $ToolTip.SetToolTip($ClientReleaseFormBrowseButtonFileLabel, $script:SelectedWordFile)
+        } else {
+            $ClientReleaseFormBrowseButtonFileLabel.Text = "Выберите спецификацию, которая содержит ссылки на архивы с исходным кодом"
+        }
+    })
+    $ClientReleaseForm.Controls.Add($ClientReleaseFormBrowseFileButton)
+    #Поле к кнопке Обзор для файла
+    $ClientReleaseFormBrowseButtonFileLabel = New-Object System.Windows.Forms.Label
+    $ClientReleaseFormBrowseButtonFileLabel.Location =  New-Object System.Drawing.Point(95,14) #x,y
+    $ClientReleaseFormBrowseButtonFileLabel.Width = 600
+    $ClientReleaseFormBrowseButtonFileLabel.Text = "Выберите спецификацию, которая содержит ссылки на архивы с исходным кодом"
+    $ClientReleaseFormBrowseButtonFileLabel.TextAlign = "TopLeft"
+    $ClientReleaseForm.Controls.Add($ClientReleaseFormBrowseButtonFileLabel)
+    #Кнопка обзор для папки
+    $ClientReleaseFormBrowseFolderButton = New-Object System.Windows.Forms.Button
+    $ClientReleaseFormBrowseFolderButton.Location = New-Object System.Drawing.Point(10,42) #x,y
+    $ClientReleaseFormBrowseFolderButton.Size = New-Object System.Drawing.Point(80,22) #width,height
+    $ClientReleaseFormBrowseFolderButton.Text = "Обзор..."
+    $ClientReleaseFormBrowseFolderButton.TabStop = $false
+    $ClientReleaseFormBrowseFolderButton.Add_Click({
+        $script:SelectedClientFolder = Select-Folder -Description "Выберите папку, в которой необходимо удалить архивы с исходным кодом и исходные документы"
+        if ($script:SelectedClientFolder -ne $null) {
+            $ClientReleaseFormBrowseButtonFolderLabel.Text = "Указанная папка: $(Split-Path -Path $script:SelectedClientFolder -Leaf). Наведите курсором, чтобы увидеть полный путь."
+            $ToolTip.SetToolTip($ClientReleaseFormBrowseButtonFolderLabel, $script:SelectedClientFolder)
+        } else {
+            $ClientReleaseFormBrowseButtonFolderLabel.Text = "Выберите папку, в которой необходимо удалить архивы с исходным кодом и исходные документы"
+        }
+    })
+    $ClientReleaseForm.Controls.Add($ClientReleaseFormBrowseFolderButton)
+    #Поле к кнопке Обзор для папки
+    $ClientReleaseFormBrowseButtonFolderLabel = New-Object System.Windows.Forms.Label
+    $ClientReleaseFormBrowseButtonFolderLabel.Location =  New-Object System.Drawing.Point(95,46) #x,y
+    $ClientReleaseFormBrowseButtonFolderLabel.Width = 600
+    $ClientReleaseFormBrowseButtonFolderLabel.Text = "Выберите папку, в которой необходимо удалить архивы с исходным кодом и исходные документы"
+    $ClientReleaseFormBrowseButtonFolderLabel.TextAlign = "TopLeft"
+    $ClientReleaseForm.Controls.Add($ClientReleaseFormBrowseButtonFolderLabel)
+    #Чекбокс 'Удалить файлы MS Word'
+    $ClientReleaseFormDeleteMsOfficeFiles = New-Object System.Windows.Forms.CheckBox
+    $ClientReleaseFormDeleteMsOfficeFiles.Width = 410
+    $ClientReleaseFormDeleteMsOfficeFiles.Text = "Удалить файлы приложения MS Word"
+    $ClientReleaseFormDeleteMsOfficeFiles.Location = New-Object System.Drawing.Point(10,72) #x,y
+    $ClientReleaseFormDeleteMsOfficeFiles.Enabled = $true
+    $ClientReleaseFormDeleteMsOfficeFiles.Checked = $true
+    $ClientReleaseFormDeleteMsOfficeFiles.Add_CheckStateChanged({})
+    $ClientReleaseForm.Controls.Add($ClientReleaseFormDeleteMsOfficeFiles)
+    #Чекбокс 'Удалить файлы MS Excel'
+    $ClientReleaseFormDeleteMsExcelFiles = New-Object System.Windows.Forms.CheckBox
+    $ClientReleaseFormDeleteMsExcelFiles.Width = 410
+    $ClientReleaseFormDeleteMsExcelFiles.Text = "Удалить файлы приложения MS Excel"
+    $ClientReleaseFormDeleteMsExcelFiles.Location = New-Object System.Drawing.Point(10,97) #x,y
+    $ClientReleaseFormDeleteMsExcelFiles.Enabled = $true
+    $ClientReleaseFormDeleteMsExcelFiles.Checked = $true
+    $ClientReleaseFormDeleteMsExcelFiles.Add_CheckStateChanged({})
+    $ClientReleaseForm.Controls.Add($ClientReleaseFormDeleteMsExcelFiles)
+    #Кнопка Начать
+    $ClientReleaseFormApplyButton = New-Object System.Windows.Forms.Button
+    $ClientReleaseFormApplyButton.Location = New-Object System.Drawing.Point(10,134) #x,y
+    $ClientReleaseFormApplyButton.Size = New-Object System.Drawing.Point(80,22) #width,height
+    $ClientReleaseFormApplyButton.Text = "Начать"
+    $ClientReleaseFormApplyButton.Enabled = $true
+    $ClientReleaseFormApplyButton.Add_Click({
+    Write-Host $script:SelectedClientFolder
+    Write-Host $script:SelectedWordFile
+    Write-Host "1"
+    if ($script:SelectedClientFolder -eq $null -and $script:SelectedWordFile -eq $null) {
+    Show-MessageBox -Message "Не указана спецификация, содержащая список архивов с исходным кодом, и папка, в которой необходимо удалить архивы с исходным кодом и исходные документы." -Title "Невозможно выполнить операцию" -Type OK
+    } elseif ($script:SelectedWordFile -eq $null) {
+    Show-MessageBox -Message "Не указана спецификация, содержащая список архивов с исходным кодом." -Title "Невозможно выполнить операцию" -Type OK
+    } elseif ($script:SelectedClientFolder -eq $null) {
+    Show-MessageBox -Message "Не указана папка, в которой необходимо удалить архивы с исходным кодом и исходные документы." -Title "Невозможно выполнить операцию." -Type OK
+    } else {
+    $ClientReleaseForm.Close()
+    }
+    })
+    $ClientReleaseForm.Controls.Add($ClientReleaseFormApplyButton)
+    #Кнопка закрыть
+    $ClientReleaseFormCancelButton = New-Object System.Windows.Forms.Button
+    $ClientReleaseFormCancelButton.Location = New-Object System.Drawing.Point(100,134) #x,y
+    $ClientReleaseFormCancelButton.Size = New-Object System.Drawing.Point(80,22) #width,height
+    $ClientReleaseFormCancelButton.Text = "Закрыть"
+    $ClientReleaseFormCancelButton.Add_Click({
+        $ClientReleaseForm.Close()
+    })
+    $ClientReleaseForm.Controls.Add($ClientReleaseFormCancelButton)
+    $ClientReleaseForm.ShowDialog()
+
+}
+
 Function Custom-Form ()
 {
     
@@ -3586,6 +3703,15 @@ Function Custom-Form ()
     ApplyChangesForm
     })
     $ScriptMainWindow.Controls.Add($MakeChanges)
+    #Кнопка Релиз для клиента...
+    $ClientRelease = New-Object System.Windows.Forms.Button
+    $ClientRelease.Location = New-Object System.Drawing.Point(680,684) #x,y
+    $ClientRelease.Size = New-Object System.Drawing.Point(137,22) #width,height
+    $ClientRelease.Text = "Релиз для клиента..."
+    $ClientRelease.Add_Click({
+    ClientReleaseForm
+    })
+    $ScriptMainWindow.Controls.Add($ClientRelease)
     $ScriptMainWindow.ShowDialog()
 }
 
