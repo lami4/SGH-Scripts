@@ -21,10 +21,12 @@ $script:CurrentVersionDocumentExists = $false
 $script:HighlightChecboxStatus = $true
 $script:PathToCurrentVrsion = $null
 $script:BannedCharacters = '\/|\\|\?|%|\*|:|\||<|>|"'
-$script:MakeChangesPathToFilesBeingPublished = "C:\Users\Tsedik\Desktop\SGH\Новая папка\TestRelease"
-$script:MakeChangesPathToCurrentVersion = "C:\Users\Tsedik\Desktop\SGH\Новая папка\TestCurrent"
-$script:MakeChangesPathToArchiveFolder = "C:\Users\Tsedik\Desktop\SGH\Новая папка\Archive"
-$script:MakeChangesPathToBackupFolder = "C:\Users\Tsedik\Desktop\SGH\Новая папка\Backup"
+$script:MakeChangesPathToFilesBeingPublished = $null #"C:\Users\Tsedik\Desktop\SGH\Новая папка\TestRelease"
+$script:MakeChangesPathToCurrentVersion = $null #"C:\Users\Tsedik\Desktop\SGH\Новая папка\TestCurrent"
+$script:MakeChangesPathToArchiveFolder = $null #"C:\Users\Tsedik\Desktop\SGH\Новая папка\Archive"
+$script:MakeChangesPathToBackupFolder = $null #"C:\Users\Tsedik\Desktop\SGH\Новая папка\Backup"
+$script:SelectedWordFile = $null
+$script:SelectedClientFolder = $null
 $script:AggregatingString = ""
 
 Function Save-File
@@ -2727,7 +2729,7 @@ Function ApplyChangesForm ()
         if ($script:MakeChangesPathToFilesBeingPublished -ne $null) {
             $ApplyChangesFormFilesBeingPublishedLabel.Text = "Указанная папка: $(Split-Path -Path $script:MakeChangesPathToFilesBeingPublished -Leaf). Наведите курсором, чтобы увидеть полный путь."
             $ToolTip.SetToolTip($ApplyChangesFormFilesBeingPublishedLabel, $script:MakeChangesPathToFilesBeingPublished)
-            Write-Host $script:MakeChangesPathToFilesBeingPublished
+            #Write-Host $script:MakeChangesPathToFilesBeingPublished
         }
     })
     $ApplyChangesForm.Controls.Add($ApplyChangesFormFilesBeingPublished)
@@ -2749,7 +2751,7 @@ Function ApplyChangesForm ()
         if ($script:MakeChangesPathToCurrentVersion -ne $null) {
             $ApplyChangesFormCurrentVersionLabel.Text = "Указанная папка: $(Split-Path -Path $script:MakeChangesPathToCurrentVersion -Leaf). Наведите курсором, чтобы увидеть полный путь."
             $ToolTip.SetToolTip($ApplyChangesFormCurrentVersionLabel, $script:MakeChangesPathToCurrentVersion)
-            Write-Host $script:MakeChangesPathToCurrentVersion
+            #Write-Host $script:MakeChangesPathToCurrentVersion
         } 
     })
     $ApplyChangesForm.Controls.Add($ApplyChangesFormCurrentVersion)
@@ -2771,7 +2773,7 @@ Function ApplyChangesForm ()
         if ($script:MakeChangesPathToArchiveFolder -ne $null) {
             $ApplyChangesArchiveFolderLabel.Text = "Указанная папка: $(Split-Path -Path $script:MakeChangesPathToArchiveFolder -Leaf). Наведите курсором, чтобы увидеть полный путь."
             $ToolTip.SetToolTip($ApplyChangesArchiveFolderLabel, $script:MakeChangesPathToArchiveFolder)
-            Write-Host $script:MakeChangesPathToArchiveFolder
+            #Write-Host $script:MakeChangesPathToArchiveFolder
         }
     })
     $ApplyChangesForm.Controls.Add($ApplyChangesArchiveFolder)
@@ -2810,7 +2812,7 @@ Function ApplyChangesForm ()
         if ($script:MakeChangesPathToBackupFolder -ne $null) {
             $ApplyChangesFormBackupLabel.Text = "Указанная папка: $(Split-Path -Path $script:MakeChangesPathToBackupFolder -Leaf). Наведите курсором, чтобы увидеть полный путь."
             $ToolTip.SetToolTip($ApplyChangesFormBackupLabel, $script:MakeChangesPathToBackupFolder)
-            Write-Host $script:MakeChangesPathToBackupFolder
+            #Write-Host $script:MakeChangesPathToBackupFolder
         }  
     })
     $ApplyChangesForm.Controls.Add($ApplyChangesFormBackup)
@@ -2892,8 +2894,6 @@ Function ApplyChangesForm ()
 
 Function ClientReleaseForm ()
 {
-    $script:SelectedWordFile = $null
-    $script:SelectedClientFolder = $null
     $script:ImportFilesArray = @()
     $ClientReleaseForm = New-Object System.Windows.Forms.Form
     $ClientReleaseForm.Padding = New-Object System.Windows.Forms.Padding(0,0,10,10)
@@ -2918,7 +2918,7 @@ Function ClientReleaseForm ()
     $ClientReleaseFormBrowseFileButton.Add_Click({
     $script:SelectedWordFile = Open-File -Filter "All files (*.*)| *.*"
         if ($script:SelectedWordFile -ne $null) {
-            $ClientReleaseFormBrowseButtonFileLabel.Text = "Указанная папка: $(Split-Path -Path $script:SelectedWordFile -Leaf). Наведите курсором, чтобы увидеть полный путь."
+            $ClientReleaseFormBrowseButtonFileLabel.Text = "Указанная спецификация: $(Split-Path -Path $script:SelectedWordFile -Leaf). Наведите курсором, чтобы увидеть полный путь."
             $ToolTip.SetToolTip($ClientReleaseFormBrowseButtonFileLabel, $script:SelectedWordFile)
         } else {
             $ClientReleaseFormBrowseButtonFileLabel.Text = "Выберите спецификацию, которая содержит ссылки на архивы с исходным кодом"
@@ -2928,7 +2928,7 @@ Function ClientReleaseForm ()
     #Поле к кнопке Обзор для файла
     $ClientReleaseFormBrowseButtonFileLabel = New-Object System.Windows.Forms.Label
     $ClientReleaseFormBrowseButtonFileLabel.Location =  New-Object System.Drawing.Point(95,14) #x,y
-    $ClientReleaseFormBrowseButtonFileLabel.Width = 600
+    $ClientReleaseFormBrowseButtonFileLabel.Width = 725
     $ClientReleaseFormBrowseButtonFileLabel.Text = "Выберите спецификацию, которая содержит ссылки на архивы с исходным кодом"
     $ClientReleaseFormBrowseButtonFileLabel.TextAlign = "TopLeft"
     $ClientReleaseForm.Controls.Add($ClientReleaseFormBrowseButtonFileLabel)
@@ -2951,10 +2951,19 @@ Function ClientReleaseForm ()
     #Поле к кнопке Обзор для папки
     $ClientReleaseFormBrowseButtonFolderLabel = New-Object System.Windows.Forms.Label
     $ClientReleaseFormBrowseButtonFolderLabel.Location =  New-Object System.Drawing.Point(95,46) #x,y
-    $ClientReleaseFormBrowseButtonFolderLabel.Width = 600
+    $ClientReleaseFormBrowseButtonFolderLabel.Width = 725
     $ClientReleaseFormBrowseButtonFolderLabel.Text = "Выберите папку, в которой необходимо удалить архивы с исходным кодом и исходные документы"
     $ClientReleaseFormBrowseButtonFolderLabel.TextAlign = "TopLeft"
     $ClientReleaseForm.Controls.Add($ClientReleaseFormBrowseButtonFolderLabel)
+    #Обновление полей
+    if ($script:SelectedWordFile -ne $null) {
+        $ClientReleaseFormBrowseButtonFileLabel.Text = "Указанная спецификация: $(Split-Path -Path $script:SelectedWordFile -Leaf). Наведите курсором, чтобы увидеть полный путь."
+        $ToolTip.SetToolTip($ClientReleaseFormBrowseButtonFileLabel, $script:SelectedWordFile)
+    }
+    if ($script:SelectedClientFolder -ne $null) {
+        $ClientReleaseFormBrowseButtonFolderLabel.Text = "Указанная папка: $(Split-Path -Path $script:SelectedClientFolder -Leaf). Наведите курсором, чтобы увидеть полный путь."
+        $ToolTip.SetToolTip($ClientReleaseFormBrowseButtonFolderLabel, $script:SelectedClientFolder)
+    }
     #Чекбокс 'Удалить файлы MS Word'
     $ClientReleaseFormDeleteMsOfficeFiles = New-Object System.Windows.Forms.CheckBox
     $ClientReleaseFormDeleteMsOfficeFiles.Width = 410
@@ -2980,17 +2989,19 @@ Function ClientReleaseForm ()
     $ClientReleaseFormApplyButton.Text = "Начать"
     $ClientReleaseFormApplyButton.Enabled = $true
     $ClientReleaseFormApplyButton.Add_Click({
-    Write-Host $script:SelectedClientFolder
-    Write-Host $script:SelectedWordFile
-    Write-Host "1"
     if ($script:SelectedClientFolder -eq $null -and $script:SelectedWordFile -eq $null) {
-    Show-MessageBox -Message "Не указана спецификация, содержащая список архивов с исходным кодом, и папка, в которой необходимо удалить архивы с исходным кодом и исходные документы." -Title "Невозможно выполнить операцию" -Type OK
+        Show-MessageBox -Message "Не указана спецификация, содержащая список архивов с исходным кодом, и папка, в которой необходимо удалить архивы с исходным кодом и исходные документы." -Title "Невозможно выполнить операцию" -Type OK
     } elseif ($script:SelectedWordFile -eq $null) {
-    Show-MessageBox -Message "Не указана спецификация, содержащая список архивов с исходным кодом." -Title "Невозможно выполнить операцию" -Type OK
+        Show-MessageBox -Message "Не указана спецификация, содержащая список архивов с исходным кодом." -Title "Невозможно выполнить операцию" -Type OK
     } elseif ($script:SelectedClientFolder -eq $null) {
-    Show-MessageBox -Message "Не указана папка, в которой необходимо удалить архивы с исходным кодом и исходные документы." -Title "Невозможно выполнить операцию." -Type OK
+        Show-MessageBox -Message "Не указана папка, в которой необходимо удалить архивы с исходным кодом и исходные документы." -Title "Невозможно выполнить операцию." -Type OK
     } else {
-    $ClientReleaseForm.Close()
+        if ((Show-MessageBox -Message "Перед началом операции убедитесь в том, что у вас нет открытых Word документов.`r`nВо время работы скрипт закроет все Word документы, не сохраняя их, что может привести к потере данных!`r`nПродолжить?" -Title "Подтвердите действие" -Type YesNo) -eq "Yes") {
+        if ($ClientReleaseFormDeleteMsOfficeFiles.Checked -eq $true) {$DeleteWordFlag = $true} else {$DeleteWordFlag = $false}
+        if ($ClientReleaseFormDeleteMsExcelFiles.Checked -eq $true) {$DeleteExcelFlag = $true} else {$DeleteExcelFlag = $false}
+        Create-ClientVersion -PathToSpecification $script:SelectedWordFile -PathToClientFolder $script:SelectedClientFolder -DeleteWordFlag $DeleteWordFlag -DeleteExcelFlag $DeleteExcelFlag
+        $ClientReleaseForm.Close()
+        }
     }
     })
     $ClientReleaseForm.Controls.Add($ClientReleaseFormApplyButton)
@@ -3005,6 +3016,45 @@ Function ClientReleaseForm ()
     $ClientReleaseForm.Controls.Add($ClientReleaseFormCancelButton)
     $ClientReleaseForm.ShowDialog()
 
+}
+
+Function Create-ClientVersion ($PathToSpecification, $PathToClientFolder, $DeleteWordFlag, $DeleteExcelFlag)
+{
+    Kill -Name WINWORD -ErrorAction SilentlyContinue
+    Write-Host "Выполняю операцию..."
+    Start-Sleep -Seconds 1
+    $script:counter = 1
+    Write-Host "Открываю спецификацию..."
+    #Создать экземпляр приложения MS Word
+    $WordApp = New-Object -ComObject Word.Application
+    #Создать документ MS Word
+    $WordDocumentSpecification = $WordApp.Documents.Open($PathToSpecification)
+    #Сделать вызванное приложение невидемым
+    $WordApp.Visible = $false
+    $CatchedArchives = @()
+    Write-Host "Собираю ссылки на архивы с исходным кодом..."
+    $WordDocumentSpecification.Tables.Item(1).Rows | % {
+        if ($_.Cells.Count -eq 7 -and ((($_.Cells.Item(5).Range.Text).Trim([char]0x0007)).Trim(' ') -replace [char]13, '') -match "архив исходных кодов") {
+            $CatchedArchives += (($_.Cells.Item(4).Range.Text).Trim([char]0x0007)).Trim(' ')  -replace [char]13, ''
+        }
+    }
+    $WordDocumentSpecification.Close([ref]0)
+    $WordApp.Quit()
+    Kill -Name WINWORD -ErrorAction SilentlyContinue
+    Write-Host "Удаляю архивы, указанные в спецификации, из указанной папки..."
+    Start-Sleep -Seconds 2
+    $CatchedArchives | % {
+       Remove-Item -Path "$($PathToClientFolder)\$_" -ErrorAction SilentlyContinue
+    }
+    Write-Host "Удаляю документы приложения MS Word из указанной папки..."
+    Start-Sleep -Seconds 2
+    if ($DeleteWordFlag -eq $true) {Get-ChildItem -Path "$PathToClientFolder\*.docx" | % {Remove-Item $_ -ErrorAction SilentlyContinue}}
+    if ($DeleteWordFlag -eq $true) {Get-ChildItem -Path "$PathToClientFolder\*.doc" | % {Remove-Item $_ -ErrorAction SilentlyContinue}}
+    Write-Host "Удаляю документы приложения MS Excel из указанной папки..."
+    Start-Sleep -Seconds 2
+    if ($DeleteExcelFlag -eq $true) {Get-ChildItem -Path "$PathToClientFolder\*.xlsx" | % {Remove-Item $_ -ErrorAction SilentlyContinue}}
+    if ($DeleteExcelFlag -eq $true) {Get-ChildItem -Path "$PathToClientFolder\*.xls" | % {Remove-Item $_ -ErrorAction SilentlyContinue}}
+    Write-Host "Операция выполнена. Релиз для клиента готов."
 }
 
 Function Custom-Form ()
