@@ -20,11 +20,11 @@ $script:IncorrectVersionDiscrepancy = $false
 $script:CurrentVersionDocumentExists = $false
 $script:HighlightChecboxStatus = $true
 $script:PathToCurrentVrsion = $null
-$script:MakeChangesPathToFilesBeingPublished = "C:\Users\Анник\Desktop\Новая папка\TestRelease"
-$script:MakeChangesPathToCurrentVersion = "C:\Users\Анник\Desktop\Новая папка\TestCurrent"
-$script:MakeChangesPathToArchiveFolder = "C:\Users\Анник\Desktop\Новая папка\Archive"
-$script:MakeChangesPathToBackupFolder = "C:\Users\Анник\Desktop\Новая папка\Backup"
 $script:BannedCharacters = '\/|\\|\?|%|\*|:|\||<|>|"'
+$script:MakeChangesPathToFilesBeingPublished = "C:\Users\Tsedik\Desktop\SGH\Новая папка\TestRelease"
+$script:MakeChangesPathToCurrentVersion = "C:\Users\Tsedik\Desktop\SGH\Новая папка\TestCurrent"
+$script:MakeChangesPathToArchiveFolder = "C:\Users\Tsedik\Desktop\SGH\Новая папка\Archive"
+$script:MakeChangesPathToBackupFolder = "C:\Users\Tsedik\Desktop\SGH\Новая папка\Backup"
 $script:AggregatingString = ""
 
 Function Save-File
@@ -2510,7 +2510,7 @@ Function Move-FileToFolder ($FileFullName, $Destination)
 {
     $ExceptionCatched = $false
     try {
-        [System.IO.File]::Copy($FileFullName, "$Destination\$([System.IO.Path]::GetFileName($FileFullName))", $true)
+        [System.IO.File]::Move($FileFullName, "$Destination\$([System.IO.Path]::GetFileName($FileFullName))")
     } catch [Exception] {
         $ExceptionCatched = $true
         $ExceptionText = $_.Exception.Message
@@ -2623,6 +2623,7 @@ Function Apply-Changes ($BackupFlag)
     if (Test-Path -Path "$PSScriptRoot\Отчет.html") {Remove-Item -Path "$PSScriptRoot\Отчет.html"}
     Start-Sleep -Seconds 3
     Create-HtmlReportForUpdateResults -Errors $ErrorsForHtmlReport
+    Write-Host "Изменения внесены..."
 }
 
 Function Check-Conditions ($BackupFlag)
@@ -2632,10 +2633,10 @@ Function Check-Conditions ($BackupFlag)
     #ПРОВЕРКИ
     #Папка для резервной копии пуста
     if ($BackupFlag -eq $true) {
-        if ((Get-ChildItem -Path $script:MakeChangesPathToBackupFolder).Count -gt 0) {$ErrorsToBePublished += "Папка для резервного копирования содержит файлы. Данная папка должна быть пустой перед тем, как начнется процедура внесения изменений по ИИ."; $ErrorDetectedFlag = $true}
+        if ((Get-ChildItem -Path $script:MakeChangesPathToBackupFolder).Count -gt 0) {$ErrorsToBePublished += "Папка для резервного копирования содержит файлы. Данная папка должна быть пустой перед началом процедуры внесения изменений по ИИ."; $ErrorDetectedFlag = $true}
     }
     #Архивная папка пуста
-    if ((Get-ChildItem -Path $script:MakeChangesPathToArchiveFolder).Count -gt 0) {$ErrorsToBePublished += "Архивная папка содержит файлы. Данная папка должна быть пустой перед тем, как начнется процедура внесения изменений по ИИ."; $ErrorDetectedFlag = $true}
+    if ((Get-ChildItem -Path $script:MakeChangesPathToArchiveFolder).Count -gt 0) {$ErrorsToBePublished += "Архивная папка содержит файлы. Данная папка должна быть пустой перед началом процедуры внесения изменений по ИИ."; $ErrorDetectedFlag = $true}
     #Повторяющиеся значения
     $ItemsInTheLists = @()
     $CheckedItems = @()
@@ -2858,7 +2859,7 @@ Function ApplyChangesForm ()
                     Show-MessageBox -Message "Один и тот же путь указан для двух разных папок." -Title "Невозможно выполнить операцию" -Type OK
                 } else {
                     $CheckResult = Check-Conditions -BackupFlag $MakeChangesBackupFlag
-                    if ($CheckResult -eq $true) {$ApplyChangesFormApplyButton.Enabled = $false; Invoke-Item "$PSScriptRoot\Ошибки.html"} else {Show-MessageBox -Message "Ошибки не обнаружены.`r`n`r`nТеперь вы можете начать процедуру внесения изменений по ИИ.`r`nЧтобы начать данную процедуру, закройте данное диалоговое окно и нажмите на кнопку Внести изменения." -Title "Ошибки не обнаружены" -Type OK ;$ApplyChangesFormApplyButton.Enabled = $true}
+                    if ($CheckResult -eq $true) {$ApplyChangesFormApplyButton.Enabled = $false; Invoke-Item "$PSScriptRoot\Ошибки.html"} else {Show-MessageBox -Message "Ошибки не обнаружены.`r`n`r`nТеперь вы можете начать процедуру внесения изменений по ИИ." -Title "Ошибки не обнаружены" -Type OK ;$ApplyChangesFormApplyButton.Enabled = $true}
                 }
             }
     })
