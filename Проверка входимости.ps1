@@ -49,11 +49,7 @@ Function Check-Integrity ()
     }
     $WordApp.Quit()
     Kill -Name WINWORD -ErrorAction SilentlyContinue
-    #Write-Host $script:CollectedReferences[0]
-    #Write-Host $script:CollectedReferences[1]
-    #Write-Host "1"
-    #СОБИРАЕМ ДАННЫЕ ИЗ СПЕЦИФИКАЦИЙ В УКАЗАННОЙ ПАПКЕ
-    #В УКАЗАННОЙ ПАПКЕ ПЕРЕДАЕМ ВСЕ ФАЙЛЫ НА КОНВЕЕР, КОТОРЫЙ ПРОВЕРЯЕТ ССЫЛАЮТСЯ ЛИ НА НИХ СПЕЦИФИКАЦИИ
+    Write-Host "Генерация отчета..."
     Create-HtmlReport
     Get-ChildItem -Path "$script:IntegrityCheckPathToFolder\*.*" | % {
         $script:ReportString = ""
@@ -63,25 +59,23 @@ Function Check-Integrity ()
         $ArrayOfIndices = @()
         if ($script:CollectedReferences[0] -contains $NameWithExtension) {
             #SOFTWARE
-            Write-Host "Software found: $($NameWithExtension)"
             $ArrayOfIndices = Get-IndicesOf -Array $script:CollectedReferences[0] -Value $NameWithExtension
             $ArrayOfIndices | % {$script:ReportString += "<br> <font color=""green""><b>$($script:CollectedReferences[1][$_])</b></font>"}
             $script:ReportString = $script:ReportString.Trim("<br>")
             Add-RowToHtmlReport -File $NameWithExtension -ReferenceInfo $script:ReportString
         } elseif ($script:CollectedReferences[0] -contains $NameWoExtension) {
             #DOCUMENT
-            Write-Host "Document found: $($NameWithExtension)"
             $ArrayOfIndices = Get-IndicesOf -Array $script:CollectedReferences[0] -Value $NameWoExtension
             $ArrayOfIndices | % {$script:ReportString += "<br> <font color=""green""><b>$($script:CollectedReferences[1][$_])</b></font>"}
             $script:ReportString = $script:ReportString.Trim("<br>")
             Add-RowToHtmlReport -File $NameWithExtension -ReferenceInfo $script:ReportString
         } else {
             #FILE EXIST BUT NOT REFERENCED BY SPECIFICATIONS
-            Write-Host "NOTHING FOUND: $($NameWithExtension)"
             Add-RowToHtmlReport -File $NameWithExtension -ReferenceInfo "<font color=""red""><b>Ссылок не найдено</b></font>"
         }
     }
     Close-HtmlReport
+    Write-Host "Проверка завершена. См. результаты в файле 'Проверка входимости.html'"
 }
 
 Function Get-IndicesOf ($Array, $Value) 
@@ -101,7 +95,7 @@ Function Collect-DataFromSpecification ($WordApp, $PathToSpecification)
     $Specification.Tables.Item(1).Rows | % {
         if ($_.Cells.Count -eq 7) {
             if (((($_.Cells.Item(4).Range.Text).Trim([char]0x0007)).Trim(' ') -replace [char]13, '') -ne '') {
-                Write-Host ((($_.Cells.Item(4).Range.Text).Trim([char]0x0007)).Trim(' ')  -replace [char]13, '')
+                #Write-Host ((($_.Cells.Item(4).Range.Text).Trim([char]0x0007)).Trim(' ')  -replace [char]13, '')
                 $script:CollectedReferences[0] += [string]((($_.Cells.Item(4).Range.Text).Trim([char]0x0007)).Trim(' ')  -replace [char]13, '')
                 $script:CollectedReferences[1] += [string][System.IO.Path]::GetFileName("$PathToSpecification")            
             }
@@ -112,7 +106,7 @@ Function Collect-DataFromSpecification ($WordApp, $PathToSpecification)
 
 Function Create-HtmlReport ()
 {
-    Add-Content "$PSScriptRoot\Отчет.html" "<!DOCTYPE html>
+    Add-Content "$PSScriptRoot\Проверка входимости.html" "<!DOCTYPE html>
 <html lang=""ru"">
 <head>
 <meta charset=""utf-8"">
@@ -165,7 +159,7 @@ td {
 
 Function Add-RowToHtmlReport ($File, $ReferenceInfo) 
 {
-    Add-Content "$PSScriptRoot\Отчет.html" "    <tr>
+    Add-Content "$PSScriptRoot\Проверка входимости.html" "    <tr>
         <td class=""Item_Number"">$($script:RowCounter)</td>
         <td class=""File"">$($File)</td>
         <td class=""Referenced_by"">$($ReferenceInfo)</td>
@@ -174,7 +168,7 @@ Function Add-RowToHtmlReport ($File, $ReferenceInfo)
 
 Function Close-HtmlReport () 
 {
-    Add-Content "$PSScriptRoot\Отчет.html" "</table>
+    Add-Content "$PSScriptRoot\Проверка входимости.html" "</table>
 </div>
 </body>
 </html>" -Encoding UTF8
@@ -233,12 +227,14 @@ Function Custom-FormIntegrityCheck
     if ($script:IntegrityCheckPathToFolder -eq $null) {
             Show-MessageBox -Message "Не указан путь к папке с текущей версией проекта!" -Title "Ошибка" -Type OK
         } else {
-            if (Test-Path -Path "$PSScriptRoot\Отчет.html") {
+            if (Test-Path -Path "$PSScriptRoot\Проверка входимости.html") {
                 if ((Show-MessageBox -Message "Отчет Проверка входимости.html уже существует в папке.`r`n`r`nНажмите Да, чтобы продолжить (отчет будет перезаписан).`r`nНажмите Нет, чтобы приостановить проверку входимости." -Title "Отчет уже существует" -Type YesNo) -eq "Yes") {
-                    Remove-Item -Path "$PSScriptRoot\Отчет.html"
+                    Remove-Item -Path "$PSScriptRoot\Проверка входимости.html"
                     Start-Sleep -Seconds 2
                     Check-Integrity
                 }
+            } else {
+                Check-Integrity
             }
         }
     })
