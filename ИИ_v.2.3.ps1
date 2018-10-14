@@ -1,5 +1,7 @@
 clear
 #Глобальные переменные
+#Переменная для стандартного списка рассылки
+$script:SendTo = "Стандартный список рассылки"
 #Значение для поля 'Причина'
 $script:GlobalReasonField = "Обновление документации"
 #Значение для поля 'Указание о заделе'
@@ -3337,6 +3339,7 @@ Function CreateLetterForm ()
         } else {
             Save-MetaData -DataType Projects -SelectedItem $EmailSubjectComboboxProjectName.SelectedItem
             Save-MetaData -DataType Departments -SelectedItem $EmailSubjectComboboxDepartmentName.SelectedItem
+            Build-OutlookMessage -Department $EmailSubjectComboboxDepartmentName.SelectedItem -Conjugation $EmailSubjectComboboxConjugation.SelectedItem -NotificationNumber $EmailSubjectNotificationNumberInput.Text -Project $EmailSubjectComboboxProjectName.SelectedItem -AccessPath $EmailSubjectAccessPathInput.Text
         }
     })
     $CreateLetterForm.Controls.Add($EmailSubjectFormApplyButton)
@@ -3347,7 +3350,7 @@ Function CreateLetterForm ()
     $EmailSubjectFormCancelButton.Text = "Закрыть"
     $EmailSubjectFormCancelButton.Margin = New-Object System.Windows.Forms.Padding(0,0,10,10)
     $EmailSubjectFormCancelButton.Add_Click({
-        $ClientReleaseForm.Close()
+        $CreateLetterForm.Close()
     })
     $CreateLetterForm.Controls.Add($EmailSubjectFormCancelButton)
     if (Test-Path "$PSScriptRoot\Отделы.xml") {
@@ -3389,6 +3392,112 @@ Function Save-MetaData ([ValidateSet("Departments", "Projects")]$DataType, $Sele
             $XmlToSaveMetaData.Save("$PSScriptRoot\Отделы.xml")
         }
     }
+}
+
+Function Build-OutlookMessage ($Department, $Conjugation, $NotificationNumber, $Project, $AccessPath)
+{
+if (Test-Path -Path "$PSScriptRoot\email.html") {Remove-Item -Path "$PSScriptRoot\email.html"}
+Add-Content "$PSScriptRoot\email.html" "<!DOCTYPE html>
+<html lang=""ru"">
+<head>
+<meta charset=""utf-8"">
+<title>Электронное сообщение</title>
+<style type=""text/css"">
+div {
+font-family: Verdana, Arial, Helvetica, sans-serif;
+}
+table {
+    border-collapse: collapse;
+}
+th {
+padding: 3px;
+	border: 1px solid black;
+    text-align:left;
+    background-color: #bfbfbf;
+}
+td {
+	padding: 3px;
+	border: 1px solid black;
+    text-align:left;
+    background-color: #FFC;
+}
+.Version {
+    width: 3%;
+    text-align: center;
+}
+.Filename {
+    width:47%;
+    text-align: left;
+}
+.Comment {
+    width:50%;
+    text-align: left;
+}
+</style>
+</head>
+<body>
+$Department $Conjugation извещение об изменении $NotificationNumber для проекта $Project.
+<br>
+<br>
+Заменен(ы):
+<br>" -Encoding UTF8
+Add-TableToEmail -List $ListViewReplace -Action "replace"
+Add-TableToEmail -List $ListViewRemove -Action "remove"
+Add-TableToEmail -List $ListViewAdd -Action "publish"
+Add-Content "$PSScriptRoot\email.html" "<br>
+Адрес доступа:  $AccessPath
+<br>
+Замененные, аннулированные программы и ПД, извещение об изменении – в архиве проекта в папке $NotificationNumber.
+"
+$ol = New-Object -comObject Outlook.Application
+$mail = $ol.CreateItem(0)
+$mail.Subject = "$Department $Conjugation извещение об изменении $NotificationNumber для проекта $Project"
+if ($EmailSubjectFormDefaulRecipients.Checked -eq $true) {$mail.To = $script:SendTo}
+#$mail.CC = "Копию, можно указать автоматически"
+$inspector = $mail.GetInspector
+$inspector.Display()
+$mailrange = $inspector.WordEditor.Application.Selection
+$mailrange.InsertFile("$PSScriptRoot\email.html", "", $false, $false, $false)
+}
+
+Function Add-TableToEmail ($List, $Action)
+{
+Add-Content "$PSScriptRoot\email.html" "<table style=""width:100%"">
+    <tr>
+        <th class=""Version"">Изм.</th>
+        <th class=""Filename"">Обозначение</th>
+        <th class=""Comment"">Примечание</th>
+    </tr>
+" -Encoding UTF8
+    ForEach ($Item in $List.Items) {
+        if ($Item.SubItems[2].Text -eq "Документ") {
+            Add-Content "$PSScriptRoot\email.html" "    <tr>
+        <td class=""Version"">$($Item.SubItems[1].Text)</td>
+        <td class=""Filename"">$($Item.Text)</td>
+        <td class=""Comment""></td>
+    </tr>
+" -Encoding UTF8  
+        }
+        if ($Item.SubItems[2].Text -eq "Программа") {
+            Add-Content "$PSScriptRoot\email.html" "    <tr>
+        <td class=""Version"">-</td>
+        <td class=""Filename"">$($Item.Text)</td>
+        <td class=""Comment"">$($Item.SubItems[1].Text)</td>
+    </tr>
+" -Encoding UTF8  
+        }
+    }
+Add-Content "$PSScriptRoot\email.html" "</table>" -Encoding UTF8  
+if ($Action -eq "replace") {
+Add-Content "$PSScriptRoot\email.html" "<br>
+Аннулирован(ы):
+" -Encoding UTF8
+}
+if ($Action -eq "remove") {
+Add-Content "$PSScriptRoot\email.html" "<br>
+Выпущен(ы):
+" -Encoding UTF8
+}
 }
 
 Function Custom-Form ()
