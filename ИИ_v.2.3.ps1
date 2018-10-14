@@ -1577,6 +1577,21 @@ $CommentForXml = @"
     if ($ListType -eq "Projects") {$XmlList.Save("$PSScriptRoot\Проекты.xml")}
 }
 
+Function Add-NewElementsToExistingList ($List, [ValidateSet("Departments", "Employees", "Projects")]$ListType) {
+    if ($ListType -eq "Departments") {
+        $XmlAddNewElement = New-Object System.Xml.XmlDocument
+        $XmlAddNewElement.Load("$PSScriptRoot\Отделы.xml")
+        Foreach ($ListItem in $List) {
+            if ($XmlAddNewElement.SelectNodes("//name[.='$ListItem']").Count -eq 0) {
+                $NewElement = $XmlAddNewElement.CreateNode("element","name",$null)
+                $NewElement.InnerXml = "$ListItem"
+                $XmlAddNewElement.SelectSingleNode("/departments").AppendChild($NewElement)
+            }
+        }
+        $XmlAddNewElement.Save("$PSScriptRoot\Отделы.xml")
+    }
+}
+
 Function Manage-CustomLists ($PathToLost, [ValidateSet("Departments", "Employees", "Projects")]$ListType)
 {
     $ManageCustomListsForm = New-Object System.Windows.Forms.Form
@@ -1774,7 +1789,7 @@ Function Manage-CustomLists ($PathToLost, [ValidateSet("Departments", "Employees
     $ManageCustomListsSaveButton.Text = "Сохранить"
     $ManageCustomListsSaveButton.Add_Click({
     if ($ListType -eq "Departments") {
-    Generate-XmlList -List $GetPropertyListBoxBlackList.Items -ListType Departments
+    if (Test-Path "$PSScriptRoot\Отделы.xml") {Add-NewElementsToExistingList -List $GetPropertyListBoxBlackList.Items -ListType Departments} else {Generate-XmlList -List $GetPropertyListBoxBlackList.Items -ListType Departments}
         $ComboboxDepartmentName.Items.Clear()
         Foreach ($ItemInList in $GetPropertyListBoxBlackList.Items) {
             $ComboboxDepartmentName.Items.Add($ItemInList)
@@ -3270,6 +3285,8 @@ Function CreateLetterForm ()
     $EmailSubjectFormApplyButton.Text = "Начать"
     $EmailSubjectFormApplyButton.Enabled = $true
     $EmailSubjectFormApplyButton.Add_Click({
+    Save-MetaData -DataType Projects -SelectedItem $EmailSubjectComboboxProjectName.SelectedItem
+    Save-MetaData -DataType Departments -SelectedItem $EmailSubjectComboboxDepartmentName.SelectedItem
     })
     $CreateLetterForm.Controls.Add($EmailSubjectFormApplyButton)
     #Кнопка закрыть
@@ -3284,6 +3301,37 @@ Function CreateLetterForm ()
     $CreateLetterForm.Controls.Add($EmailSubjectFormCancelButton)
     UpdateSubjectTemplate -Department $EmailSubjectComboboxDepartmentName.SelectedItem -Conjugation $EmailSubjectComboboxConjugation.SelectedItem -NotificationNumber $EmailSubjectNotificationNumberInput.Text -Project $EmailSubjectComboboxProjectName.SelectedItem -TemplateInputField $EmailSubjectTemplateInput
     $CreateLetterForm.ShowDialog()
+}
+
+Function Save-MetaData ([ValidateSet("Departments", "Projects")]$DataType, $SelectedItem)
+{
+    if ($DataType -eq "Projects") {
+        if (Test-Path -Path "$PSScriptRoot\Проекты.xml") {
+            $XmlToSaveMetaData = New-Object System.Xml.XmlDocument
+            $XmlToSaveMetaData.Load("$PSScriptRoot\Проекты.xml")
+                $XmlToSaveMetaData.SelectNodes("//name") | % {if ($_.InnerXml -eq $SelectedItem) {
+                    $ElementAttribute = $XmlToSaveMetaData.CreateAttribute("access_path")
+                    $ElementAttribute.Value = "$($EmailSubjectAccessPathInput.Text)"
+                    $_.Attributes.Append($ElementAttribute)
+                }
+            }
+            $XmlToSaveMetaData.Save("$PSScriptRoot\Проекты.xml")
+        }
+    }
+    if ($DataType -eq "Departments") {
+        if (Test-Path -Path "$PSScriptRoot\Отделы.xml") {
+            $XmlToSaveMetaData = New-Object System.Xml.XmlDocument
+            $XmlToSaveMetaData.Load("$PSScriptRoot\Отделы.xml")
+                $XmlToSaveMetaData.SelectNodes("//name") | % {if ($_.InnerXml -eq $SelectedItem) {
+                Write-Host "Object found"
+                    $ElementAttribute = $XmlToSaveMetaData.CreateAttribute("conjugation")
+                    $ElementAttribute.Value = "$($EmailSubjectComboboxConjugation.SelectedItem)"
+                    $_.Attributes.Append($ElementAttribute)
+                }
+            }
+            $XmlToSaveMetaData.Save("$PSScriptRoot\Отделы.xml")
+        }
+    }
 }
 
 Function Custom-Form ()
