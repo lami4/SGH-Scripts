@@ -1590,6 +1590,30 @@ Function Add-NewElementsToExistingList ($List, [ValidateSet("Departments", "Empl
         }
         $XmlAddNewElement.Save("$PSScriptRoot\Отделы.xml")
     }
+    if ($ListType -eq "Projects") {
+        $XmlAddNewElement = New-Object System.Xml.XmlDocument
+        $XmlAddNewElement.Load("$PSScriptRoot\Проекты.xml")
+        Foreach ($ListItem in $List) {
+            if ($XmlAddNewElement.SelectNodes("//name[.='$ListItem']").Count -eq 0) {
+                $NewElement = $XmlAddNewElement.CreateNode("element","name",$null)
+                $NewElement.InnerXml = "$ListItem"
+                $XmlAddNewElement.SelectSingleNode("/projects").AppendChild($NewElement)
+            }
+        }
+        $XmlAddNewElement.Save("$PSScriptRoot\Проекты.xml")
+    }
+    if ($ListType -eq "Employees") {
+        $XmlAddNewElement = New-Object System.Xml.XmlDocument
+        $XmlAddNewElement.Load("$PSScriptRoot\Сотрудники.xml")
+        Foreach ($ListItem in $List) {
+            if ($XmlAddNewElement.SelectNodes("//name[.='$ListItem']").Count -eq 0) {
+                $NewElement = $XmlAddNewElement.CreateNode("element","name",$null)
+                $NewElement.InnerXml = "$ListItem"
+                $XmlAddNewElement.SelectSingleNode("/employees").AppendChild($NewElement)
+            }
+        }
+        $XmlAddNewElement.Save("$PSScriptRoot\Сотрудники.xml")
+    }
 }
 
 Function Manage-CustomLists ($PathToLost, [ValidateSet("Departments", "Employees", "Projects")]$ListType)
@@ -1796,7 +1820,7 @@ Function Manage-CustomLists ($PathToLost, [ValidateSet("Departments", "Employees
         }
     }
     if ($ListType -eq "Employees") {
-    Generate-XmlList -List $GetPropertyListBoxBlackList.Items -ListType Employees
+    if (Test-Path "$PSScriptRoot\Сотрудники.xml") {Add-NewElementsToExistingList -List $GetPropertyListBoxBlackList.Items -ListType Employees} else {Generate-XmlList -List $GetPropertyListBoxBlackList.Items -ListType Employees}
         $ComboboxCheckedBy.Items.Clear()
         $ComboboxCreatedBy.Items.Clear()
         Foreach ($ItemInList in $GetPropertyListBoxBlackList.Items) {
@@ -1805,7 +1829,8 @@ Function Manage-CustomLists ($PathToLost, [ValidateSet("Departments", "Employees
         }
     }
     if ($ListType -eq "Projects") {
-    Generate-XmlList -List $GetPropertyListBoxBlackList.Items -ListType Projects
+    $EmailSubjectAccessPathInput.Text = ""
+    if (Test-Path "$PSScriptRoot\Проекты.xml") {Add-NewElementsToExistingList -List $GetPropertyListBoxBlackList.Items -ListType Projects} else {Generate-XmlList -List $GetPropertyListBoxBlackList.Items -ListType Projects}
         $EmailSubjectComboboxProjectName.Items.Clear()
         Foreach ($ItemInList in $GetPropertyListBoxBlackList.Items) {
             $EmailSubjectComboboxProjectName.Items.Add($ItemInList)
@@ -3157,6 +3182,13 @@ Function CreateLetterForm ()
     $ComboboxDepartmentName.Items | % {$EmailSubjectComboboxDepartmentName.Items.Add($_)}
     $EmailSubjectComboboxDepartmentName.SelectedItem = $ComboboxDepartmentName.SelectedItem
     $EmailSubjectComboboxDepartmentName.Add_SelectedIndexChanged({
+    if (Test-Path "$PSScriptRoot\Отделы.xml") {
+        $XmlPopulateDepartmentMetadata = New-Object System.Xml.XmlDocument
+        $XmlPopulateDepartmentMetadata.Load("$PSScriptRoot\Отделы.xml")
+        if ($XmlPopulateDepartmentMetadata.SelectNodes("//name[.='$($EmailSubjectComboboxDepartmentName.SelectedItem)' and @conjugation]").Count -eq 1) {
+            $EmailSubjectComboboxConjugation.SelectedItem = "$($XmlPopulateDepartmentMetadata.SelectSingleNode("//name[.='$($EmailSubjectComboboxDepartmentName.SelectedItem)' and @conjugation]").Attributes.GetNamedItem("conjugation").Value)"
+        }
+    }
     UpdateSubjectTemplate -Department $EmailSubjectComboboxDepartmentName.SelectedItem -Conjugation $EmailSubjectComboboxConjugation.SelectedItem -NotificationNumber $EmailSubjectNotificationNumberInput.Text -Project $EmailSubjectComboboxProjectName.SelectedItem -TemplateInputField $EmailSubjectTemplateInput
     })
     $EmailSubjectSettingsGroup.Controls.Add($EmailSubjectComboboxDepartmentName)
@@ -3167,7 +3199,7 @@ Function CreateLetterForm ()
     $EmailSubjectConjugationLabel.Text = "Спряжение:"
     $EmailSubjectConjugationLabel.TextAlign = "TopRight"
     $EmailSubjectSettingsGroup.Controls.Add($EmailSubjectConjugationLabel)
-    #Список, содержащий доступные названия отделов
+    #Список, содержащий спряжения
     $ConjugationsArray = @("выпустил", "выпустило")
     $EmailSubjectComboboxConjugation = New-Object System.Windows.Forms.ComboBox
     $EmailSubjectComboboxConjugation.Location = New-Object System.Drawing.Point(120,53) #x,y
@@ -3210,6 +3242,14 @@ Function CreateLetterForm ()
     $EmailSubjectComboboxProjectName.Width = 200
     if (Test-Path -Path "$PSScriptRoot\Проекты.xml") {Populate-List -List $EmailSubjectComboboxProjectName -PathToXml "$PSScriptRoot\Проекты.xml"}
     $EmailSubjectComboboxProjectName.Add_SelectedIndexChanged({
+    $EmailSubjectAccessPathInput.Text = ""
+    if (Test-Path "$PSScriptRoot\Проекты.xml") {
+        $XmlPopulateProjectMetadata = New-Object System.Xml.XmlDocument
+        $XmlPopulateProjectMetadata.Load("$PSScriptRoot\Проекты.xml")
+        if ($XmlPopulateProjectMetadata.SelectNodes("//name[.='$($EmailSubjectComboboxProjectName.SelectedItem)' and @access_path]").Count -eq 1) {
+            $EmailSubjectAccessPathInput.Text = "$($XmlPopulateProjectMetadata.SelectSingleNode("//name[.='$($EmailSubjectComboboxProjectName.SelectedItem)' and @access_path]").Attributes.GetNamedItem("access_path").Value)"
+        }
+    }
     UpdateSubjectTemplate -Department $EmailSubjectComboboxDepartmentName.SelectedItem -Conjugation $EmailSubjectComboboxConjugation.SelectedItem -NotificationNumber $EmailSubjectNotificationNumberInput.Text -Project $EmailSubjectComboboxProjectName.SelectedItem -TemplateInputField $EmailSubjectTemplateInput
     })
     $EmailSubjectSettingsGroup.Controls.Add($EmailSubjectComboboxProjectName)
@@ -3299,6 +3339,13 @@ Function CreateLetterForm ()
         $ClientReleaseForm.Close()
     })
     $CreateLetterForm.Controls.Add($EmailSubjectFormCancelButton)
+    if (Test-Path "$PSScriptRoot\Отделы.xml") {
+        $XmlPopulateDepartmentMetadata = New-Object System.Xml.XmlDocument
+        $XmlPopulateDepartmentMetadata.Load("$PSScriptRoot\Отделы.xml")
+        if ($XmlPopulateDepartmentMetadata.SelectNodes("//name[.='$($EmailSubjectComboboxDepartmentName.SelectedItem)' and @conjugation]").Count -eq 1) {
+            $EmailSubjectComboboxConjugation.SelectedItem = "$($XmlPopulateDepartmentMetadata.SelectSingleNode("//name[.='$($EmailSubjectComboboxDepartmentName.SelectedItem)' and @conjugation]").Attributes.GetNamedItem("conjugation").Value)"
+        }
+    }
     UpdateSubjectTemplate -Department $EmailSubjectComboboxDepartmentName.SelectedItem -Conjugation $EmailSubjectComboboxConjugation.SelectedItem -NotificationNumber $EmailSubjectNotificationNumberInput.Text -Project $EmailSubjectComboboxProjectName.SelectedItem -TemplateInputField $EmailSubjectTemplateInput
     $CreateLetterForm.ShowDialog()
 }
@@ -3323,7 +3370,6 @@ Function Save-MetaData ([ValidateSet("Departments", "Projects")]$DataType, $Sele
             $XmlToSaveMetaData = New-Object System.Xml.XmlDocument
             $XmlToSaveMetaData.Load("$PSScriptRoot\Отделы.xml")
                 $XmlToSaveMetaData.SelectNodes("//name") | % {if ($_.InnerXml -eq $SelectedItem) {
-                Write-Host "Object found"
                     $ElementAttribute = $XmlToSaveMetaData.CreateAttribute("conjugation")
                     $ElementAttribute.Value = "$($EmailSubjectComboboxConjugation.SelectedItem)"
                     $_.Attributes.Append($ElementAttribute)
