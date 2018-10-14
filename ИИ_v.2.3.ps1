@@ -3459,6 +3459,7 @@ $inspector = $mail.GetInspector
 $inspector.Display()
 $mailrange = $inspector.WordEditor.Application.Selection
 $mailrange.InsertFile("$PSScriptRoot\email.html", "", $false, $false, $false)
+Remove-Item -Path "$PSScriptRoot\email.html"
 }
 
 Function Add-TableToEmail ($List, $Action)
