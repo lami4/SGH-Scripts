@@ -3340,6 +3340,7 @@ Function CreateLetterForm ()
             Save-MetaData -DataType Projects -SelectedItem $EmailSubjectComboboxProjectName.SelectedItem
             Save-MetaData -DataType Departments -SelectedItem $EmailSubjectComboboxDepartmentName.SelectedItem
             Build-OutlookMessage -Department $EmailSubjectComboboxDepartmentName.SelectedItem -Conjugation $EmailSubjectComboboxConjugation.SelectedItem -NotificationNumber $EmailSubjectNotificationNumberInput.Text -Project $EmailSubjectComboboxProjectName.SelectedItem -AccessPath $EmailSubjectAccessPathInput.Text
+            $CreateLetterForm.Close()
         }
     })
     $CreateLetterForm.Controls.Add($EmailSubjectFormApplyButton)
