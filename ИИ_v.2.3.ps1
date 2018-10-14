@@ -3325,8 +3325,19 @@ Function CreateLetterForm ()
     $EmailSubjectFormApplyButton.Text = "Начать"
     $EmailSubjectFormApplyButton.Enabled = $true
     $EmailSubjectFormApplyButton.Add_Click({
-    Save-MetaData -DataType Projects -SelectedItem $EmailSubjectComboboxProjectName.SelectedItem
-    Save-MetaData -DataType Departments -SelectedItem $EmailSubjectComboboxDepartmentName.SelectedItem
+        $TextInMessage = "Не указаны или некорректно указаны следующие параметры:`r`n"
+        $ErrorPresent = $false
+        if ($EmailSubjectComboboxConjugation.SelectedItem -eq $null) {$ErrorPresent = $true; $TextInMessage += "`r`nНе выбрано спряжение."}
+        if ($EmailSubjectNotificationNumberInput.Text -eq '  -  -') {$ErrorPresent = $true; $TextInMessage += "`r`nНе указан номер извещения."}
+        if ($EmailSubjectNotificationNumberInput.Text -ne '  -  -') {if ($EmailSubjectNotificationNumberInput.Text -notmatch '\d\d-\d\d-\d\d\d\d') {$ErrorPresent = $true; $TextInMessage += "`r`nНомер извещения указан неполностью, либо содержит недопустимые символы."}}
+        if ($EmailSubjectComboboxProjectName.SelectedItem -eq $null) {$ErrorPresent = $true; $TextInMessage += "`r`nНе выбран проект."}
+        if ($EmailSubjectAccessPathInput.Text -eq "") {$ErrorPresent = $true; $TextInMessage += "`r`nНе указан адрес доступа."}
+        if ($ErrorPresent -eq $true) {
+            Show-MessageBox -Message $TextInMessage -Title "Невозможно начать генерацию электронного письма" -Type OK
+        } else {
+            Save-MetaData -DataType Projects -SelectedItem $EmailSubjectComboboxProjectName.SelectedItem
+            Save-MetaData -DataType Departments -SelectedItem $EmailSubjectComboboxDepartmentName.SelectedItem
+        }
     })
     $CreateLetterForm.Controls.Add($EmailSubjectFormApplyButton)
     #Кнопка закрыть
