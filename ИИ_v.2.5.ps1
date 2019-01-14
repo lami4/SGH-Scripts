@@ -2841,9 +2841,9 @@ td {
     $Register.Visible = $false
     $RegisterWorkbook = $Register.WorkBooks.Open($script:PathToRegister)
     $RegisterWorksheet = $RegisterWorkbook.Worksheets.Item(1)
+    if ($RegisterWorksheet.AutoFilterMode -eq $true) {$RegisterWorksheet.ShowAllData()}
     $RegisterLastRow = $RegisterWorksheet.Cells.Item($RegisterWorksheet.Rows.Count, "E").End(-4162).Row
     $SearchRange = $RegisterWorksheet.Range("E2:E$($RegisterLastRow)")
-    if ($RegisterWorksheet.AutoFilterMode -eq $true) {$RegisterWorksheet.ShowAllData()}
     $RegisterRowCounter = 1
     $ListViewAdd.Items | % {
     if (($SearchRange.Find([string]$_.Text, [Type]::Missing, -4163, 1)) -ne $null) {
