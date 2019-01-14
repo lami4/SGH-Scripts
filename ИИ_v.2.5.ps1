@@ -2838,7 +2838,7 @@ td {
         <th class=""Check_results"">Результат проверки</th>
     </tr>" -Encoding UTF8
     $Register = New-Object -ComObject Excel.Application
-    $Register.Visible = $true
+    $Register.Visible = $false
     $RegisterWorkbook = $Register.WorkBooks.Open($script:PathToRegister)
     $RegisterWorksheet = $RegisterWorkbook.Worksheets.Item(1)
     $RegisterLastRow = $RegisterWorksheet.Cells.Item($RegisterWorksheet.Rows.Count, "E").End(-4162).Row
