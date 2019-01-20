@@ -2,6 +2,8 @@ clear
 #Глобальные переменные
 #Переменная для стандартного списка рассылки
 $script:SendTo = 'Стандартный список рассылки'
+#Формат файлов
+$script:FileFormats = @('sh;SH-файл', 'zip;ZIP-архив', 'gz;GZ-файл')
 #Значение для поля 'Причина'
 $script:GlobalReasonField = "Обновление документации"
 #Значение для поля 'Указание о заделе'
@@ -28,12 +30,93 @@ $script:MakeChangesPathToCurrentVersion = $null
 $script:MakeChangesPathToArchiveFolder = $null
 $script:MakeChangesPathToBackupFolder = $null
 $script:PathToRegister = $null
-$script:SelectedRegister = $null
-$script:SelectedFolderWithFilesBeingPublished = $null
+$script:SelectedRegister = "C:\Users\Tsedik\Downloads\Учет программ и ПД.xls"
+$script:SelectedFolderWithFilesBeingPublished = "C:\Users\Tsedik\Desktop\SGH\ИИ_v.2.3 final release\ИИ_v.2.4\filler"
+$script:CollectedReferences = @(), @(), @()
 $script:SelectedWordFile = $null
 $script:SelectedClientFolder = $null
 $script:SelectedAccessPath = $null
 $script:AggregatingString = ""
+
+Function Collect-DataFromSpecification ($WordApp, $PathToSpecification)
+{
+    $Specification = $WordApp.Documents.Open("$PathToSpecification")
+    $Specification.Tables.Item(1).Rows | % {
+        if ($_.Cells.Count -eq 7) {
+            if (((($_.Cells.Item(4).Range.Text).Trim([char]0x0007)).Trim(' ') -replace [char]13, '') -ne '') {
+                if ($script:CollectedReferences[0] -cnotcontains [string]((($_.Cells.Item(4).Range.Text).Trim([char]0x0007)).Trim(' ')  -replace [char]13, '').Trim([char]0x0009)) {
+                    $script:CollectedReferences[0] += [string]((($_.Cells.Item(4).Range.Text).Trim([char]0x0007)).Trim(' ')  -replace [char]13, '').Trim([char]0x0009).Trim(' ')
+                    $script:CollectedReferences[1] += [string]((($_.Cells.Item(5).Range.Text).Trim([char]0x0007)).Trim(' ')  -replace [char]13, '').Trim([char]0x0009).Trim(' ')
+                    $script:CollectedReferences[2] += [string]((($_.Cells.Item(1).Range.Text).Trim([char]0x0007)).Trim(' ')  -replace [char]13, '').Trim([char]0x0009).Trim(' ')
+                }         
+            }
+        }
+    }
+    $Specification.Close([ref]0)
+}
+
+Function Populate-Register ()
+{
+    Kill -Name WINWORD -ErrorAction SilentlyContinue
+    Start-Sleep -Seconds 1
+    #СОБИРАЕМ ДАННЫЕ ИЗ СПЕЦИФИКАЦИЙ В УКАЗАННОЙ ПАПКЕ
+    #Создать экземпляр приложения MS Word
+    $RegisterWordApp = New-Object -ComObject Word.Application
+    #Сделать вызванное приложение невидемым
+    $RegisterWordApp.Visible = $false
+    Write-Host "Сбор информации о документах и программах, указанной в публикуемых спецификациях..."
+    #DOCX
+    Get-ChildItem -Path "$script:SelectedFolderWithFilesBeingPublished\*.docx" | % {
+        if ($_.BaseName -match 'SPC' -or $_.BaseName -match 'LPD') {
+            Write-Host $_.Name
+            Collect-DataFromSpecification -Word $RegisterWordApp -PathToSpecification $_
+        }
+    }
+    #DOC
+    Get-ChildItem -Path "$script:SelectedFolderWithFilesBeingPublished\*.doc" | % {
+        if ($_.BaseName -match 'SPC' -or $_.BaseName -match 'LPD') {
+            Write-Host $_.Name
+            Collect-DataFromSpecification -Word $RegisterWordApp -PathToSpecification $_
+        }
+    }
+    $RegisterWordApp.Quit()
+    Kill -Name WINWORD -ErrorAction SilentlyContinue
+    Write-Host $script:CollectedReferences
+    Write-Host "Сбор информации закончен."
+    Write-Host "Заполняю файл учета программ и ПД..."
+    Start-Sleep -Seconds 2
+    $Register = New-Object -ComObject Excel.Application
+    $Register.Visible = $true
+    $RegisterWorkbook = $Register.WorkBooks.Open($script:SelectedRegister)
+    $RegisterWorksheet = $RegisterWorkbook.Worksheets.Item(1)
+    if ($RegisterWorksheet.AutoFilterMode -eq $true) {$RegisterWorksheet.ShowAllData()}
+    $RegisterLastRow = $RegisterWorksheet.Cells.Item($RegisterWorksheet.Rows.Count, "E").End(-4162).Row
+    #Список ВЫПУСТИТЬ
+    $ListViewAdd.Items | % {
+        $ArrayContainsExtensionFlag = $false
+        $ArrayContainsExtensionIndex = $null
+        $RegisterLastRow += 1
+        #Программа
+        if ($_.SubItems[2].Text -eq "Программа") {
+            $RegisterWorksheet.Cells.Item($RegisterLastRow, 1) = $UpdateRegisterFormComboboxProjectName.SelectedItem
+            $RegisterWorksheet.Cells.Item($RegisterLastRow, 2) = $UpdateRegisterFormComboboxDeveloperName.SelectedItem
+            $RegisterWorksheet.Cells.Item($RegisterLastRow, 3) = $_.Text
+            #$RegisterCurrentFileName = $_.Text
+            $RegisterWorksheet.Cells.Item($RegisterLastRow, 4) = [string]($_.SubItems[1].Text).ToUpper()
+            $RegisterWorksheet.Cells.Item($RegisterLastRow, 6) = $script:CollectedReferences[1][$script:CollectedReferences[0].IndexOf("$($_.Text)")]
+            for ($i = 0; $i -lt $script:FileFormats.Count; $i++) {
+            Write-Host 
+                if ((($script:FileFormats[$i] -split ';')[0]).ToLower() -eq ([System.IO.Path]::GetExtension($_.Text)).Trim('.').ToLower()) {$ArrayContainsExtensionFlag = $true; $ArrayContainsExtensionIndex = $i}
+            }
+            if ($ArrayContainsExtensionFlag -eq $true) {$RegisterWorksheet.Cells.Item($RegisterLastRow, 7) = ($script:FileFormats[$ArrayContainsExtensionIndex] -split ';')[1]}
+            Get-ChildItem -Path "$script:SelectedFolderWithFilesBeingPublished\$($_.Text)" | % {
+                if ($_.Length -lt 1048576) {$RegisterWorksheet.Cells.Item($RegisterLastRow, 8) = "$([math]::Round($_.Length/1KB, 2))" + " КБ " + "($($_.Length)" + " байт)"}
+                if ($_.Length -gt 1048576 -and $_.Length -lt 1073741824) {$RegisterWorksheet.Cells.Item($RegisterLastRow, 8) = "$([math]::Round($_.Length/1MB, 2))" + " МБ " + "($($_.Length)" + " байт)"}
+                if ($_.Length -gt 1073741824) {$RegisterWorksheet.Cells.Item($RegisterLastRow, 8) = "$([math]::Round($_.Length/1GB, 2))" + " ГБ " + "($($_.Length)" + " байт)"}
+            }
+        }
+    }
+}
 
 Function Save-File
 { 
@@ -3910,9 +3993,7 @@ Function UpdateRegisterForm ()
         Show-MessageBox -Message "Не указана папка, в которой необходимо удалить архивы с исходным кодом и исходные документы." -Title "Невозможно выполнить операцию." -Type OK
     } else {
         if ((Show-MessageBox -Message "Перед началом операции убедитесь в том, что у вас нет открытых Word документов.`r`nВо время работы скрипт закроет все Word документы, не сохраняя их, что может привести к потере данных!`r`nПродолжить?" -Title "Подтвердите действие" -Type YesNo) -eq "Yes") {
-        if ($UpdateRegisterFormDeleteMsOfficeFiles.Checked -eq $true) {$DeleteWordFlag = $true} else {$DeleteWordFlag = $false}
-        if ($UpdateRegisterFormDeleteMsExcelFiles.Checked -eq $true) {$DeleteExcelFlag = $true} else {$DeleteExcelFlag = $false}
-        Create-ClientVersion -PathToSpecification $script:SelectedRegister -PathToClientFolder $script:SelectedFolderWithFilesBeingPublished -DeleteWordFlag $DeleteWordFlag -DeleteExcelFlag $DeleteExcelFlag
+        Populate-Register
         $UpdateRegisterForm.Close()
         }
     }
