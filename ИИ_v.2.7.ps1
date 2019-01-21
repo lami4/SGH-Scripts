@@ -3,7 +3,7 @@ clear
 #Переменная для стандартного списка рассылки
 $script:SendTo = 'Стандартный список рассылки'
 #Формат файлов
-$script:FileFormats = @('sh;SH-файл', 'zip;ZIP-архив', 'gz;GZ-файл')
+$script:FileFormats = @('zip;ZIP-архив', 'gz;GZ-файл')#'sh;SH-файл',
 #Значение для поля 'Причина'
 $script:GlobalReasonField = "Обновление документации"
 #Значение для поля 'Указание о заделе'
@@ -32,6 +32,7 @@ $script:MakeChangesPathToBackupFolder = $null
 $script:PathToRegister = $null
 $script:SelectedRegister = "C:\Users\Tsedik\Downloads\Учет программ и ПД.xls"
 $script:SelectedFolderWithFilesBeingPublished = "C:\Users\Tsedik\Desktop\SGH\ИИ_v.2.3 final release\ИИ_v.2.4\filler"
+$script:ManuallyEnteredValueForRegister = ""
 $script:CollectedReferences = @(), @(), @()
 $script:SelectedWordFile = $null
 $script:SelectedClientFolder = $null
@@ -53,6 +54,49 @@ Function Collect-DataFromSpecification ($WordApp, $PathToSpecification)
         }
     }
     $Specification.Close([ref]0)
+}
+
+Function Enter-DataToRegisterManually ($Title, $Label)
+{
+    $EnterDataToRegisterManuallyForm = New-Object System.Windows.Forms.Form
+    $EnterDataToRegisterManuallyForm.Padding = New-Object System.Windows.Forms.Padding(0,0,10,0)
+    $EnterDataToRegisterManuallyForm.ShowIcon = $false
+    $EnterDataToRegisterManuallyForm.AutoSize = $true
+    $EnterDataToRegisterManuallyForm.Text = "$Title"
+    $EnterDataToRegisterManuallyForm.AutoSizeMode = "GrowAndShrink"
+    $EnterDataToRegisterManuallyForm.WindowState = "Normal"
+    $EnterDataToRegisterManuallyForm.SizeGripStyle = "Hide"
+    $EnterDataToRegisterManuallyForm.ShowInTaskbar = $true
+    $EnterDataToRegisterManuallyForm.StartPosition = "CenterScreen"
+    $EnterDataToRegisterManuallyForm.ControlBox = $false
+    $EnterDataToRegisterManuallyForm.MinimizeBox = $false
+    $EnterDataToRegisterManuallyForm.MaximizeBox = $false
+    #Надпись к полю для ввода
+    $EnterDataToRegisterManuallyFormInputFieldLabel = New-Object System.Windows.Forms.Label
+    $EnterDataToRegisterManuallyFormInputFieldLabel.Location =  New-Object System.Drawing.Point(10,15) #x,y
+    $EnterDataToRegisterManuallyFormInputFieldLabel.Width = 600
+    $EnterDataToRegisterManuallyFormInputFieldLabel.Height = 16
+    $EnterDataToRegisterManuallyFormInputFieldLabel.Text = "$Label"
+    $EnterDataToRegisterManuallyFormInputFieldLabel.TextAlign = "TopLeft"
+    $EnterDataToRegisterManuallyForm.Controls.Add($EnterDataToRegisterManuallyFormInputFieldLabel)
+    #Поле для ввода
+    $EnterDataToRegisterManuallyFormInputField = New-Object System.Windows.Forms.TextBox 
+    $EnterDataToRegisterManuallyFormInputField.Location = New-Object System.Drawing.Point(10,35) #x,y
+    $EnterDataToRegisterManuallyFormInputField.Width = 800
+    $EnterDataToRegisterManuallyFormInputField.ForeColor = "Black"
+    $EnterDataToRegisterManuallyForm.Controls.Add($EnterDataToRegisterManuallyFormInputField)
+    #Кнопка применить
+    $EnterDataToRegisterManuallyFormApplyButton = New-Object System.Windows.Forms.Button
+    $EnterDataToRegisterManuallyFormApplyButton.Location = New-Object System.Drawing.Point(10,75) #x,y
+    $EnterDataToRegisterManuallyFormApplyButton.Size = New-Object System.Drawing.Point(80,22) #width,height
+    $EnterDataToRegisterManuallyFormApplyButton.Text = "Применить"
+    $EnterDataToRegisterManuallyFormApplyButton.Margin = New-Object System.Windows.Forms.Padding(0,0,10,10)
+    $EnterDataToRegisterManuallyFormApplyButton.Add_Click({
+    $script:ManuallyEnteredValueForRegister = $EnterDataToRegisterManuallyFormInputField.Text
+    $EnterDataToRegisterManuallyForm.Close()
+    })
+    $EnterDataToRegisterManuallyForm.Controls.Add($EnterDataToRegisterManuallyFormApplyButton)
+    $EnterDataToRegisterManuallyForm.ShowDialog()
 }
 
 Function Populate-Register ()
@@ -98,22 +142,41 @@ Function Populate-Register ()
         $RegisterLastRow += 1
         #Программа
         if ($_.SubItems[2].Text -eq "Программа") {
+            #КОД ПРОЕКТА
             $RegisterWorksheet.Cells.Item($RegisterLastRow, 1) = $UpdateRegisterFormComboboxProjectName.SelectedItem
+            #РАЗРАБОТЧИК
             $RegisterWorksheet.Cells.Item($RegisterLastRow, 2) = $UpdateRegisterFormComboboxDeveloperName.SelectedItem
+            #ФАЙЛ ПРОГРАММЫ 
             $RegisterWorksheet.Cells.Item($RegisterLastRow, 3) = $_.Text
-            #$RegisterCurrentFileName = $_.Text
+            #КООНТРОЛЬНАЯ СУММА
             $RegisterWorksheet.Cells.Item($RegisterLastRow, 4) = [string]($_.SubItems[1].Text).ToUpper()
-            $RegisterWorksheet.Cells.Item($RegisterLastRow, 6) = $script:CollectedReferences[1][$script:CollectedReferences[0].IndexOf("$($_.Text)")]
+            #НАИМЕНОВАНИЕ
+            if ($script:CollectedReferences[1][$script:CollectedReferences[0].IndexOf("$($_.Text)")] -ne "") {
+                $RegisterWorksheet.Cells.Item($RegisterLastRow, 6) = $script:CollectedReferences[1][$script:CollectedReferences[0].IndexOf("$($_.Text)")]
+            } else {
+                Enter-DataToRegisterManually -Title 'Наименование для программы не указано ни в одной из спецификаций' -Label "Укажите наименование для программы $($_.Text):"
+                $RegisterWorksheet.Cells.Item($RegisterLastRow, 6) = $script:ManuallyEnteredValueForRegister
+                $script:ManuallyEnteredValueForRegister = ""
+            }
+            #ФОРМАТ
             for ($i = 0; $i -lt $script:FileFormats.Count; $i++) {
-            Write-Host 
                 if ((($script:FileFormats[$i] -split ';')[0]).ToLower() -eq ([System.IO.Path]::GetExtension($_.Text)).Trim('.').ToLower()) {$ArrayContainsExtensionFlag = $true; $ArrayContainsExtensionIndex = $i}
             }
-            if ($ArrayContainsExtensionFlag -eq $true) {$RegisterWorksheet.Cells.Item($RegisterLastRow, 7) = ($script:FileFormats[$ArrayContainsExtensionIndex] -split ';')[1]}
+            if ($ArrayContainsExtensionFlag -eq $true) {
+                $RegisterWorksheet.Cells.Item($RegisterLastRow, 7) = ($script:FileFormats[$ArrayContainsExtensionIndex] -split ';')[1]
+            } else {
+                Enter-DataToRegisterManually -Title 'Формат программы не может быть заполнен автоматически, так как отсутсвует в списке настроенных форматов' -Label "Укажите формат для программы $($_.Text):"
+                $RegisterWorksheet.Cells.Item($RegisterLastRow, 7) = $script:ManuallyEnteredValueForRegister
+                $script:ManuallyEnteredValueForRegister = ""
+            }
+            #РАЗМЕР ФАЙЛА
             Get-ChildItem -Path "$script:SelectedFolderWithFilesBeingPublished\$($_.Text)" | % {
                 if ($_.Length -lt 1048576) {$RegisterWorksheet.Cells.Item($RegisterLastRow, 8) = "$([math]::Round($_.Length/1KB, 2))" + " КБ " + "($($_.Length)" + " байт)"}
                 if ($_.Length -gt 1048576 -and $_.Length -lt 1073741824) {$RegisterWorksheet.Cells.Item($RegisterLastRow, 8) = "$([math]::Round($_.Length/1MB, 2))" + " МБ " + "($($_.Length)" + " байт)"}
                 if ($_.Length -gt 1073741824) {$RegisterWorksheet.Cells.Item($RegisterLastRow, 8) = "$([math]::Round($_.Length/1GB, 2))" + " ГБ " + "($($_.Length)" + " байт)"}
             }
+            #ДАТА ПОСТУПЛЕНИЯ
+            $RegisterWorksheet.Cells.Item($RegisterLastRow, 9) = $CalendarApplyUpdatesUntilInput.Text
         }
     }
 }
@@ -4005,6 +4068,7 @@ Function UpdateRegisterForm ()
     $UpdateRegisterFormCancelButton.Size = New-Object System.Drawing.Point(80,22) #width,height
     $UpdateRegisterFormCancelButton.Text = "Закрыть"
     $UpdateRegisterFormCancelButton.Add_Click({
+        Enter-DataToRegisterManually
         $UpdateRegisterForm.Close()
     })
     $UpdateRegisterForm.Controls.Add($UpdateRegisterFormCancelButton)
