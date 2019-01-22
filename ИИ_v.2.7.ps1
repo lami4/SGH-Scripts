@@ -129,6 +129,8 @@ Function Populate-Register ()
     Write-Host "Сбор информации закончен."
     Write-Host "Заполняю файл учета программ и ПД..."
     Start-Sleep -Seconds 2
+    $WordApplication = New-Object -ComObject word.application
+    $WordApplication.Visible = $false
     $Register = New-Object -ComObject Excel.Application
     $Register.Visible = $true
     $RegisterWorkbook = $Register.WorkBooks.Open($script:SelectedRegister)
@@ -178,7 +180,55 @@ Function Populate-Register ()
             #ДАТА ПОСТУПЛЕНИЯ
             $RegisterWorksheet.Cells.Item($RegisterLastRow, 9) = $CalendarApplyUpdatesUntilInput.Text
         }
+        #Документ
+        if ($_.SubItems[2].Text -eq "Документ") {
+            #КОД ПРОЕКТА
+            $RegisterWorksheet.Cells.Item($RegisterLastRow, 1) = $UpdateRegisterFormComboboxProjectName.SelectedItem
+            #РАЗРАБОТЧИК
+            $RegisterWorksheet.Cells.Item($RegisterLastRow, 2) = $UpdateRegisterFormComboboxDeveloperName.SelectedItem
+            #ОБОЗНАЧЕНИЕ
+            $RegisterWorksheet.Cells.Item($RegisterLastRow, 5) = $_.Text
+            #НАИМЕНОВАНИЕ
+            if ($script:CollectedReferences[1][$script:CollectedReferences[0].IndexOf("$($_.Text)")] -ne "") {
+                $RegisterWorksheet.Cells.Item($RegisterLastRow, 6) = $script:CollectedReferences[1][$script:CollectedReferences[0].IndexOf("$($_.Text)")]
+            } else {
+                Enter-DataToRegisterManually -Title 'Наименование для документа не указано ни в одной из спецификаций' -Label "Укажите наименование для документа $($_.Text):"
+                $RegisterWorksheet.Cells.Item($RegisterLastRow, 6) = $script:ManuallyEnteredValueForRegister
+                $script:ManuallyEnteredValueForRegister = ""
+            }
+            #ФОРМАТ
+            if ($script:CollectedReferences[2][$script:CollectedReferences[0].IndexOf("$($_.Text)")] -ne "") {
+                $RegisterWorksheet.Cells.Item($RegisterLastRow, 7) = $script:CollectedReferences[2][$script:CollectedReferences[0].IndexOf("$($_.Text)")]
+            } else {
+                Enter-DataToRegisterManually -Title 'Формат для документа не указан ни в одной из спецификаций' -Label "Укажите формат для документа $($_.Text):"
+                $RegisterWorksheet.Cells.Item($RegisterLastRow, 7) = $script:ManuallyEnteredValueForRegister
+                $script:ManuallyEnteredValueForRegister = ""
+            }
+            #КОЛИЧЕСТВО ЛИСТОВ
+            #Гид по стилю
+            if ($($_.Text) -match "DSG") {
+                Enter-DataToRegisterManually -Title 'Документ с кодом DSG' -Label "Укажите общее количество страниц для документа $($_.Text):"
+                $RegisterWorksheet.Cells.Item($RegisterLastRow, 8) = $script:ManuallyEnteredValueForRegister
+                $script:ManuallyEnteredValueForRegister = ""
+            } elseif ((Test-Path -Path "$script:SelectedFolderWithFilesBeingPublished\$($_.Text).xlsx") -or (Test-Path -Path "$script:SelectedFolderWithFilesBeingPublished\$($_.Text).xls")) {
+            #Excel-файл
+                Enter-DataToRegisterManually -Title 'Документ созданный в приложении MS Excel' -Label "Укажите общее количество страниц для документа $($_.Text):"
+                $RegisterWorksheet.Cells.Item($RegisterLastRow, 8) = $script:ManuallyEnteredValueForRegister
+                $script:ManuallyEnteredValueForRegister = ""
+            #Остальные файлы, т.е. WORD-файлы
+            } else {
+                if (Test-Path -Path "$script:SelectedFolderWithFilesBeingPublished\$($_.Text).docx") {$DocumentRegister = $WordApplication.Documents.Open("$script:SelectedFolderWithFilesBeingPublished\$($_.Text).docx")}
+                if (Test-Path -Path "$script:SelectedFolderWithFilesBeingPublished\$($_.Text).doc") {$DocumentRegister = $WordApplication.Documents.Open("$script:SelectedFolderWithFilesBeingPublished\$($_.Text).doc")}
+                $Wholestory = $DocumentRegister.Range()
+                $TotalPages = $Wholestory.Information(4)
+                $RegisterWorksheet.Cells.Item($RegisterLastRow, 8) = $TotalPages
+                $DocumentRegister.Close()
+            }
+            #ДАТА ПОСТУПЛЕНИЯ
+            $RegisterWorksheet.Cells.Item($RegisterLastRow, 9) = $CalendarApplyUpdatesUntilInput.Text
+        }
     }
+    $WordApplication.Quit()
 }
 
 Function Save-File
