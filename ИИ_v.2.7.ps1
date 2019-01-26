@@ -3,7 +3,7 @@ clear
 #Переменная для стандартного списка рассылки
 $script:SendTo = 'Стандартный список рассылки'
 #Формат файлов
-$script:FileFormats = @('zip;ZIP-архив', 'gz;GZ-файл')#'sh;SH-файл',
+$script:FileFormats = @('sh;SH-файл', 'zip;ZIP-архив', 'gz;GZ-файл')
 #Значение для поля 'Причина'
 $script:GlobalReasonField = "Обновление документации"
 #Значение для поля 'Указание о заделе'
@@ -30,8 +30,8 @@ $script:MakeChangesPathToCurrentVersion = $null
 $script:MakeChangesPathToArchiveFolder = $null
 $script:MakeChangesPathToBackupFolder = $null
 $script:PathToRegister = $null
-$script:SelectedRegister = "C:\Users\Tsedik\Downloads\Учет программ и ПД.xls"
-$script:SelectedFolderWithFilesBeingPublished = "C:\Users\Tsedik\Desktop\SGH\ИИ_v.2.3 final release\ИИ_v.2.4\filler"
+$script:SelectedRegister = $null
+$script:SelectedFolderWithFilesBeingPublished = $null
 $script:ManuallyEnteredValueForRegister = ""
 $script:CollectedReferences = @(), @(), @()
 $script:SelectedWordFile = $null
@@ -53,6 +53,9 @@ Function Collect-DataFromSpecification ($WordApp, $PathToSpecification)
             }
         }
     }
+    $script:CollectedReferences[0] += [string]((($Specification.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(1, 6).Range.Text)).Trim(' ')  -replace [char]13, '').Trim([char]0x0007).Trim([char]0x0009).Trim(' ')
+    $script:CollectedReferences[1] += [string]((($Specification.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(4, 5).Range.Text)).Trim(' ')  -replace [char]13, '').Trim([char]0x0007).Trim([char]0x0009).Trim(' ')
+    $script:CollectedReferences[2] += "А4"
     $Specification.Close([ref]0)
 }
 
@@ -99,8 +102,46 @@ Function Enter-DataToRegisterManually ($Title, $Label)
     $EnterDataToRegisterManuallyForm.ShowDialog()
 }
 
+Function Find-StringToBePopulated ($Sheet, $LookFor)
+{
+    $InstanceCounter = @()
+    $Range = $Sheet.Range("E:E")
+    $Target = $Range.Find("$LookFor", [Type]::Missing, [Type]::Missing, 1)
+    if ($Target -eq $null) {
+        #Обозначение заявлено к замене, но не существует в файле учета нет ни одного вхождения.
+        Add-Content "$PSScriptRoot\Журнал автозаполнения.txt" "$($LookFor): ОШИБКА. Требуется ручное внесение данных. Обозначение заявлено к замене, но файле учета ПД и программ не существует ни одного вхождения."
+        return "not exist"
+    } else {
+        #Ищет
+        $FirstHit = $Target
+        Do
+        {
+            $FoundNameRowNumber = $Target.AddressLocal($false, $false) -replace "E", ""
+            if ($Sheet.Cells.Item($FoundNameRowNumber, "E").Interior.ColorIndex -eq -4142 -and $Sheet.Cells.Item($FoundNameRowNumber, "L").Value() -eq $null -and $Sheet.Cells.Item($FoundNameRowNumber, "M").Value() -eq $null -and $Sheet.Cells.Item($FoundNameRowNumber, "N").Value() -eq $null) {
+            $InstanceCounter += $FoundNameRowNumber
+            }
+            $Target = $Range.FindNext($Target)
+        }
+        While ($Target -ne $null -and $Target.AddressLocal() -ne $FirstHit.AddressLocal())
+    }
+    if ($InstanceCounter.Count -eq 0) {
+        Add-Content "$PSScriptRoot\Журнал автозаполнения.txt" "$($LookFor): ОШИБКА. Требуется ручное внесение данных. Не удалось обнаружить строку заменяемого файла, которая подходит для заполнения. К строке либо по ошибке применили заливку, либо в ней по ошибке заполнены столбцы L, M или N."
+        return "not found"
+        #Write-Host "Не удалось найти строку подходящую для заполнения. К строке либо по ошибке прмиенили заливку, либо в ней по ошибке заполнены столбцы L, M или N."
+    } elseif ($InstanceCounter.Count -eq 1) {
+        Add-Content "$PSScriptRoot\Журнал автозаполнения.txt" "$($LookFor): УСПЕШНО. В файл учета успешно внесены все необходимые данные."
+        return [int]$InstanceCounter[0]
+        #Write-Host "Найдена строка без заливки и без начений в столбцах L, M и N."
+    } else {
+        Add-Content "$PSScriptRoot\Журнал автозаполнения.txt" "$($LookFor): ОШИБКА. Требуется ручное внесение данных. Найдено несколько строк подходящих для заполнения. Номера подходящих строк"
+        return "multiple instances"
+        #Write-Host "Найдено несколько строк подходящих для заполнения. Их номера:"
+    }
+}
+
 Function Populate-Register ()
 {
+    if (Test-Path -Path "$PSScriptRoot\Журнал автозаполнения.txt") {Remove-Item -Path "$PSScriptRoot\Журнал автозаполнения.txt"}
     Kill -Name WINWORD -ErrorAction SilentlyContinue
     Start-Sleep -Seconds 1
     #СОБИРАЕМ ДАННЫЕ ИЗ СПЕЦИФИКАЦИЙ В УКАЗАННОЙ ПАПКЕ
@@ -136,9 +177,14 @@ Function Populate-Register ()
     $RegisterWorkbook = $Register.WorkBooks.Open($script:SelectedRegister)
     $RegisterWorksheet = $RegisterWorkbook.Worksheets.Item(1)
     if ($RegisterWorksheet.AutoFilterMode -eq $true) {$RegisterWorksheet.ShowAllData()}
-    $RegisterLastRow = $RegisterWorksheet.Cells.Item($RegisterWorksheet.Rows.Count, "E").End(-4162).Row
+    $ArrayOfRowNumbers = @()
+    $ArrayOfRowNumbers += $RegisterWorksheet.Cells.Item($RegisterWorksheet.Rows.Count, "E").End(-4162).Row
+    $ArrayOfRowNumbers += $RegisterWorksheet.Cells.Item($RegisterWorksheet.Rows.Count, "C").End(-4162).Row
+    $ArrayOfRowNumbers += $RegisterWorksheet.Cells.Item($RegisterWorksheet.Rows.Count, "F").End(-4162).Row
+    $ArrayOfRowNumbers += $RegisterWorksheet.Cells.Item($RegisterWorksheet.Rows.Count, "A").End(-4162).Row
+    $RegisterLastRow = [int]($ArrayOfRowNumbers | Measure -Maximum).Maximum
     #Список ВЫПУСТИТЬ
-    $ListViewAdd.Items | % {
+    <#$ListViewAdd.Items | % {
         $ArrayContainsExtensionFlag = $false
         $ArrayContainsExtensionIndex = $null
         $RegisterLastRow += 1
@@ -150,7 +196,7 @@ Function Populate-Register ()
             $RegisterWorksheet.Cells.Item($RegisterLastRow, 2) = $UpdateRegisterFormComboboxDeveloperName.SelectedItem
             #ФАЙЛ ПРОГРАММЫ 
             $RegisterWorksheet.Cells.Item($RegisterLastRow, 3) = $_.Text
-            #КООНТРОЛЬНАЯ СУММА
+            #КОНТРОЛЬНАЯ СУММА
             $RegisterWorksheet.Cells.Item($RegisterLastRow, 4) = [string]($_.SubItems[1].Text).ToUpper()
             #НАИМЕНОВАНИЕ
             if ($script:CollectedReferences[1][$script:CollectedReferences[0].IndexOf("$($_.Text)")] -ne "") {
@@ -179,6 +225,7 @@ Function Populate-Register ()
             }
             #ДАТА ПОСТУПЛЕНИЯ
             $RegisterWorksheet.Cells.Item($RegisterLastRow, 9) = $CalendarApplyUpdatesUntilInput.Text
+            Add-Content "$PSScriptRoot\Журнал автозаполнения.txt" "$($_.Text): УСПЕШНО. В файл учета успешно внесены все необходимые данные."
         }
         #Документ
         if ($_.SubItems[2].Text -eq "Документ") {
@@ -226,7 +273,91 @@ Function Populate-Register ()
             }
             #ДАТА ПОСТУПЛЕНИЯ
             $RegisterWorksheet.Cells.Item($RegisterLastRow, 9) = $CalendarApplyUpdatesUntilInput.Text
+            Add-Content "$PSScriptRoot\Журнал автозаполнения.txt" "$($_.Text): УСПЕШНО. В файл учета успешно внесены все необходимые данные."
         }
+    }#>
+    #Список ЗАМЕНИТЬ
+    Write-Host "Работую со списком Заменить"
+    $ListViewReplace.Items | % {
+        $ArrayContainsExtensionFlag = $false
+        $ArrayContainsExtensionIndex = $null
+        $RegisterLastRow += 1
+        #Документ
+        if ($_.SubItems[2].Text -eq "Документ") {
+            Write-Host "Работую с $($_.Text)"
+            $ActionFlag = $null
+            #Определяем есть ли строка заменяемого файла, подходящая для заполнения
+            $ActionFlag = Find-StringToBePopulated -Sheet $RegisterWorksheet -LookFor $_.Text
+            Write-Host "Значение ячейки $ActionFlag"
+            #Если подходящая строка найдена, то заполняем ее и создаем новую строку для заменяющего файла под строкой для заменяемого файла
+            if ($ActionFlag -ne 'not exist' -and $ActionFlag -ne 'not found' -and $ActionFlag -ne 'multiple instances') {
+                #Заполняем строку заменяемого файла
+                $RegisterWorksheet.Cells.Item($ActionFlag, 12) = $CalendarApplyUpdatesUntilInput.Text
+                $RegisterWorksheet.Rows.Item($ActionFlag).Cells.Item(13).NumberFormat = "@"
+                $RegisterWorksheet.Cells.Item($ActionFlag, 13) = $UpdateNotificationNumberInput.Text
+                $RegisterWorksheet.Rows.Item($ActionFlag).Cells.Item(13).HorizontalAlignment = -4131
+                $RegisterWorksheet.Rows.Item($ActionFlag).Cells.Item(14).NumberFormat = "@"
+                $RegisterWorksheet.Cells.Item($ActionFlag, 14) = "заменен"
+                $RegisterWorksheet.Rows.Item($ActionFlag).Cells.Item(14).HorizontalAlignment = -4131
+                #Залить первую ячейку в строке
+                $RegisterWorksheet.Rows.Item($ActionFlag).Cells.Item(1).Interior.Color = 139
+                #Создаем и заполняем строку заменяющего файла
+                $RegisterWorksheet.Rows.Item($ActionFlag + 1).Insert(-4121)
+                $RegisterWorksheet.Rows.Item($ActionFlag + 1).Interior.Color = -4142
+                #КОД ПРОЕКТА
+                $RegisterWorksheet.Cells.Item($ActionFlag + 1, 1) = $UpdateRegisterFormComboboxProjectName.SelectedItem
+                #РАЗРАБОТЧИК
+                $RegisterWorksheet.Cells.Item($ActionFlag + 1, 2) = $UpdateRegisterFormComboboxDeveloperName.SelectedItem
+                #ОБОЗНАЧЕНИЕ
+                $RegisterWorksheet.Cells.Item($ActionFlag + 1, 5) = $_.Text
+                #НАИМЕНОВАНИЕ
+                if ($script:CollectedReferences[1][$script:CollectedReferences[0].IndexOf("$($_.Text)")] -ne "") {
+                    $RegisterWorksheet.Cells.Item($ActionFlag + 1, 6) = $script:CollectedReferences[1][$script:CollectedReferences[0].IndexOf("$($_.Text)")]
+                } else {
+                    Enter-DataToRegisterManually -Title 'Наименование для документа не указано ни в одной из спецификаций' -Label "Укажите наименование для документа $($_.Text):"
+                    $RegisterWorksheet.Cells.Item($ActionFlag + 1, 6) = $script:ManuallyEnteredValueForRegister
+                    $script:ManuallyEnteredValueForRegister = ""
+                }
+                #ФОРМАТ
+                if ($script:CollectedReferences[2][$script:CollectedReferences[0].IndexOf("$($_.Text)")] -ne "") {
+                    $RegisterWorksheet.Cells.Item($ActionFlag + 1, 7) = $script:CollectedReferences[2][$script:CollectedReferences[0].IndexOf("$($_.Text)")]
+                } else {
+                    Enter-DataToRegisterManually -Title 'Формат для документа не указан ни в одной из спецификаций' -Label "Укажите формат для документа $($_.Text):"
+                    $RegisterWorksheet.Cells.Item($ActionFlag + 1, 7) = $script:ManuallyEnteredValueForRegister
+                    $script:ManuallyEnteredValueForRegister = ""
+                }
+                #КОЛИЧЕСТВО ЛИСТОВ
+                #Гид по стилю
+                if ($($_.Text) -match "DSG") {
+                    Enter-DataToRegisterManually -Title 'Документ с кодом DSG' -Label "Укажите общее количество страниц для документа $($_.Text):"
+                    $RegisterWorksheet.Cells.Item($ActionFlag + 1, 8) = $script:ManuallyEnteredValueForRegister
+                    $script:ManuallyEnteredValueForRegister = ""
+                #Excel-файл
+                } elseif ((Test-Path -Path "$script:SelectedFolderWithFilesBeingPublished\$($_.Text).xlsx") -or (Test-Path -Path "$script:SelectedFolderWithFilesBeingPublished\$($_.Text).xls")) {
+                    Enter-DataToRegisterManually -Title 'Документ созданный в приложении MS Excel' -Label "Укажите общее количество страниц для документа $($_.Text):"
+                    $RegisterWorksheet.Cells.Item($ActionFlag + 1, 8) = $script:ManuallyEnteredValueForRegister
+                    $script:ManuallyEnteredValueForRegister = ""
+                #Остальные файлы, т.е. WORD-файлы
+                } else {
+                    if (Test-Path -Path "$script:SelectedFolderWithFilesBeingPublished\$($_.Text).docx") {$DocumentRegister = $WordApplication.Documents.Open("$script:SelectedFolderWithFilesBeingPublished\$($_.Text).docx")}
+                    if (Test-Path -Path "$script:SelectedFolderWithFilesBeingPublished\$($_.Text).doc") {$DocumentRegister = $WordApplication.Documents.Open("$script:SelectedFolderWithFilesBeingPublished\$($_.Text).doc")}
+                    $Wholestory = $DocumentRegister.Range()
+                    $TotalPages = $Wholestory.Information(4)
+                    $RegisterWorksheet.Cells.Item($ActionFlag + 1, 8) = $TotalPages
+                    $DocumentRegister.Close()
+                }
+                #ДАТА ПОСТУПЛЕНИЯ
+                $RegisterWorksheet.Cells.Item($ActionFlag + 1, 9) = $CalendarApplyUpdatesUntilInput.Text
+                #Изм.
+                $RegisterWorksheet.Cells.Item($ActionFlag + 1, 10) = $_.SubItems[1].Text
+                #№ докум. Введен
+                $RegisterWorksheet.Rows.Item($ActionFlag + 1).Cells.Item(11).NumberFormat = "@"
+                $RegisterWorksheet.Cells.Item($ActionFlag + 1, 11) = $UpdateNotificationNumberInput.Text
+                $RegisterWorksheet.Rows.Item($ActionFlag + 1).Cells.Item(11).HorizontalAlignment = -4131
+                #Залить первую ячейку в строке
+                $RegisterWorksheet.Rows.Item($ActionFlag + 1).Cells.Item(1).Interior.Color = 139
+            }
+        }   
     }
     $WordApplication.Quit()
 }
