@@ -201,10 +201,16 @@ Function Populate-Register ()
             #КОНТРОЛЬНАЯ СУММА
             $RegisterWorksheet.Cells.Item($RegisterLastRow, 4) = [string]($_.SubItems[1].Text).ToUpper()
             #НАИМЕНОВАНИЕ
-            if ($script:CollectedReferences[1][$script:CollectedReferences[0].IndexOf("$($_.Text)")] -ne "") {
-                $RegisterWorksheet.Cells.Item($RegisterLastRow, 6) = $script:CollectedReferences[1][$script:CollectedReferences[0].IndexOf("$($_.Text)")]
+            if ($script:CollectedReferences[0].Contains("$($_.Text)")) {
+                if ($script:CollectedReferences[1][$script:CollectedReferences[0].IndexOf("$($_.Text)")] -ne "") {
+                    $RegisterWorksheet.Cells.Item($RegisterLastRow, 6) = $script:CollectedReferences[1][$script:CollectedReferences[0].IndexOf("$($_.Text)")]
+                } else {
+                    Enter-DataToRegisterManually -Title 'Программа упоминается в спекицикации(ях), но для нее не указано наименование' -Label "Укажите наименование для программы $($_.Text):"
+                    $RegisterWorksheet.Cells.Item($RegisterLastRow, 6) = $script:ManuallyEnteredValueForRegister
+                    $script:ManuallyEnteredValueForRegister = ""
+                } 
             } else {
-                Enter-DataToRegisterManually -Title 'Наименование для программы не указано ни в одной из спецификаций' -Label "Укажите наименование для программы $($_.Text):"
+                Enter-DataToRegisterManually -Title 'Программа не упоминается ни в одной из спецификаций' -Label "Укажите наименование для программы $($_.Text):"
                 $RegisterWorksheet.Cells.Item($RegisterLastRow, 6) = $script:ManuallyEnteredValueForRegister
                 $script:ManuallyEnteredValueForRegister = ""
             }
@@ -239,10 +245,16 @@ Function Populate-Register ()
             #ОБОЗНАЧЕНИЕ
             $RegisterWorksheet.Cells.Item($RegisterLastRow, 5) = $_.Text
             #НАИМЕНОВАНИЕ
-            if ($script:CollectedReferences[1][$script:CollectedReferences[0].IndexOf("$($_.Text)")] -ne "") {
-                $RegisterWorksheet.Cells.Item($RegisterLastRow, 6) = $script:CollectedReferences[1][$script:CollectedReferences[0].IndexOf("$($_.Text)")]
+            if ($script:CollectedReferences[0].Contains("$($_.Text)")) {
+                if ($script:CollectedReferences[1][$script:CollectedReferences[0].IndexOf("$($_.Text)")] -ne "") {
+                    $RegisterWorksheet.Cells.Item($RegisterLastRow, 6) = $script:CollectedReferences[1][$script:CollectedReferences[0].IndexOf("$($_.Text)")]
+                } else {
+                    Enter-DataToRegisterManually -Title 'Документ упоминается в спекицикации(ях), но для него не указано наименование' -Label "Укажите наименование для документа $($_.Text):"
+                    $RegisterWorksheet.Cells.Item($RegisterLastRow, 6) = $script:ManuallyEnteredValueForRegister
+                    $script:ManuallyEnteredValueForRegister = ""
+                }
             } else {
-                Enter-DataToRegisterManually -Title 'Наименование для документа не указано ни в одной из спецификаций' -Label "Укажите наименование для документа $($_.Text):"
+                Enter-DataToRegisterManually -Title 'Документ не упоминается ни в одной из спецификаций' -Label "Укажите наименование для документа $($_.Text):"
                 $RegisterWorksheet.Cells.Item($RegisterLastRow, 6) = $script:ManuallyEnteredValueForRegister
                 $script:ManuallyEnteredValueForRegister = ""
             }
@@ -317,10 +329,16 @@ Function Populate-Register ()
                 #КОНТРОЛЬНАЯ СУММА
                 $RegisterWorksheet.Cells.Item($ActionFlag + 1, 4) = [string]($_.SubItems[1].Text).ToUpper()
                 #НАИМЕНОВАНИЕ
-                if ($script:CollectedReferences[1][$script:CollectedReferences[0].IndexOf("$($_.Text)")] -ne "") {
-                    $RegisterWorksheet.Cells.Item($ActionFlag + 1, 6) = $script:CollectedReferences[1][$script:CollectedReferences[0].IndexOf("$($_.Text)")]
+                if ($script:CollectedReferences[0].Contains("$($_.Text)")) {
+                    if ($script:CollectedReferences[1][$script:CollectedReferences[0].IndexOf("$($_.Text)")] -ne "") {
+                        $RegisterWorksheet.Cells.Item($ActionFlag + 1, 6) = $script:CollectedReferences[1][$script:CollectedReferences[0].IndexOf("$($_.Text)")]
+                    } else {
+                        Enter-DataToRegisterManually -Title 'Программа упоминается в спекицикации(ях), но для нее не указано наименование' -Label "Укажите наименование для программы $($_.Text):"
+                        $RegisterWorksheet.Cells.Item($ActionFlag + 1, 6) = $script:ManuallyEnteredValueForRegister
+                        $script:ManuallyEnteredValueForRegister = ""
+                    } 
                 } else {
-                    Enter-DataToRegisterManually -Title 'Наименование для программы не указано ни в одной из спецификаций' -Label "Укажите наименование для программы $($_.Text):"
+                    Enter-DataToRegisterManually -Title 'Программа не упоминается ни в одной из спецификаций' -Label "Укажите наименование для программы $($_.Text):"
                     $RegisterWorksheet.Cells.Item($ActionFlag + 1, 6) = $script:ManuallyEnteredValueForRegister
                     $script:ManuallyEnteredValueForRegister = ""
                 }
@@ -380,10 +398,16 @@ Function Populate-Register ()
                 #ОБОЗНАЧЕНИЕ
                 $RegisterWorksheet.Cells.Item($ActionFlag + 1, 5) = $_.Text
                 #НАИМЕНОВАНИЕ
-                if ($script:CollectedReferences[1][$script:CollectedReferences[0].IndexOf("$($_.Text)")] -ne "") {
-                    $RegisterWorksheet.Cells.Item($ActionFlag + 1, 6) = $script:CollectedReferences[1][$script:CollectedReferences[0].IndexOf("$($_.Text)")]
+                if ($script:CollectedReferences[0].Contains("$($_.Text)")) {
+                    if ($script:CollectedReferences[1][$script:CollectedReferences[0].IndexOf("$($_.Text)")] -ne "") {
+                        $RegisterWorksheet.Cells.Item($ActionFlag + 1, 6) = $script:CollectedReferences[1][$script:CollectedReferences[0].IndexOf("$($_.Text)")]
+                    } else {
+                        Enter-DataToRegisterManually -Title 'Документ упоминается в спекицикации(ях), но для него не указано наименование' -Label "Укажите наименование для документа $($_.Text):"
+                        $RegisterWorksheet.Cells.Item($ActionFlag + 1, 6) = $script:ManuallyEnteredValueForRegister
+                        $script:ManuallyEnteredValueForRegister = ""
+                    }
                 } else {
-                    Enter-DataToRegisterManually -Title 'Наименование для документа не указано ни в одной из спецификаций' -Label "Укажите наименование для документа $($_.Text):"
+                    Enter-DataToRegisterManually -Title 'Документ не упоминается ни в одной из спецификаций' -Label "Укажите наименование для документа $($_.Text):"
                     $RegisterWorksheet.Cells.Item($ActionFlag + 1, 6) = $script:ManuallyEnteredValueForRegister
                     $script:ManuallyEnteredValueForRegister = ""
                 }
@@ -428,6 +452,9 @@ Function Populate-Register ()
             }
         }   
     }
+    Write-Host "АВТОЗАПОЛНЕНИЕ ЗАКОНЧЕНО. МОЖНО РАБОТАТЬ С ФАЙЛОМ УЧЕТА."
+    Write-Host "АВТОЗАПОЛНЕНИЕ ЗАКОНЧЕНО. МОЖНО РАБОТАТЬ С ФАЙЛОМ УЧЕТА."
+    Write-Host "АВТОЗАПОЛНЕНИЕ ЗАКОНЧЕНО. МОЖНО РАБОТАТЬ С ФАЙЛОМ УЧЕТА."
     $WordApplication.Quit()
 }
 
