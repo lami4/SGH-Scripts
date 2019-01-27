@@ -102,10 +102,10 @@ Function Enter-DataToRegisterManually ($Title, $Label)
     $EnterDataToRegisterManuallyForm.ShowDialog()
 }
 
-Function Find-StringToBePopulated ($Sheet, $LookFor)
+Function Find-StringToBePopulated ($Sheet, $LookFor, $ColumnLetter)
 {
     $InstanceCounter = @()
-    $Range = $Sheet.Range("E:E")
+    $Range = $Sheet.Range("$($ColumnLetter):$($ColumnLetter)")
     $Target = $Range.Find("$LookFor", [Type]::Missing, [Type]::Missing, 1)
     if ($Target -eq $null) {
         #Обозначение заявлено к замене, но не существует в файле учета нет ни одного вхождения.
@@ -116,8 +116,8 @@ Function Find-StringToBePopulated ($Sheet, $LookFor)
         $FirstHit = $Target
         Do
         {
-            $FoundNameRowNumber = $Target.AddressLocal($false, $false) -replace "E", ""
-            if ($Sheet.Cells.Item($FoundNameRowNumber, "E").Interior.ColorIndex -eq -4142 -and $Sheet.Cells.Item($FoundNameRowNumber, "L").Value() -eq $null -and $Sheet.Cells.Item($FoundNameRowNumber, "M").Value() -eq $null -and $Sheet.Cells.Item($FoundNameRowNumber, "N").Value() -eq $null) {
+            $FoundNameRowNumber = $Target.AddressLocal($false, $false) -replace "$($ColumnLetter)", ""
+            if ($Sheet.Cells.Item($FoundNameRowNumber, "$($ColumnLetter)").Interior.ColorIndex -eq -4142 -and $Sheet.Cells.Item($FoundNameRowNumber, "L").Value() -eq $null -and $Sheet.Cells.Item($FoundNameRowNumber, "M").Value() -eq $null -and $Sheet.Cells.Item($FoundNameRowNumber, "N").Value() -eq $null) {
             $InstanceCounter += $FoundNameRowNumber
             }
             $Target = $Range.FindNext($Target)
@@ -133,7 +133,9 @@ Function Find-StringToBePopulated ($Sheet, $LookFor)
         return [int]$InstanceCounter[0]
         #Write-Host "Найдена строка без заливки и без начений в столбцах L, M и N."
     } else {
-        Add-Content "$PSScriptRoot\Журнал автозаполнения.txt" "$($LookFor): ОШИБКА. Требуется ручное внесение данных. Найдено несколько строк подходящих для заполнения. Номера подходящих строк"
+        $RegisterStringForReport = ""
+        $InstanceCounter | % {$RegisterStringForReport += "$([string]$_), "}
+        Add-Content "$PSScriptRoot\Журнал автозаполнения.txt" "$($LookFor): ОШИБКА. Требуется ручное внесение данных. Найдено несколько строк подходящих для заполнения. Номера подходящих строк: $($RegisterStringForReport.Trim(', '))"
         return "multiple instances"
         #Write-Host "Найдено несколько строк подходящих для заполнения. Их номера:"
     }
@@ -184,7 +186,7 @@ Function Populate-Register ()
     $ArrayOfRowNumbers += $RegisterWorksheet.Cells.Item($RegisterWorksheet.Rows.Count, "A").End(-4162).Row
     $RegisterLastRow = [int]($ArrayOfRowNumbers | Measure -Maximum).Maximum
     #Список ВЫПУСТИТЬ
-    <#$ListViewAdd.Items | % {
+    $ListViewAdd.Items | % {
         $ArrayContainsExtensionFlag = $false
         $ArrayContainsExtensionIndex = $null
         $RegisterLastRow += 1
@@ -226,6 +228,7 @@ Function Populate-Register ()
             #ДАТА ПОСТУПЛЕНИЯ
             $RegisterWorksheet.Cells.Item($RegisterLastRow, 9) = $CalendarApplyUpdatesUntilInput.Text
             Add-Content "$PSScriptRoot\Журнал автозаполнения.txt" "$($_.Text): УСПЕШНО. В файл учета успешно внесены все необходимые данные."
+            $RegisterWorksheet.Rows.Item($RegisterLastRow).Cells.Item(1).Interior.Color = 139
         }
         #Документ
         if ($_.SubItems[2].Text -eq "Документ") {
@@ -274,20 +277,86 @@ Function Populate-Register ()
             #ДАТА ПОСТУПЛЕНИЯ
             $RegisterWorksheet.Cells.Item($RegisterLastRow, 9) = $CalendarApplyUpdatesUntilInput.Text
             Add-Content "$PSScriptRoot\Журнал автозаполнения.txt" "$($_.Text): УСПЕШНО. В файл учета успешно внесены все необходимые данные."
+            $RegisterWorksheet.Rows.Item($RegisterLastRow).Cells.Item(1).Interior.Color = 139
         }
-    }#>
+    }
     #Список ЗАМЕНИТЬ
     Write-Host "Работую со списком Заменить"
     $ListViewReplace.Items | % {
         $ArrayContainsExtensionFlag = $false
         $ArrayContainsExtensionIndex = $null
         $RegisterLastRow += 1
+        #Программа
+        if ($_.SubItems[2].Text -eq "Программа") {
+            Write-Host "Работую с $($_.Text)"
+            $ActionFlag = $null
+            #Определяем есть ли строка заменяемого файла, подходящая для заполнения
+            $ActionFlag = Find-StringToBePopulated -Sheet $RegisterWorksheet -LookFor $_.Text -ColumnLetter "C"
+            Write-Host "Значение ячейки $ActionFlag"
+            #Если подходящая строка найдена, то заполняем ее и создаем новую строку для заменяющего файла под строкой для заменяемого файла
+            if ($ActionFlag -ne 'not exist' -and $ActionFlag -ne 'not found' -and $ActionFlag -ne 'multiple instances') {
+                #Заполняем строку заменяемого файла
+                $RegisterWorksheet.Cells.Item($ActionFlag, 12) = $CalendarApplyUpdatesUntilInput.Text
+                $RegisterWorksheet.Rows.Item($ActionFlag).Cells.Item(13).NumberFormat = "@"
+                $RegisterWorksheet.Cells.Item($ActionFlag, 13) = $UpdateNotificationNumberInput.Text
+                $RegisterWorksheet.Rows.Item($ActionFlag).Cells.Item(13).HorizontalAlignment = -4131
+                $RegisterWorksheet.Rows.Item($ActionFlag).Cells.Item(14).NumberFormat = "@"
+                $RegisterWorksheet.Cells.Item($ActionFlag, 14) = "заменен"
+                $RegisterWorksheet.Rows.Item($ActionFlag).Cells.Item(14).HorizontalAlignment = -4131
+                #Залить первую ячейку в строке
+                $RegisterWorksheet.Rows.Item($ActionFlag).Cells.Item(1).Interior.Color = 139
+                #Создаем и заполняем строку заменяющего файла
+                $RegisterWorksheet.Rows.Item($ActionFlag + 1).Insert(-4121)
+                $RegisterWorksheet.Rows.Item($ActionFlag + 1).Interior.Color = -4142
+                #КОД ПРОЕКТА
+                $RegisterWorksheet.Cells.Item($ActionFlag + 1, 1) = $UpdateRegisterFormComboboxProjectName.SelectedItem
+                #РАЗРАБОТЧИК
+                $RegisterWorksheet.Cells.Item($ActionFlag + 1, 2) = $UpdateRegisterFormComboboxDeveloperName.SelectedItem
+                #ФАЙЛ ПРОГРАММЫ 
+                $RegisterWorksheet.Cells.Item($ActionFlag + 1, 3) = $_.Text
+                #КОНТРОЛЬНАЯ СУММА
+                $RegisterWorksheet.Cells.Item($ActionFlag + 1, 4) = [string]($_.SubItems[1].Text).ToUpper()
+                #НАИМЕНОВАНИЕ
+                if ($script:CollectedReferences[1][$script:CollectedReferences[0].IndexOf("$($_.Text)")] -ne "") {
+                    $RegisterWorksheet.Cells.Item($ActionFlag + 1, 6) = $script:CollectedReferences[1][$script:CollectedReferences[0].IndexOf("$($_.Text)")]
+                } else {
+                    Enter-DataToRegisterManually -Title 'Наименование для программы не указано ни в одной из спецификаций' -Label "Укажите наименование для программы $($_.Text):"
+                    $RegisterWorksheet.Cells.Item($ActionFlag + 1, 6) = $script:ManuallyEnteredValueForRegister
+                    $script:ManuallyEnteredValueForRegister = ""
+                }
+                #ФОРМАТ
+                for ($i = 0; $i -lt $script:FileFormats.Count; $i++) {
+                    if ((($script:FileFormats[$i] -split ';')[0]).ToLower() -eq ([System.IO.Path]::GetExtension($_.Text)).Trim('.').ToLower()) {$ArrayContainsExtensionFlag = $true; $ArrayContainsExtensionIndex = $i}
+                }
+                if ($ArrayContainsExtensionFlag -eq $true) {
+                    $RegisterWorksheet.Cells.Item($ActionFlag + 1, 7) = ($script:FileFormats[$ArrayContainsExtensionIndex] -split ';')[1]
+                } else {
+                    Enter-DataToRegisterManually -Title 'Формат программы не может быть заполнен автоматически, так как отсутсвует в списке настроенных форматов' -Label "Укажите формат для программы $($_.Text):"
+                    $RegisterWorksheet.Cells.Item($ActionFlag + 1, 7) = $script:ManuallyEnteredValueForRegister
+                    $script:ManuallyEnteredValueForRegister = ""
+                }
+                #РАЗМЕР ФАЙЛА
+                Get-ChildItem -Path "$script:SelectedFolderWithFilesBeingPublished\$($_.Text)" | % {
+                    if ($_.Length -lt 1048576) {$RegisterWorksheet.Cells.Item($ActionFlag + 1, 8) = "$([math]::Round($_.Length/1KB, 2))" + " КБ " + "($($_.Length)" + " байт)"}
+                    if ($_.Length -gt 1048576 -and $_.Length -lt 1073741824) {$RegisterWorksheet.Cells.Item($ActionFlag + 1, 8) = "$([math]::Round($_.Length/1MB, 2))" + " МБ " + "($($_.Length)" + " байт)"}
+                    if ($_.Length -gt 1073741824) {$RegisterWorksheet.Cells.Item($ActionFlag + 1, 8) = "$([math]::Round($_.Length/1GB, 2))" + " ГБ " + "($($_.Length)" + " байт)"}
+                }
+                #ДАТА ПОСТУПЛЕНИЯ
+                $RegisterWorksheet.Cells.Item($ActionFlag + 1, 9) = $CalendarApplyUpdatesUntilInput.Text
+                #№ ДОКУМ. ВВЕДЕН
+                $RegisterWorksheet.Rows.Item($ActionFlag + 1).Cells.Item(11).NumberFormat = "@"
+                $RegisterWorksheet.Cells.Item($ActionFlag + 1, 11) = $UpdateNotificationNumberInput.Text
+                $RegisterWorksheet.Rows.Item($ActionFlag + 1).Cells.Item(11).HorizontalAlignment = -4131
+                #Залить первую ячейку в строке
+                $RegisterWorksheet.Rows.Item($ActionFlag + 1).Cells.Item(1).Interior.Color = 139
+            }       
+        }
         #Документ
         if ($_.SubItems[2].Text -eq "Документ") {
             Write-Host "Работую с $($_.Text)"
             $ActionFlag = $null
             #Определяем есть ли строка заменяемого файла, подходящая для заполнения
-            $ActionFlag = Find-StringToBePopulated -Sheet $RegisterWorksheet -LookFor $_.Text
+            $ActionFlag = Find-StringToBePopulated -Sheet $RegisterWorksheet -LookFor $_.Text -ColumnLetter "E"
             Write-Host "Значение ячейки $ActionFlag"
             #Если подходящая строка найдена, то заполняем ее и создаем новую строку для заменяющего файла под строкой для заменяемого файла
             if ($ActionFlag -ne 'not exist' -and $ActionFlag -ne 'not found' -and $ActionFlag -ne 'multiple instances') {
@@ -348,9 +417,9 @@ Function Populate-Register ()
                 }
                 #ДАТА ПОСТУПЛЕНИЯ
                 $RegisterWorksheet.Cells.Item($ActionFlag + 1, 9) = $CalendarApplyUpdatesUntilInput.Text
-                #Изм.
+                #ИЗМ.
                 $RegisterWorksheet.Cells.Item($ActionFlag + 1, 10) = $_.SubItems[1].Text
-                #№ докум. Введен
+                #№ ДОКУМ. ВВЕДЕН
                 $RegisterWorksheet.Rows.Item($ActionFlag + 1).Cells.Item(11).NumberFormat = "@"
                 $RegisterWorksheet.Cells.Item($ActionFlag + 1, 11) = $UpdateNotificationNumberInput.Text
                 $RegisterWorksheet.Rows.Item($ActionFlag + 1).Cells.Item(11).HorizontalAlignment = -4131
