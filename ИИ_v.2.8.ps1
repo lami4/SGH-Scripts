@@ -144,8 +144,8 @@ Function Find-StringToBePopulated ($Sheet, $LookFor, $ColumnLetter)
 Function Populate-Register ()
 {
     if (Test-Path -Path "$PSScriptRoot\Журнал автозаполнения.txt") {Remove-Item -Path "$PSScriptRoot\Журнал автозаполнения.txt"}
-    Kill -Name WINWORD -ErrorAction SilentlyContinue
-    Start-Sleep -Seconds 1
+    Kill -Name WINWORD, EXCEL -ErrorAction SilentlyContinue
+    Start-Sleep -Seconds 2
     #СОБИРАЕМ ДАННЫЕ ИЗ СПЕЦИФИКАЦИЙ В УКАЗАННОЙ ПАПКЕ
     #Создать экземпляр приложения MS Word
     $RegisterWordApp = New-Object -ComObject Word.Application
@@ -186,12 +186,15 @@ Function Populate-Register ()
     $ArrayOfRowNumbers += $RegisterWorksheet.Cells.Item($RegisterWorksheet.Rows.Count, "A").End(-4162).Row
     $RegisterLastRow = [int]($ArrayOfRowNumbers | Measure -Maximum).Maximum
     #Список ВЫПУСТИТЬ
+    Write-Host "======================================="
+    Write-Host "Работую со списком Выпустить..."
     $ListViewAdd.Items | % {
         $ArrayContainsExtensionFlag = $false
         $ArrayContainsExtensionIndex = $null
         $RegisterLastRow += 1
         #Программа
         if ($_.SubItems[2].Text -eq "Программа") {
+            Write-Host "$($_.Text)"
             #КОД ПРОЕКТА
             $RegisterWorksheet.Cells.Item($RegisterLastRow, 1) = $UpdateRegisterFormComboboxProjectName.SelectedItem
             #РАЗРАБОТЧИК
@@ -232,12 +235,13 @@ Function Populate-Register ()
                 if ($_.Length -gt 1073741824) {$RegisterWorksheet.Cells.Item($RegisterLastRow, 8) = "$([math]::Round($_.Length/1GB, 2))" + " ГБ " + "($($_.Length)" + " байт)"}
             }
             #ДАТА ПОСТУПЛЕНИЯ
-            $RegisterWorksheet.Cells.Item($RegisterLastRow, 9) = $CalendarApplyUpdatesUntilInput.Text
+            $RegisterWorksheet.Cells.Item($RegisterLastRow, 9) = $CalendarIssueDateInput.Text
             Add-Content "$PSScriptRoot\Журнал автозаполнения.txt" "$($_.Text): УСПЕШНО. В файл учета успешно внесены все необходимые данные."
             $RegisterWorksheet.Rows.Item($RegisterLastRow).Cells.Item(1).Interior.Color = 139
         }
         #Документ
         if ($_.SubItems[2].Text -eq "Документ") {
+            Write-Host "$($_.Text)"
             #КОД ПРОЕКТА
             $RegisterWorksheet.Cells.Item($RegisterLastRow, 1) = $UpdateRegisterFormComboboxProjectName.SelectedItem
             #РАЗРАБОТЧИК
@@ -287,28 +291,29 @@ Function Populate-Register ()
                 $DocumentRegister.Close()
             }
             #ДАТА ПОСТУПЛЕНИЯ
-            $RegisterWorksheet.Cells.Item($RegisterLastRow, 9) = $CalendarApplyUpdatesUntilInput.Text
+            $RegisterWorksheet.Cells.Item($RegisterLastRow, 9) = $CalendarIssueDateInput.Text
             Add-Content "$PSScriptRoot\Журнал автозаполнения.txt" "$($_.Text): УСПЕШНО. В файл учета успешно внесены все необходимые данные."
             $RegisterWorksheet.Rows.Item($RegisterLastRow).Cells.Item(1).Interior.Color = 139
         }
     }
     #Список ЗАМЕНИТЬ
-    Write-Host "Работую со списком Заменить"
+    Write-Host "======================================="
+    Write-Host "Работую со списком Заменить..."
     $ListViewReplace.Items | % {
         $ArrayContainsExtensionFlag = $false
         $ArrayContainsExtensionIndex = $null
         $RegisterLastRow += 1
         #Программа
         if ($_.SubItems[2].Text -eq "Программа") {
-            Write-Host "Работую с $($_.Text)"
+            Write-Host "$($_.Text)"
             $ActionFlag = $null
             #Определяем есть ли строка заменяемого файла, подходящая для заполнения
             $ActionFlag = Find-StringToBePopulated -Sheet $RegisterWorksheet -LookFor $_.Text -ColumnLetter "C"
-            Write-Host "Значение ячейки $ActionFlag"
+            #Write-Host "Значение ячейки $ActionFlag"
             #Если подходящая строка найдена, то заполняем ее и создаем новую строку для заменяющего файла под строкой для заменяемого файла
             if ($ActionFlag -ne 'not exist' -and $ActionFlag -ne 'not found' -and $ActionFlag -ne 'multiple instances') {
                 #Заполняем строку заменяемого файла
-                $RegisterWorksheet.Cells.Item($ActionFlag, 12) = $CalendarApplyUpdatesUntilInput.Text
+                $RegisterWorksheet.Cells.Item($ActionFlag, 12) = $CalendarIssueDateInput.Text
                 $RegisterWorksheet.Rows.Item($ActionFlag).Cells.Item(13).NumberFormat = "@"
                 $RegisterWorksheet.Cells.Item($ActionFlag, 13) = $UpdateNotificationNumberInput.Text
                 $RegisterWorksheet.Rows.Item($ActionFlag).Cells.Item(13).HorizontalAlignment = -4131
@@ -317,6 +322,7 @@ Function Populate-Register ()
                 $RegisterWorksheet.Rows.Item($ActionFlag).Cells.Item(14).HorizontalAlignment = -4131
                 #Залить первую ячейку в строке
                 $RegisterWorksheet.Rows.Item($ActionFlag).Cells.Item(1).Interior.Color = 139
+                $RegisterWorksheet.Rows.Item($ActionFlag).Cells.Item(2).Interior.Color = 16436871
                 #Создаем и заполняем строку заменяющего файла
                 $RegisterWorksheet.Rows.Item($ActionFlag + 1).Insert(-4121)
                 $RegisterWorksheet.Rows.Item($ActionFlag + 1).Interior.Color = -4142
@@ -360,7 +366,7 @@ Function Populate-Register ()
                     if ($_.Length -gt 1073741824) {$RegisterWorksheet.Cells.Item($ActionFlag + 1, 8) = "$([math]::Round($_.Length/1GB, 2))" + " ГБ " + "($($_.Length)" + " байт)"}
                 }
                 #ДАТА ПОСТУПЛЕНИЯ
-                $RegisterWorksheet.Cells.Item($ActionFlag + 1, 9) = $CalendarApplyUpdatesUntilInput.Text
+                $RegisterWorksheet.Cells.Item($ActionFlag + 1, 9) = $CalendarIssueDateInput.Text
                 #№ ДОКУМ. ВВЕДЕН
                 $RegisterWorksheet.Rows.Item($ActionFlag + 1).Cells.Item(11).NumberFormat = "@"
                 $RegisterWorksheet.Cells.Item($ActionFlag + 1, 11) = $UpdateNotificationNumberInput.Text
@@ -371,15 +377,15 @@ Function Populate-Register ()
         }
         #Документ
         if ($_.SubItems[2].Text -eq "Документ") {
-            Write-Host "Работую с $($_.Text)"
+            Write-Host "$($_.Text)"
             $ActionFlag = $null
             #Определяем есть ли строка заменяемого файла, подходящая для заполнения
             $ActionFlag = Find-StringToBePopulated -Sheet $RegisterWorksheet -LookFor $_.Text -ColumnLetter "E"
-            Write-Host "Значение ячейки $ActionFlag"
+            #Write-Host "Значение ячейки $ActionFlag"
             #Если подходящая строка найдена, то заполняем ее и создаем новую строку для заменяющего файла под строкой для заменяемого файла
             if ($ActionFlag -ne 'not exist' -and $ActionFlag -ne 'not found' -and $ActionFlag -ne 'multiple instances') {
                 #Заполняем строку заменяемого файла
-                $RegisterWorksheet.Cells.Item($ActionFlag, 12) = $CalendarApplyUpdatesUntilInput.Text
+                $RegisterWorksheet.Cells.Item($ActionFlag, 12) = $CalendarIssueDateInput.Text
                 $RegisterWorksheet.Rows.Item($ActionFlag).Cells.Item(13).NumberFormat = "@"
                 $RegisterWorksheet.Cells.Item($ActionFlag, 13) = $UpdateNotificationNumberInput.Text
                 $RegisterWorksheet.Rows.Item($ActionFlag).Cells.Item(13).HorizontalAlignment = -4131
@@ -388,6 +394,7 @@ Function Populate-Register ()
                 $RegisterWorksheet.Rows.Item($ActionFlag).Cells.Item(14).HorizontalAlignment = -4131
                 #Залить первую ячейку в строке
                 $RegisterWorksheet.Rows.Item($ActionFlag).Cells.Item(1).Interior.Color = 139
+                $RegisterWorksheet.Rows.Item($ActionFlag).Cells.Item(2).Interior.Color = 16436871
                 #Создаем и заполняем строку заменяющего файла
                 $RegisterWorksheet.Rows.Item($ActionFlag + 1).Insert(-4121)
                 $RegisterWorksheet.Rows.Item($ActionFlag + 1).Interior.Color = -4142
@@ -440,9 +447,9 @@ Function Populate-Register ()
                     $DocumentRegister.Close()
                 }
                 #ДАТА ПОСТУПЛЕНИЯ
-                $RegisterWorksheet.Cells.Item($ActionFlag + 1, 9) = $CalendarApplyUpdatesUntilInput.Text
+                $RegisterWorksheet.Cells.Item($ActionFlag + 1, 9) = $CalendarIssueDateInput.Text
                 #ИЗМ.
-                $RegisterWorksheet.Cells.Item($ActionFlag + 1, 10) = $_.SubItems[1].Text
+                if ($_.SubItems[1].Text -eq '-') {$RegisterWorksheet.Cells.Item($ActionFlag + 1, 10) = (0 + 1)} else {$RegisterWorksheet.Cells.Item($ActionFlag + 1, 10) = ([int]($_.SubItems[1].Text) + 1)}
                 #№ ДОКУМ. ВВЕДЕН
                 $RegisterWorksheet.Rows.Item($ActionFlag + 1).Cells.Item(11).NumberFormat = "@"
                 $RegisterWorksheet.Cells.Item($ActionFlag + 1, 11) = $UpdateNotificationNumberInput.Text
@@ -451,6 +458,56 @@ Function Populate-Register ()
                 $RegisterWorksheet.Rows.Item($ActionFlag + 1).Cells.Item(1).Interior.Color = 139
             }
         }   
+    }
+    #Список АННУЛИРОВАТЬ
+    Write-Host "======================================="
+    Write-Host "Работую со списком Аннулировать..."
+    $ListViewRemove.Items | % {
+        $ArrayContainsExtensionFlag = $false
+        $ArrayContainsExtensionIndex = $null
+        $RegisterLastRow += 1
+        if ($_.SubItems[2].Text -eq "Программа") {
+            Write-Host "$($_.Text)"
+            $ActionFlag = $null
+            #Определяем есть ли строка заменяемого файла, подходящая для заполнения
+            $ActionFlag = Find-StringToBePopulated -Sheet $RegisterWorksheet -LookFor $_.Text -ColumnLetter "C"
+            #Write-Host "Значение ячейки $ActionFlag"
+            #Если подходящая строка найдена, то заполняем ее и создаем новую строку для заменяющего файла под строкой для заменяемого файла
+            if ($ActionFlag -ne 'not exist' -and $ActionFlag -ne 'not found' -and $ActionFlag -ne 'multiple instances') {
+                #Заполняем строку заменяемого файла
+                $RegisterWorksheet.Cells.Item($ActionFlag, 12) = $CalendarIssueDateInput.Text
+                $RegisterWorksheet.Rows.Item($ActionFlag).Cells.Item(13).NumberFormat = "@"
+                $RegisterWorksheet.Cells.Item($ActionFlag, 13) = $UpdateNotificationNumberInput.Text
+                $RegisterWorksheet.Rows.Item($ActionFlag).Cells.Item(13).HorizontalAlignment = -4131
+                $RegisterWorksheet.Rows.Item($ActionFlag).Cells.Item(14).NumberFormat = "@"
+                $RegisterWorksheet.Cells.Item($ActionFlag, 14) = "аннулирован"
+                $RegisterWorksheet.Rows.Item($ActionFlag).Cells.Item(14).HorizontalAlignment = -4131
+                #Залить первую ячейку в строке
+                $RegisterWorksheet.Rows.Item($ActionFlag).Cells.Item(1).Interior.Color = 139
+                $RegisterWorksheet.Rows.Item($ActionFlag).Cells.Item(2).Interior.Color = 16436871
+            }
+        }
+        if ($_.SubItems[2].Text -eq "Документ") {
+            Write-Host "$($_.Text)"
+            $ActionFlag = $null
+            #Определяем есть ли строка заменяемого файла, подходящая для заполнения
+            $ActionFlag = Find-StringToBePopulated -Sheet $RegisterWorksheet -LookFor $_.Text -ColumnLetter "E"
+            #Write-Host "Значение ячейки $ActionFlag"
+            #Если подходящая строка найдена, то заполняем ее и создаем новую строку для заменяющего файла под строкой для заменяемого файла
+            if ($ActionFlag -ne 'not exist' -and $ActionFlag -ne 'not found' -and $ActionFlag -ne 'multiple instances') {
+                #Заполняем строку заменяемого файла
+                $RegisterWorksheet.Cells.Item($ActionFlag, 12) = $CalendarIssueDateInput.Text
+                $RegisterWorksheet.Rows.Item($ActionFlag).Cells.Item(13).NumberFormat = "@"
+                $RegisterWorksheet.Cells.Item($ActionFlag, 13) = $UpdateNotificationNumberInput.Text
+                $RegisterWorksheet.Rows.Item($ActionFlag).Cells.Item(13).HorizontalAlignment = -4131
+                $RegisterWorksheet.Rows.Item($ActionFlag).Cells.Item(14).NumberFormat = "@"
+                $RegisterWorksheet.Cells.Item($ActionFlag, 14) = "аннулирован"
+                $RegisterWorksheet.Rows.Item($ActionFlag).Cells.Item(14).HorizontalAlignment = -4131
+                #Залить первую ячейку в строке
+                $RegisterWorksheet.Rows.Item($ActionFlag).Cells.Item(1).Interior.Color = 139
+                $RegisterWorksheet.Rows.Item($ActionFlag).Cells.Item(2).Interior.Color = 16436871
+            }
+        }
     }
     Write-Host "АВТОЗАПОЛНЕНИЕ ЗАКОНЧЕНО. МОЖНО РАБОТАТЬ С ФАЙЛОМ УЧЕТА."
     Write-Host "АВТОЗАПОЛНЕНИЕ ЗАКОНЧЕНО. МОЖНО РАБОТАТЬ С ФАЙЛОМ УЧЕТА."
@@ -4251,12 +4308,12 @@ Function UpdateRegisterForm ()
     $UpdateRegisterFormBrowseFolderButton.Text = "Обзор..."
     $UpdateRegisterFormBrowseFolderButton.TabStop = $false
     $UpdateRegisterFormBrowseFolderButton.Add_Click({
-        $script:SelectedFolderWithFilesBeingPublished = Select-Folder -Description "Выберите папку с публикуемыми файлами"
+        $script:SelectedFolderWithFilesBeingPublished = Select-Folder -Description "Выберите папку с спецификациями, в которых упоминаются файлы из извещения об изменении"
         if ($script:SelectedFolderWithFilesBeingPublished -ne $null) {
             $UpdateRegisterFormBrowseButtonFolderLabel.Text = "Указанная папка: $(Split-Path -Path $script:SelectedFolderWithFilesBeingPublished -Leaf). Наведите курсором, чтобы увидеть полный путь."
             $ToolTip.SetToolTip($UpdateRegisterFormBrowseButtonFolderLabel, $script:SelectedFolderWithFilesBeingPublished)
         } else {
-            $UpdateRegisterFormBrowseButtonFolderLabel.Text = "Выберите папку с публикуемыми файлами"
+            $UpdateRegisterFormBrowseButtonFolderLabel.Text = "Выберите папку с спецификациями, в которых упоминаются файлы из извещения об изменении"
         }
     })
     $UpdateRegisterForm.Controls.Add($UpdateRegisterFormBrowseFolderButton)
@@ -4264,7 +4321,7 @@ Function UpdateRegisterForm ()
     $UpdateRegisterFormBrowseButtonFolderLabel = New-Object System.Windows.Forms.Label
     $UpdateRegisterFormBrowseButtonFolderLabel.Location =  New-Object System.Drawing.Point(95,46) #x,y
     $UpdateRegisterFormBrowseButtonFolderLabel.Width = 725
-    $UpdateRegisterFormBrowseButtonFolderLabel.Text = "Выберите папку с публикуемыми файлами"
+    $UpdateRegisterFormBrowseButtonFolderLabel.Text = "Выберите папку с спецификациями, в которых упоминаются файлы из извещения об изменении"
     $UpdateRegisterFormBrowseButtonFolderLabel.TextAlign = "TopLeft"
     $UpdateRegisterForm.Controls.Add($UpdateRegisterFormBrowseButtonFolderLabel)
     #Обновление полей
@@ -4325,18 +4382,20 @@ Function UpdateRegisterForm ()
     $UpdateRegisterFormApplyButton.Text = "Начать"
     $UpdateRegisterFormApplyButton.Enabled = $true
     $UpdateRegisterFormApplyButton.Add_Click({
-    if ($script:SelectedFolderWithFilesBeingPublished -eq $null -and $script:SelectedRegister -eq $null) {
-        Show-MessageBox -Message "Не указана спецификация, содержащая список архивов с исходным кодом, и папка, в которой необходимо удалить архивы с исходным кодом и исходные документы." -Title "Невозможно выполнить операцию" -Type OK
-    } elseif ($script:SelectedRegister -eq $null) {
-        Show-MessageBox -Message "Не указана спецификация, содержащая список архивов с исходным кодом." -Title "Невозможно выполнить операцию" -Type OK
-    } elseif ($script:SelectedFolderWithFilesBeingPublished -eq $null) {
-        Show-MessageBox -Message "Не указана папка, в которой необходимо удалить архивы с исходным кодом и исходные документы." -Title "Невозможно выполнить операцию." -Type OK
-    } else {
-        if ((Show-MessageBox -Message "Перед началом операции убедитесь в том, что у вас нет открытых Word документов.`r`nВо время работы скрипт закроет все Word документы, не сохраняя их, что может привести к потере данных!`r`nПродолжить?" -Title "Подтвердите действие" -Type YesNo) -eq "Yes") {
-        Populate-Register
-        $UpdateRegisterForm.Close()
+        $TextInMessage = "Не указаны следующие параметры:`r`n"
+        $ErrorPresent = $false
+        if ($script:SelectedRegister -eq $null) {$ErrorPresent = $true; $TextInMessage += "`r`nНе указан путь к файлу учета."}
+        if ($script:SelectedFolderWithFilesBeingPublished -eq $null) {$ErrorPresent = $true; $TextInMessage += "`r`nНе указан путь к папке с спецификациями, в которых упоминаются публикуемые файлы."}
+        if ($UpdateRegisterFormComboboxProjectName.SelectedItem -eq $null) {$ErrorPresent = $true; $TextInMessage += "`r`nНе выбран код проект."}
+        if ($UpdateRegisterFormComboboxDeveloperName.SelectedItem -eq $null) {$ErrorPresent = $true; $TextInMessage += "`r`nНе выбран разработчик."}
+        if ($ErrorPresent -eq $true) {
+            Show-MessageBox -Message $TextInMessage -Title "Невозможно выполнить операцию" -Type OK
+        } else {
+            if ((Show-MessageBox -Message "Перед началом операции убедитесь в том, что у вас нет открытых Word и Excel документов.`r`nВо время работы скрипт закроет все Word и Excel документы, не сохраняя их, что может привести к потере данных!`r`nПродолжить?" -Title "Подтвердите действие" -Type YesNo) -eq "Yes") {
+                Populate-Register
+                $UpdateRegisterForm.Close()
+            }
         }
-    }
     })
     $UpdateRegisterForm.Controls.Add($UpdateRegisterFormApplyButton)
     #Кнопка закрыть
@@ -5231,7 +5290,19 @@ Function Custom-Form ()
     $UpdadeRegister.Size = New-Object System.Drawing.Point(137,22) #width,height
     $UpdadeRegister.Text = "Внести в реестр..."
     $UpdadeRegister.Add_Click({
+        $TextInMessage = "Не указаны или некорректно указаны следующие параметры извещения:`r`n"
+        $ErrorPresent = $false
+        if ($UpdateNotificationNumberInput.Text -eq '  -  -') {$ErrorPresent = $true; $TextInMessage += "`r`nНе указан номер извещения."}
+        if ($UpdateNotificationNumberInput.Text -ne '  -  -') {if ($UpdateNotificationNumberInput.Text -notmatch '\d\d-\d\d-\d\d\d\d') {$ErrorPresent = $true; $TextInMessage += "`r`nНомер извещения указан неполностью, либо содержит недопустимые символы."}}
+        if ($ComboboxCreatedBy.SelectedItem -eq $null) {$ErrorPresent = $true; $TextInMessage += "`r`nНе выбран отдел."}
+        if ($ComboboxCheckedBy.SelectedItem -eq $null) {$ErrorPresent = $true; $TextInMessage += "`r`nНе выбрано ФИО для поля Выпустил."}
+        if ($ComboboxDepartmentName.SelectedItem -eq $null) {$ErrorPresent = $true; $TextInMessage += "`r`nНе выбрано ФИО для поля Проверил."}
+        if ($ComboboxCodes.SelectedItem -eq $null) {$ErrorPresent = $true; $TextInMessage += "`r`nНе выбран код."}
+        if ($ErrorPresent -eq $true) {
+            Show-MessageBox -Message $TextInMessage -Title "Невозможно начать создание электронного письма" -Type OK
+        } else {
         UpdateRegisterForm
+        }
     })
     $ScriptMainWindow.Controls.Add($UpdadeRegister)
     $ScriptMainWindow.ShowDialog()
