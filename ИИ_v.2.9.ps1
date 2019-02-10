@@ -109,7 +109,7 @@ Function Find-StringToBePopulated ($Sheet, $LookFor, $ColumnLetter)
     $Target = $Range.Find("$LookFor", [Type]::Missing, [Type]::Missing, 1)
     if ($Target -eq $null) {
         #Обозначение заявлено к замене, но не существует в файле учета нет ни одного вхождения.
-        Add-Content "$PSScriptRoot\Журнал автозаполнения.txt" "$($LookFor): ОШИБКА. Требуется ручное внесение данных. Обозначение заявлено к замене, но файле учета ПД и программ не существует ни одного вхождения."
+        Add-Content "$PSScriptRoot\Журнал автозаполнения.txt" "$($LookFor): ОШИБКА. Требуется ручное внесение данных. Обозначение заявлено к замене/аннулированию, но файле учета ПД и программ не существует ни одного вхождения с таким обозначением."
         return "not exist"
     } else {
         #Ищет
@@ -125,7 +125,7 @@ Function Find-StringToBePopulated ($Sheet, $LookFor, $ColumnLetter)
         While ($Target -ne $null -and $Target.AddressLocal() -ne $FirstHit.AddressLocal())
     }
     if ($InstanceCounter.Count -eq 0) {
-        Add-Content "$PSScriptRoot\Журнал автозаполнения.txt" "$($LookFor): ОШИБКА. Требуется ручное внесение данных. Не удалось обнаружить строку заменяемого файла, которая подходит для заполнения. К строке либо по ошибке применили заливку, либо в ней по ошибке заполнены столбцы L, M или N."
+        Add-Content "$PSScriptRoot\Журнал автозаполнения.txt" "$($LookFor): ОШИБКА. Требуется ручное внесение данных. В файле учета ПД и программ не удалось обнаружить ни одной строки для заменяемого/аннулируемого файла, которая подходит для автозаполнения. К нужной строке либо по ошибке применили заливку, либо в ней по ошибке заполнены столбцы L, M или N."
         return "not found"
         #Write-Host "Не удалось найти строку подходящую для заполнения. К строке либо по ошибке прмиенили заливку, либо в ней по ошибке заполнены столбцы L, M или N."
     } elseif ($InstanceCounter.Count -eq 1) {
@@ -135,7 +135,7 @@ Function Find-StringToBePopulated ($Sheet, $LookFor, $ColumnLetter)
     } else {
         $RegisterStringForReport = ""
         $InstanceCounter | % {$RegisterStringForReport += "$([string]$_), "}
-        Add-Content "$PSScriptRoot\Журнал автозаполнения.txt" "$($LookFor): ОШИБКА. Требуется ручное внесение данных. Найдено несколько строк подходящих для заполнения. Номера подходящих строк: $($RegisterStringForReport.Trim(', '))"
+        Add-Content "$PSScriptRoot\Журнал автозаполнения.txt" "$($LookFor): ОШИБКА. Требуется ручное внесение данных. В файле учета ПД и программ найдено несколько строк подходящих для автозаполнения. Номера подходящих строк: $($RegisterStringForReport.Trim(', '))"
         return "multiple instances"
         #Write-Host "Найдено несколько строк подходящих для заполнения. Их номера:"
     }
