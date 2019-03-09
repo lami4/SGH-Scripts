@@ -3690,26 +3690,13 @@ Function Apply-ColoringToRegister ()
     $RegisterWorksheetApplyColoring = $RegisterWorkbookApplyColoring.Worksheets.Item(1)
     if ($RegisterWorksheetApplyColoring.AutoFilterMode -eq $true) {$RegisterWorksheetApplyColoring.ShowAllData()}
     $RegisterLastRowApplyColoring = $RegisterWorksheetApplyColoring.Cells.Item($RegisterWorksheetApplyColoring.Rows.Count, "A").End(-4162).Row
-    #Write-Host $RegisterWorksheetApplyColoring.Cells.Item(76, 3).Interior.Color
-    #16777215 #139
     $RegisterWorksheetApplyColoring.Range("A2:A$($RegisterLastRowApplyColoring)").AutoFilter(1, 139, 8)
-   
     $LoopRangeApplyColoring = $RegisterWorksheetApplyColoring.Range("A2:A$($RegisterLastRowApplyColoring)")
     Foreach ($Cell in $LoopRangeApplyColoring.SpecialCells(12)) {
         if ($RegisterWorksheetApplyColoring.Cells.Item($Cell.Row, 2).Interior.Color -eq 16436871) {
-            $RegisterWorksheetApplyColoring.Cells.Item($Cell.Row, 2).Interior.Color = 14336204
-            $RegisterWorksheetApplyColoring.Cells.Item($Cell.Row, 3).Interior.Color = 14336204
-            $RegisterWorksheetApplyColoring.Cells.Item($Cell.Row, 4).Interior.Color = 14336204
-            $RegisterWorksheetApplyColoring.Cells.Item($Cell.Row, 5).Interior.Color = 14336204
-            $RegisterWorksheetApplyColoring.Cells.Item($Cell.Row, 6).Interior.Color = 14336204
-            $RegisterWorksheetApplyColoring.Cells.Item($Cell.Row, 7).Interior.Color = 14336204
-            $RegisterWorksheetApplyColoring.Cells.Item($Cell.Row, 8).Interior.Color = 14336204
-            $RegisterWorksheetApplyColoring.Cells.Item($Cell.Row, 9).Interior.Color = 14336204
-            $RegisterWorksheetApplyColoring.Cells.Item($Cell.Row, 10).Interior.Color = 14336204
-            $RegisterWorksheetApplyColoring.Cells.Item($Cell.Row, 11).Interior.Color = 14336204
-            $RegisterWorksheetApplyColoring.Cells.Item($Cell.Row, 12).Interior.Color = 14336204
-            $RegisterWorksheetApplyColoring.Cells.Item($Cell.Row, 13).Interior.Color = 14336204
-            $RegisterWorksheetApplyColoring.Cells.Item($Cell.Row, 14).Interior.Color = 14336204
+        $RegisterWorksheetApplyColoring.Range($RegisterWorksheetApplyColoring.Cells.Item($Cell.Row, 1), $RegisterWorksheetApplyColoring.Cells.Item($Cell.Row, 14)).Interior.Color = 14336204
+        } else {
+        $RegisterWorksheetApplyColoring.Cells.Item($Cell.Row, 1).Interior.Color = 16777215
         }
     }
 }
