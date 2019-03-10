@@ -3684,6 +3684,7 @@ Function UniquenessCheckForm ()
 
 Function Apply-ColoringToRegister ()
 {
+    Write-Host "Применяю заливку к автоматически заполненным строкам в файле учета программ и проектной документации..."
     $RegisterApplyColoring = New-Object -ComObject Excel.Application
     $RegisterApplyColoring.Visible = $true
     $RegisterWorkbookApplyColoring = $RegisterApplyColoring.WorkBooks.Open($script:PathToRegisterColoring)
@@ -3699,6 +3700,9 @@ Function Apply-ColoringToRegister ()
         $RegisterWorksheetApplyColoring.Cells.Item($Cell.Row, 1).Interior.Color = 16777215
         }
     }
+    Write-Host "ЗАЛИВКА ПРИМЕНИНА. МОЖНО РАБОТАТЬ С ФАЙЛОМ УЧЕТА."
+    Write-Host "ЗАЛИВКА ПРИМЕНИНА. МОЖНО РАБОТАТЬ С ФАЙЛОМ УЧЕТА."
+    Write-Host "ЗАЛИВКА ПРИМЕНИНА. МОЖНО РАБОТАТЬ С ФАЙЛОМ УЧЕТА."
 }
 
 Function ApplyColoringToRegisterForm ()
