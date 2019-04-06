@@ -3770,6 +3770,9 @@ Function Apply-ColoringToRegister ()
         $RegisterWorksheetApplyColoring.Range($RegisterWorksheetApplyColoring.Cells.Item($Cell.Row, 1), $RegisterWorksheetApplyColoring.Cells.Item($Cell.Row, 14)).Interior.Color = 14336204
         } else {
         $RegisterWorksheetApplyColoring.Cells.Item($Cell.Row, 1).Interior.ColorIndex = -4142
+        $RegisterWorksheetApplyColoring.Range($RegisterWorksheetApplyColoring.Cells.Item($Cell.Row, 1), $RegisterWorksheetApplyColoring.Cells.Item($Cell.Row, 15)).BorderAround(1)
+        $RegisterWorksheetApplyColoring.Range($RegisterWorksheetApplyColoring.Cells.Item($Cell.Row, 1), $RegisterWorksheetApplyColoring.Cells.Item($Cell.Row, 15)).Borders.Item(12).LineStyle = 1
+        $RegisterWorksheetApplyColoring.Range($RegisterWorksheetApplyColoring.Cells.Item($Cell.Row, 1), $RegisterWorksheetApplyColoring.Cells.Item($Cell.Row, 15)).Borders.Item(11).LineStyle = 1
         }
     }
     Write-Host "ЗАЛИВКА ПРИМЕНЕНА. МОЖНО РАБОТАТЬ С ФАЙЛОМ УЧЕТА."
