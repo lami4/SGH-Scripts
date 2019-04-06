@@ -3769,7 +3769,7 @@ Function Apply-ColoringToRegister ()
         if ($RegisterWorksheetApplyColoring.Cells.Item($Cell.Row, 2).Interior.Color -eq 16436871) {
         $RegisterWorksheetApplyColoring.Range($RegisterWorksheetApplyColoring.Cells.Item($Cell.Row, 1), $RegisterWorksheetApplyColoring.Cells.Item($Cell.Row, 14)).Interior.Color = 14336204
         } else {
-        $RegisterWorksheetApplyColoring.Cells.Item($Cell.Row, 1).Interior.Color = 16777215
+        $RegisterWorksheetApplyColoring.Cells.Item($Cell.Row, 1).Interior.ColorIndex = -4142
         }
     }
     Write-Host "ЗАЛИВКА ПРИМЕНЕНА. МОЖНО РАБОТАТЬ С ФАЙЛОМ УЧЕТА."
