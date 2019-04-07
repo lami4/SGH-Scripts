@@ -258,17 +258,21 @@ Function Populate-Register ()
                         if ($_.Text -match 'SPC' -or $_.Text -match 'LPD') {
                             $DocumentRegister = $WordApplication.Documents.Open("$script:SelectedFolderWithFilesBeingPublished\$($_.Text).docx")
                             $RegisterWorksheet.Cells.Item($RegisterLastRow, 6) = $([string](((($DocumentRegister.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(4, 5).Range.Text)).Trim(' ')  -replace [char]13, ' ').Trim([char]0x0007).Trim([char]0x0009).Trim(' ')  -replace '\s+', ' '))
+                            $DocumentRegister.Close()
                         } else {
                             $DocumentRegister = $WordApplication.Documents.Open("$script:SelectedFolderWithFilesBeingPublished\$($_.Text).docx")
                             $RegisterWorksheet.Cells.Item($RegisterLastRow, 6) = $([string]((($DocumentRegister.Tables.Item(1).Cell(9, 7).Range.Text)).Trim(' ')  -replace [char]13, ' ').Trim([char]0x0007).Trim([char]0x0009).Trim(' ')  -replace '\s+', ' ')
+                            $DocumentRegister.Close()
                         }
                     } elseif (Test-Path -Path "$script:SelectedFolderWithFilesBeingPublished\$($_.Text).doc") {
                         if ($_.Text -match 'SPC' -or $_.Text -match 'LPD') {
                             $DocumentRegister = $WordApplication.Documents.Open("$script:SelectedFolderWithFilesBeingPublished\$($_.Text).doc")
                             $RegisterWorksheet.Cells.Item($RegisterLastRow, 6) = $([string](((($DocumentRegister.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(4, 5).Range.Text)).Trim(' ')  -replace [char]13, ' ').Trim([char]0x0007).Trim([char]0x0009).Trim(' ')  -replace '\s+', ' '))
+                            $DocumentRegister.Close()
                         } else {
                             $DocumentRegister = $WordApplication.Documents.Open("$script:SelectedFolderWithFilesBeingPublished\$($_.Text).doc")
                             $RegisterWorksheet.Cells.Item($RegisterLastRow, 6) = $([string]((($DocumentRegister.Tables.Item(1).Cell(9, 7).Range.Text)).Trim(' ')  -replace [char]13, ' ').Trim([char]0x0007).Trim([char]0x0009).Trim(' ')  -replace '\s+', ' ')
+                            $DocumentRegister.Close()
                         }   
                     } else {
                         Enter-DataToRegisterManually -Title 'Документ упоминается в спекицикации(ях), но для него не указано наименование' -Label "Укажите наименование для документа $($_.Text):"
@@ -281,17 +285,21 @@ Function Populate-Register ()
                     if ($_.Text -match 'SPC' -or $_.Text -match 'LPD') {
                         $DocumentRegister = $WordApplication.Documents.Open("$script:SelectedFolderWithFilesBeingPublished\$($_.Text).docx")
                         $RegisterWorksheet.Cells.Item($RegisterLastRow, 6) = $([string](((($DocumentRegister.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(4, 5).Range.Text)).Trim(' ')  -replace [char]13, ' ').Trim([char]0x0007).Trim([char]0x0009).Trim(' ')  -replace '\s+', ' '))
+                        $DocumentRegister.Close()
                     } else {
                         $DocumentRegister = $WordApplication.Documents.Open("$script:SelectedFolderWithFilesBeingPublished\$($_.Text).docx")
                         $RegisterWorksheet.Cells.Item($RegisterLastRow, 6) = $([string]((($DocumentRegister.Tables.Item(1).Cell(9, 7).Range.Text)).Trim(' ')  -replace [char]13, ' ').Trim([char]0x0007).Trim([char]0x0009).Trim(' ')  -replace '\s+', ' ')
+                        $DocumentRegister.Close()
                     }
                 } elseif (Test-Path -Path "$script:SelectedFolderWithFilesBeingPublished\$($_.Text).doc") {
                     if ($_.Text -match 'SPC' -or $_.Text -match 'LPD') {
                         $DocumentRegister = $WordApplication.Documents.Open("$script:SelectedFolderWithFilesBeingPublished\$($_.Text).doc")
                         $RegisterWorksheet.Cells.Item($RegisterLastRow, 6) = $([string](((($DocumentRegister.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(4, 5).Range.Text)).Trim(' ')  -replace [char]13, ' ').Trim([char]0x0007).Trim([char]0x0009).Trim(' ')  -replace '\s+', ' '))
+                        $DocumentRegister.Close()
                     } else {
                         $DocumentRegister = $WordApplication.Documents.Open("$script:SelectedFolderWithFilesBeingPublished\$($_.Text).doc")
                         $RegisterWorksheet.Cells.Item($RegisterLastRow, 6) = $([string]((($DocumentRegister.Tables.Item(1).Cell(9, 7).Range.Text)).Trim(' ')  -replace [char]13, ' ').Trim([char]0x0007).Trim([char]0x0009).Trim(' ')  -replace '\s+', ' ')
+                        $DocumentRegister.Close()
                     }   
                 } else {
                     Enter-DataToRegisterManually -Title 'Документ не упоминается ни в одной из спецификаций' -Label "Укажите наименование для документа $($_.Text):"
@@ -450,17 +458,21 @@ Function Populate-Register ()
                             if ($_.Text -match 'SPC' -or $_.Text -match 'LPD') {
                                 $DocumentRegister = $WordApplication.Documents.Open("$script:SelectedFolderWithFilesBeingPublished\$($_.Text).docx")
                                 $RegisterWorksheet.Cells.Item($ActionFlag + 1, 6) = $([string](((($DocumentRegister.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(4, 5).Range.Text)).Trim(' ')  -replace [char]13, ' ').Trim([char]0x0007).Trim([char]0x0009).Trim(' ')  -replace '\s+', ' '))
+                                $DocumentRegister.Close()
                             } else {
                                 $DocumentRegister = $WordApplication.Documents.Open("$script:SelectedFolderWithFilesBeingPublished\$($_.Text).docx")
                                 $RegisterWorksheet.Cells.Item($ActionFlag + 1, 6) = $([string]((($DocumentRegister.Tables.Item(1).Cell(9, 7).Range.Text)).Trim(' ')  -replace [char]13, ' ').Trim([char]0x0007).Trim([char]0x0009).Trim(' ')  -replace '\s+', ' ')
+                                $DocumentRegister.Close()
                             }
                         } elseif (Test-Path -Path "$script:SelectedFolderWithFilesBeingPublished\$($_.Text).doc") {
                             if ($_.Text -match 'SPC' -or $_.Text -match 'LPD') {
                                 $DocumentRegister = $WordApplication.Documents.Open("$script:SelectedFolderWithFilesBeingPublished\$($_.Text).doc")
                                 $RegisterWorksheet.Cells.Item($ActionFlag + 1, 6) = $([string](((($DocumentRegister.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(4, 5).Range.Text)).Trim(' ')  -replace [char]13, ' ').Trim([char]0x0007).Trim([char]0x0009).Trim(' ')  -replace '\s+', ' '))
+                                $DocumentRegister.Close()
                             } else {
                                 $DocumentRegister = $WordApplication.Documents.Open("$script:SelectedFolderWithFilesBeingPublished\$($_.Text).doc")
                                 $RegisterWorksheet.Cells.Item($ActionFlag + 1, 6) = $([string]((($DocumentRegister.Tables.Item(1).Cell(9, 7).Range.Text)).Trim(' ')  -replace [char]13, ' ').Trim([char]0x0007).Trim([char]0x0009).Trim(' ')  -replace '\s+', ' ')
+                                $DocumentRegister.Close()
                             }   
                         } else {
                             Enter-DataToRegisterManually -Title 'Документ упоминается в спекицикации(ях), но для него не указано наименование' -Label "Укажите наименование для документа $($_.Text):"
@@ -473,17 +485,21 @@ Function Populate-Register ()
                             if ($_.Text -match 'SPC' -or $_.Text -match 'LPD') {
                                 $DocumentRegister = $WordApplication.Documents.Open("$script:SelectedFolderWithFilesBeingPublished\$($_.Text).docx")
                                 $RegisterWorksheet.Cells.Item($ActionFlag + 1, 6) = $([string](((($DocumentRegister.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(4, 5).Range.Text)).Trim(' ')  -replace [char]13, ' ').Trim([char]0x0007).Trim([char]0x0009).Trim(' ')  -replace '\s+', ' '))
+                                $DocumentRegister.Close()
                             } else {
                                 $DocumentRegister = $WordApplication.Documents.Open("$script:SelectedFolderWithFilesBeingPublished\$($_.Text).docx")
                                 $RegisterWorksheet.Cells.Item($ActionFlag + 1, 6) = $([string]((($DocumentRegister.Tables.Item(1).Cell(9, 7).Range.Text)).Trim(' ')  -replace [char]13, ' ').Trim([char]0x0007).Trim([char]0x0009).Trim(' ')  -replace '\s+', ' ')
+                                $DocumentRegister.Close()
                             }
                         } elseif (Test-Path -Path "$script:SelectedFolderWithFilesBeingPublished\$($_.Text).doc") {
                             if ($_.Text -match 'SPC' -or $_.Text -match 'LPD') {
                                 $DocumentRegister = $WordApplication.Documents.Open("$script:SelectedFolderWithFilesBeingPublished\$($_.Text).doc")
                                 $RegisterWorksheet.Cells.Item($ActionFlag + 1, 6) = $([string](((($DocumentRegister.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(4, 5).Range.Text)).Trim(' ')  -replace [char]13, ' ').Trim([char]0x0007).Trim([char]0x0009).Trim(' ')  -replace '\s+', ' '))
+                                $DocumentRegister.Close()
                             } else {
                                 $DocumentRegister = $WordApplication.Documents.Open("$script:SelectedFolderWithFilesBeingPublished\$($_.Text).doc")
                                 $RegisterWorksheet.Cells.Item($ActionFlag + 1, 6) = $([string]((($DocumentRegister.Tables.Item(1).Cell(9, 7).Range.Text)).Trim(' ')  -replace [char]13, ' ').Trim([char]0x0007).Trim([char]0x0009).Trim(' ')  -replace '\s+', ' ')
+                                $DocumentRegister.Close()
                             }   
                         } else {
                             Enter-DataToRegisterManually -Title 'Документ не упоминается ни в одной из спецификаций' -Label "Укажите наименование для документа $($_.Text):"
