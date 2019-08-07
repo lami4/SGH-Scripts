@@ -711,11 +711,14 @@ $excel.Quit()
 }
 Add-ExecutionTimeToReport -Time $ExecutionTime -ReportName "Check-Changes Report" -StringToReplace "<h3>Анализ</h3>"
 #========Statistics========
+if ($script:CheckPublishedDocuments -eq $true) {$colspanvalue = "2"}
+if ($script:CheckDocumentsToBePublished -eq $true) {$colspanvalue = "3"}
+
 $script:xlfiles | % {
 Add-Content "$PSScriptRoot\Check-Changes Report.html" "
 <tr>
 <td>$_</td>
-<td colspan=""2"">Файл в формате XLS/XLSX. Требуется ручная проверка.</td>
+<td colspan=""$colspanvalue"">Файл в формате XLS/XLSX. Требуется ручная проверка.</td>
 </tr>" -Encoding UTF8
 }
 
@@ -723,7 +726,7 @@ $script:pdffiles | % {
 Add-Content "$PSScriptRoot\Check-Changes Report.html" "
 <tr>
 <td>$_</td>
-<td colspan=""2"">DSG-файл в формате PDF. Требуется ручная проверка.</td>
+<td colspan=""$colspanvalue"">DSG-файл в формате PDF. Требуется ручная проверка.</td>
 </tr>" -Encoding UTF8
 }
 
