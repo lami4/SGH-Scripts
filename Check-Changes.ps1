@@ -6,6 +6,8 @@ $script:UserInputNotification = ""
 $script:JSvariable = 0
 $script:CheckPublishedDocuments = $false
 $script:CheckDocumentsToBePublished = $false
+$script:xlfiles = @()
+$script:pdffiles = @()
 
 Function Add-HtmlData ($DocumentsCount, $ExtraColumn)
 {
@@ -108,6 +110,15 @@ Function Select-Folder ($Description)
     If ($Show -eq "OK") {$script:PathToFolder = $objForm.SelectedPath}
 }
 
+Function Show-MessageBox ()
+{ 
+    param($Message, $Title, [ValidateSet("OK", "OKCancel", "YesNo")]$Type)
+    Add-Type –AssemblyName System.Windows.Forms 
+    if ($Type -eq "OK") {[System.Windows.Forms.MessageBox]::Show("$Message","$Title")}  
+    if ($Type -eq "OKCancel") {[System.Windows.Forms.MessageBox]::Show("$Message","$Title",[System.Windows.Forms.MessageBoxButtons]::OKCancel)}
+    if ($Type -eq "YesNo") {[System.Windows.Forms.MessageBox]::Show("$Message","$Title",[System.Windows.Forms.MessageBoxButtons]::YesNo)}
+}
+
 Function Custom-Form {
 Add-Type -AssemblyName  System.Windows.Forms
 $dialog = New-Object System.Windows.Forms.Form
@@ -191,12 +202,23 @@ $SystemWindowsFormsMargin = New-Object System.Windows.Forms.Padding
 $SystemWindowsFormsMargin.Bottom = 25
 $buttonRunScript.Margin = $SystemWindowsFormsMargin
 $buttonRunScript.Add_Click({
-                            if ($radioPublished.Checked -eq $true) {$script:CheckPublishedDocuments = $true}
-                            if ($radioBeingPublished.Checked -eq $true) {$script:CheckDocumentsToBePublished = $true}
-                            $script:UserInputNotification = $MaskedTextBox.Text
-                            $dialog.DialogResult = "OK";
-                            $dialog.Close()
-                           })
+    if (Test-Path -Path "$PSScriptRoot\Check-Changes Report.html") {
+        if ((Show-MessageBox -Message "Отчет Check-Changes Report.html уже существует в папке.`r`n`r`nНажмите Да, чтобы продолжить (отчет будет перезаписан).`r`nНажмите Нет, чтобы приостановить проверку." -Title "Отчет уже существует" -Type YesNo) -eq "Yes") {
+        Remove-Item -Path "$PSScriptRoot\Check-Changes Report.html"
+        if ($radioPublished.Checked -eq $true) {$script:CheckPublishedDocuments = $true}
+        if ($radioBeingPublished.Checked -eq $true) {$script:CheckDocumentsToBePublished = $true}
+        $script:UserInputNotification = $MaskedTextBox.Text
+        $dialog.DialogResult = "OK";
+        $dialog.Close()
+        }
+    } else {
+        if ($radioPublished.Checked -eq $true) {$script:CheckPublishedDocuments = $true}
+        if ($radioBeingPublished.Checked -eq $true) {$script:CheckDocumentsToBePublished = $true}
+        $script:UserInputNotification = $MaskedTextBox.Text
+        $dialog.DialogResult = "OK";
+        $dialog.Close()
+    }
+})
 $buttonRunScript.Enabled = $false
 #Exit
 $buttonExit = New-Object System.Windows.Forms.Button
@@ -316,23 +338,31 @@ $dialog.ShowDialog()
 
 Function Get-DataFromDocuments 
 {
-$xlfiles = @()
+Write-Host "Считываю значения из титульных листов документов..."
 $basenames = @()
 $notifications = @()
 $changenumbers = @()
 $word = New-Object -ComObject Word.Application
 $word.Visible = $false
-Get-ChildItem -Path "$script:PathToFolder\*.*" -Include "*.doc*", "*.xls*" | % {
+Get-ChildItem -Path "$script:PathToFolder\*.*" -Include "*.doc*", "*.xls*", "*.pdf" | % {
     #If file has *.xls or *.xlsx extensions, adds file to the special array to append it to the table in the report
     if ($_.Extension -eq ".xls" -or $_.Extension -eq ".xlsx") {
-        Write-Host "$($_.BaseName): файл с расширением *.xls/*.xlsx, требуется ручная проверка."
-        $xlfiles += $_.BaseName
+        Write-Host "$($_.BaseName): Файл с расширением *.xls/*.xlsx, требуется ручная проверка."
+        $script:xlfiles += $_.BaseName
         return
     }
-    Write-Host "$($_.BaseName): забираю значения номера изменения и номера извещения..."
+    if ($_.Extension -eq ".pdf" -and $_.BaseName -notmatch "DSG") {
+    return
+    }
+    if ($_.Extension -eq ".pdf" -and $_.BaseName -match "DSG") {
+        Write-Host "$($_.BaseName): DSG-файл с расширением *.pdf, требуется ручная проверка."
+        $script:pdffiles += $_.BaseName
+        return
+    }
+    Write-Host "$($_.BaseName): Считываю значения номера изменения и номера извещения."
     $document = $word.Documents.Open($_.FullName)
     #If file is a specification, gets data using coordinates required for a specification
-    if ($_.BaseName -match "SPC") {
+    if ($_.BaseName -match "SPC" -or $_.BaseName -match "LPD") {
         $basenames += $_.BaseName
         $notifications += try {((($document.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(1, 3).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')} catch {"error"}
         $changenumbers += try {((($document.Sections.Item(1).Footers.Item(2).Range.Tables.Item(1).Cell(1, 1).Range.Text).Trim([char]0x0007)) -replace '\s+', ' ').Trim(' ')} catch {"error"}
@@ -345,7 +375,7 @@ Get-ChildItem -Path "$script:PathToFolder\*.*" -Include "*.doc*", "*.xls*" | % {
     $document.Close([ref]0)
 }
 $word.Quit()
-$CollectedData = $basenames, $notifications, $changenumbers, $xlfiles
+$CollectedData = $basenames, $notifications, $changenumbers
 return $CollectedData
 }
 
@@ -364,7 +394,7 @@ if ($Target -eq $null) {
     {
         $ChangeAddress = $Target.AddressLocal($false, $false) -replace "E", ""
         if ($ExcelActiveSheet.Cells.Item($ChangeAddress, "J").Interior.ColorIndex -eq -4142) {
-        Write-Host "White background found"
+        #Write-Host "White background found"
         [int]$ValueInCellChange = $ExcelActiveSheet.Cells.Item($ChangeAddress, "J").Value()
         if ($ValueInCellChange.Length -eq 0) {$Changes += 0} else {$Changes += $ValueInCellChange}
         $NotificationCoordinatesRow += $ChangeAddress
@@ -485,9 +515,10 @@ Add-HtmlData -DocumentsCount ($DataFromDocuments[0].Length + $DataFromDocuments[
 Add-HtmlData -DocumentsCount ($DataFromDocuments[0].Length + $DataFromDocuments[3].Length) -ExtraColumn "<th>Статус<br>публикуемого документа</th> " 
 #========Statistics========
 }
+Write-Host "Начал проверку считанных значений..."
 for ($i = 0; $i -lt $DataFromDocuments[0].Length; $i++) {
     $DocumentData = @{BaseName = [string]$DataFromDocuments[0][$i]; Notification = [string]$DataFromDocuments[1][$i]; Version = [string]$DataFromDocuments[2][$i]}
-    Write-Host "Working on $($DocumentData.BaseName)..."
+    Write-Host "Проверяю $($DocumentData.BaseName)..."
     $DataFromRegister = Get-DataFromDocumentRegister -ExcelActiveSheet $worksheet -LookFor $DocumentData.BaseName
     if ($DataFromRegister -ne $null) {
     $DocumentDataInRegister = @{Notification = [string]$DataFromRegister[1]; Version = [string]$DataFromRegister[0]}
@@ -680,6 +711,22 @@ $excel.Quit()
 }
 Add-ExecutionTimeToReport -Time $ExecutionTime -ReportName "Check-Changes Report" -StringToReplace "<h3>Анализ</h3>"
 #========Statistics========
+$script:xlfiles | % {
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "
+<tr>
+<td>$_</td>
+<td colspan=""2"">Файл в формате XLS/XLSX. Требуется ручная проверка.</td>
+</tr>" -Encoding UTF8
+}
+
+$script:pdffiles | % {
+Add-Content "$PSScriptRoot\Check-Changes Report.html" "
+<tr>
+<td>$_</td>
+<td colspan=""2"">DSG-файл в формате PDF. Требуется ручная проверка.</td>
+</tr>" -Encoding UTF8
+}
+
 Add-Content "$PSScriptRoot\Check-Changes Report.html" "</table>
 </div>
 </body>
@@ -691,3 +738,4 @@ Add-Content "$PSScriptRoot\Check-Changes Report.html" "</table>
 <br>
 <br>" -Encoding UTF8
 #========Statistics========
+Write-Host "Проверка закончена. Результаты см. в отчете"
