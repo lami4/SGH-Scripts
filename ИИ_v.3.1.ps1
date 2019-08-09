@@ -37,6 +37,7 @@ $script:ManuallyEnteredValueForRegister = ""
 $script:CollectedReferences = @(), @(), @()
 $script:SelectedWordFile = $null
 $script:SelectedClientFolder = $null
+$script:SelectedSpecsFolder = $null
 $script:SelectedAccessPath = $null
 $script:AggregatingString = ""
 
@@ -4094,9 +4095,59 @@ Function ClientReleaseForm ()
     $ClientReleaseFormBrowseButtonFileLabel.Text = "Выберите спецификацию, которая содержит ссылки на архивы с исходным кодом"
     $ClientReleaseFormBrowseButtonFileLabel.TextAlign = "TopLeft"
     $ClientReleaseForm.Controls.Add($ClientReleaseFormBrowseButtonFileLabel)
+
+    #####
+    #Чекбокс 'Найти ссылки на архивы с исходным кодом во всех спецификациях, хранящихся в папке'
+    $ClientReleaseFormMultipleSpecs = New-Object System.Windows.Forms.CheckBox
+    $ClientReleaseFormMultipleSpecs.Width = 500
+    $ClientReleaseFormMultipleSpecs.Text = "Найти ссылки на архивы с исходным кодом во всех спецификациях, хранящихся в папке"
+    $ClientReleaseFormMultipleSpecs.Location = New-Object System.Drawing.Point(10,40) #x,y
+    $ClientReleaseFormMultipleSpecs.Enabled = $true
+    $ClientReleaseFormMultipleSpecs.Checked = $false
+    $ClientReleaseFormMultipleSpecs.Add_CheckStateChanged({
+    if ($ClientReleaseFormMultipleSpecs.Checked -eq $false) {
+        $ClientReleaseFormBrowseFileButton.Enabled = $true
+        $ClientReleaseFormBrowseButtonFileLabel.Enabled = $true
+        $ClientReleaseFormBrowseFolderWithSpecsButton.Enabled = $false
+        $ClientReleaseFormBrowseFolderWithSpecsLabel.Enabled = $false
+    } else {
+        $ClientReleaseFormBrowseFolderWithSpecsButton.Enabled = $true
+        $ClientReleaseFormBrowseFolderWithSpecsLabel.Enabled = $true
+        $ClientReleaseFormBrowseFileButton.Enabled = $false
+        $ClientReleaseFormBrowseButtonFileLabel.Enabled = $false
+    }
+    })
+    $ClientReleaseForm.Controls.Add($ClientReleaseFormMultipleSpecs)
+    #Кнопка обзор для папки со спецификациями
+    $ClientReleaseFormBrowseFolderWithSpecsButton = New-Object System.Windows.Forms.Button
+    $ClientReleaseFormBrowseFolderWithSpecsButton.Location = New-Object System.Drawing.Point(10,70) #x,y
+    $ClientReleaseFormBrowseFolderWithSpecsButton.Size = New-Object System.Drawing.Point(80,22) #width,height
+    $ClientReleaseFormBrowseFolderWithSpecsButton.Text = "Обзор..."
+    $ClientReleaseFormBrowseFolderWithSpecsButton.TabStop = $false
+    $ClientReleaseFormBrowseFolderWithSpecsButton.Enabled = $false
+    $ClientReleaseFormBrowseFolderWithSpecsButton.Add_Click({
+        $script:SelectedSpecsFolder = Select-Folder -Description "Выберите папку, в которой для каждой спецификации будет выполнен поиск ссылок на архивы с исходным кодом"
+        if ($script:SelectedSpecsFolder -ne $null) {
+            $ClientReleaseFormBrowseFolderWithSpecsLabel.Text = "Указанная папка: $(Split-Path -Path $script:SelectedSpecsFolder -Leaf). Наведите курсором, чтобы увидеть полный путь."
+            $ToolTip.SetToolTip($ClientReleaseFormBrowseFolderWithSpecsLabel, $script:SelectedSpecsFolder)
+        } else {
+            $ClientReleaseFormBrowseFolderWithSpecsLabel.Text = "Выберите папку, в которой для каждой спецификации будет выполнен поиск ссылок на архивы с исходным кодом"
+        }
+    })
+    $ClientReleaseForm.Controls.Add($ClientReleaseFormBrowseFolderWithSpecsButton)
+    #Поле к кнопке Обзор для папки со спецификациями
+    $ClientReleaseFormBrowseFolderWithSpecsLabel = New-Object System.Windows.Forms.Label
+    $ClientReleaseFormBrowseFolderWithSpecsLabel.Location =  New-Object System.Drawing.Point(95,74) #x,y
+    $ClientReleaseFormBrowseFolderWithSpecsLabel.Enabled = $false
+    $ClientReleaseFormBrowseFolderWithSpecsLabel.Width = 725
+    $ClientReleaseFormBrowseFolderWithSpecsLabel.Text = "Выберите папку, в которой для каждой спецификации будет выполнен поиск ссылок на архивы с исходным кодом"
+    $ClientReleaseFormBrowseFolderWithSpecsLabel.TextAlign = "TopLeft"
+    $ClientReleaseForm.Controls.Add($ClientReleaseFormBrowseFolderWithSpecsLabel)
+    #####
+
     #Кнопка обзор для папки
     $ClientReleaseFormBrowseFolderButton = New-Object System.Windows.Forms.Button
-    $ClientReleaseFormBrowseFolderButton.Location = New-Object System.Drawing.Point(10,42) #x,y
+    $ClientReleaseFormBrowseFolderButton.Location = New-Object System.Drawing.Point(10,102) #x,y
     $ClientReleaseFormBrowseFolderButton.Size = New-Object System.Drawing.Point(80,22) #width,height
     $ClientReleaseFormBrowseFolderButton.Text = "Обзор..."
     $ClientReleaseFormBrowseFolderButton.TabStop = $false
@@ -4112,7 +4163,7 @@ Function ClientReleaseForm ()
     $ClientReleaseForm.Controls.Add($ClientReleaseFormBrowseFolderButton)
     #Поле к кнопке Обзор для папки
     $ClientReleaseFormBrowseButtonFolderLabel = New-Object System.Windows.Forms.Label
-    $ClientReleaseFormBrowseButtonFolderLabel.Location =  New-Object System.Drawing.Point(95,46) #x,y
+    $ClientReleaseFormBrowseButtonFolderLabel.Location =  New-Object System.Drawing.Point(95,106) #x,y
     $ClientReleaseFormBrowseButtonFolderLabel.Width = 725
     $ClientReleaseFormBrowseButtonFolderLabel.Text = "Выберите папку, в которой необходимо удалить архивы с исходным кодом и исходные документы"
     $ClientReleaseFormBrowseButtonFolderLabel.TextAlign = "TopLeft"
@@ -4126,11 +4177,15 @@ Function ClientReleaseForm ()
         $ClientReleaseFormBrowseButtonFolderLabel.Text = "Указанная папка: $(Split-Path -Path $script:SelectedClientFolder -Leaf). Наведите курсором, чтобы увидеть полный путь."
         $ToolTip.SetToolTip($ClientReleaseFormBrowseButtonFolderLabel, $script:SelectedClientFolder)
     }
+    if ($script:SelectedSpecsFolder -ne $null) {
+        $ClientReleaseFormBrowseFolderWithSpecsLabel.Text = "Указанная папка: $(Split-Path -Path $script:SelectedSpecsFolder -Leaf). Наведите курсором, чтобы увидеть полный путь."
+        $ToolTip.SetToolTip($ClientReleaseFormBrowseFolderWithSpecsLabel, $script:SelectedSpecsFolder)
+    }
     #Чекбокс 'Удалить файлы MS Word'
     $ClientReleaseFormDeleteMsOfficeFiles = New-Object System.Windows.Forms.CheckBox
     $ClientReleaseFormDeleteMsOfficeFiles.Width = 410
     $ClientReleaseFormDeleteMsOfficeFiles.Text = "Удалить файлы приложения MS Word"
-    $ClientReleaseFormDeleteMsOfficeFiles.Location = New-Object System.Drawing.Point(10,72) #x,y
+    $ClientReleaseFormDeleteMsOfficeFiles.Location = New-Object System.Drawing.Point(10,132) #x,y
     $ClientReleaseFormDeleteMsOfficeFiles.Enabled = $true
     $ClientReleaseFormDeleteMsOfficeFiles.Checked = $true
     $ClientReleaseFormDeleteMsOfficeFiles.Add_CheckStateChanged({})
@@ -4139,24 +4194,20 @@ Function ClientReleaseForm ()
     $ClientReleaseFormDeleteMsExcelFiles = New-Object System.Windows.Forms.CheckBox
     $ClientReleaseFormDeleteMsExcelFiles.Width = 410
     $ClientReleaseFormDeleteMsExcelFiles.Text = "Удалить файлы приложения MS Excel"
-    $ClientReleaseFormDeleteMsExcelFiles.Location = New-Object System.Drawing.Point(10,97) #x,y
+    $ClientReleaseFormDeleteMsExcelFiles.Location = New-Object System.Drawing.Point(10,157) #x,y
     $ClientReleaseFormDeleteMsExcelFiles.Enabled = $true
     $ClientReleaseFormDeleteMsExcelFiles.Checked = $true
     $ClientReleaseFormDeleteMsExcelFiles.Add_CheckStateChanged({})
     $ClientReleaseForm.Controls.Add($ClientReleaseFormDeleteMsExcelFiles)
     #Кнопка Начать
     $ClientReleaseFormApplyButton = New-Object System.Windows.Forms.Button
-    $ClientReleaseFormApplyButton.Location = New-Object System.Drawing.Point(10,134) #x,y
+    $ClientReleaseFormApplyButton.Location = New-Object System.Drawing.Point(10,194) #x,y
     $ClientReleaseFormApplyButton.Size = New-Object System.Drawing.Point(80,22) #width,height
     $ClientReleaseFormApplyButton.Text = "Начать"
     $ClientReleaseFormApplyButton.Enabled = $true
     $ClientReleaseFormApplyButton.Add_Click({
-    if ($script:SelectedClientFolder -eq $null -and $script:SelectedWordFile -eq $null) {
-        Show-MessageBox -Message "Не указана спецификация, содержащая список архивов с исходным кодом, и папка, в которой необходимо удалить архивы с исходным кодом и исходные документы." -Title "Невозможно выполнить операцию" -Type OK
-    } elseif ($script:SelectedWordFile -eq $null) {
-        Show-MessageBox -Message "Не указана спецификация, содержащая список архивов с исходным кодом." -Title "Невозможно выполнить операцию" -Type OK
-    } elseif ($script:SelectedClientFolder -eq $null) {
-        Show-MessageBox -Message "Не указана папка, в которой необходимо удалить архивы с исходным кодом и исходные документы." -Title "Невозможно выполнить операцию." -Type OK
+    if ($script:SelectedClientFolder -eq $null -or $script:SelectedWordFile -eq $null -or ($ClientReleaseFormMultipleSpecs.Checked -eq $true -and $script:SelectedSpecsFolder -eq $null)) {
+        Show-MessageBox -Message "Не указана путь для одного или нескольких параметров." -Title "Невозможно выполнить операцию" -Type OK
     } else {
         if ((Show-MessageBox -Message "Перед началом операции убедитесь в том, что у вас нет открытых Word документов.`r`nВо время работы скрипт закроет все Word документы, не сохраняя их, что может привести к потере данных!`r`nПродолжить?" -Title "Подтвердите действие" -Type YesNo) -eq "Yes") {
         if ($ClientReleaseFormDeleteMsOfficeFiles.Checked -eq $true) {$DeleteWordFlag = $true} else {$DeleteWordFlag = $false}
@@ -4169,7 +4220,7 @@ Function ClientReleaseForm ()
     $ClientReleaseForm.Controls.Add($ClientReleaseFormApplyButton)
     #Кнопка закрыть
     $ClientReleaseFormCancelButton = New-Object System.Windows.Forms.Button
-    $ClientReleaseFormCancelButton.Location = New-Object System.Drawing.Point(100,134) #x,y
+    $ClientReleaseFormCancelButton.Location = New-Object System.Drawing.Point(100,194) #x,y
     $ClientReleaseFormCancelButton.Size = New-Object System.Drawing.Point(80,22) #width,height
     $ClientReleaseFormCancelButton.Text = "Закрыть"
     $ClientReleaseFormCancelButton.Add_Click({
