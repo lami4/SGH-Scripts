@@ -4217,6 +4217,7 @@ Function ClientReleaseForm ()
                 if ((Show-MessageBox -Message "Релиз для клиента.html уже существует в папке.`r`n`r`nНажмите Да, чтобы продолжить (отчет будет перезаписан).`r`nНажмите Нет, чтобы приостановить проверку." -Title "Отчет уже существует" -Type YesNo) -eq "Yes") {
                     Remove-Item -Path "$PSScriptRoot\Релиз для клиента.html"
                     Create-ClientVersion -PathToSpecification $script:SelectedWordFile -PathToClientFolder $script:SelectedClientFolder -CollectFromMultipleSpecsFlag $CollectFromMultipleSpecsFlag -DeleteWordFlag $DeleteWordFlag -DeleteExcelFlag $DeleteExcelFlag
+                    Invoke-Item "$PSScriptRoot\Релиз для клиента.html"
                     $ClientReleaseForm.Close()
                 }
             }
