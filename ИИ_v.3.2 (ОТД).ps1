@@ -4220,6 +4220,10 @@ Function ClientReleaseForm ()
                     Invoke-Item "$PSScriptRoot\Релиз для клиента.html"
                     $ClientReleaseForm.Close()
                 }
+            } else {
+                    Create-ClientVersion -PathToSpecification $script:SelectedWordFile -PathToClientFolder $script:SelectedClientFolder -CollectFromMultipleSpecsFlag $CollectFromMultipleSpecsFlag -DeleteWordFlag $DeleteWordFlag -DeleteExcelFlag $DeleteExcelFlag
+                    Invoke-Item "$PSScriptRoot\Релиз для клиента.html"
+                    $ClientReleaseForm.Close()
             }
         }
     }
