@@ -16,13 +16,5 @@
       "eventAttenders": 3,
       "eventDate": "18 августа"
     }
-  ],
-  "user": {
-    "eventId": 290027266,
-    "eventName": "Поездка в Краснодар",
-    "organizerName": "Сергей",
-    "eventDetails": "Купить вино.",
-    "eventAttenders": 1,
-    "eventDate": "12 июля"
-  }
+  ]
 }
