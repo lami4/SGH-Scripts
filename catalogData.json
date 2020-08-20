@@ -1,18 +1,28 @@
-[
-  {
-    "id_product": 123,
-    "product_name": "Ноутбук",
-    "price": 45600
-  },
-  {
-    "id_product": 456,
-    "product_name": "Мышка",
-    "price": 1000
+{
+  "events": [
+    {
+      "eventId": 29002811,
+      "eventName": "День рождения друга",
+      "organizerName": "Иван Петров",
+      "eventDetails": "День рождения у лучшего друга в Москве. Прихватить зонтик",
+      "eventAttenders": 9,
+      "eventDate": "12 августа"
+    },
+    {
+      "eventId": 2900272,
+      "eventName": "Поездка на дачу",
+      "organizerName": "Саша",
+      "eventDetails": "Заехать в магазин и купить мяса для шашлыка.",
+      "eventAttenders": 3,
+      "eventDate": "18 августа"
+    }
+  ],
+  "user": {
+    "eventId": 290027266,
+    "eventName": "Поездка в Краснодар",
+    "organizerName": "Сергей",
+    "eventDetails": "Купить вино.",
+    "eventAttenders": 1,
+    "eventDate": "12 июля"
   }
-  ,
-  {
-    "id_product": 457,
-    "product_name": "Клавиатура",
-    "price": 2600
-  }
-]
+}
